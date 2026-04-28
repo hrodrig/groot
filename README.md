@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes diagnostics CLI" width="100%" />
+</p>
+
 # GROOT - Go Kubernetes Emergency Logger
 [![Version](https://img.shields.io/badge/version-0.1.0-blue)](#)
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?label=release)](https://github.com/hrodrig/groot/releases)
@@ -5,6 +9,21 @@
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, including worker/node details, control plane logs, namespace resources, pod logs, and events.
+
+## Table of contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Quick start](#quick-start)
+- [First run](#first-run)
+- [Config](#config)
+- [Resolution and precedence](#resolution-and-precedence)
+- [Output naming](#output-naming)
+- [Console output modes](#console-output-modes)
+- [Typical collected data](#typical-collected-data)
+- [Notifications](#notifications)
+- [Rootless container](#rootless-container)
+- [Security note](#security-note)
 
 ## Features
 
@@ -27,6 +46,8 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 ```bash
 make build
 ./bin/groot --print-sample-config > groot.yml
+# Edit groot.yml: replace sample values with your cluster settings (namespaces, targets,
+# kubeconfig, output paths, optional notify webhooks/tokens) before collecting.
 ./bin/groot collect
 ```
 
@@ -46,6 +67,13 @@ If you do not have a config file yet, print a sample and save it:
 
 ```bash
 ./bin/groot --print-sample-config > groot.yml
+```
+
+The generated file is a **template only**. Open `groot.yml` and set **your own** values for your environment—for example `kubeconfig` (if not using the default), `collection.namespaces`, workloads under `collection.targets` (deployments, StatefulSets, DaemonSets, Helm releases), `output_dir` / `file_prefix`, and any `notify.*` URLs or secrets. Until you do, the sample names and disabled notification blocks will not match a real cluster.
+
+Then run:
+
+```bash
 ./bin/groot collect
 ```
 
@@ -63,7 +91,7 @@ You can always override file discovery with:
 
 ## Config
 
-Edit `groot.yml` (or any file passed with `--config`).
+Edit `groot.yml` (or any file passed with `--config`) and align every section with your cluster and operational needs. Do not rely on the shipped sample as a drop-in configuration.
 
 Sample config:
 

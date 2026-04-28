@@ -1,0 +1,110 @@
+version: 2
+
+project_name: groot
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: groot
+    main: ./cmd/groot
+    binary: groot
+    flags:
+      - -trimpath
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s
+      - -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.branch={{.Branch}}
+      - -X main.buildDate={{.Date}}
+
+archives:
+  - id: groot-dist
+    ids:
+      - groot
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "groot_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+nfpms:
+  - id: groot-packages
+    package_name: groot
+    file_name_template: "groot_{{ .Version }}_{{ .Arch }}"
+    ids:
+      - groot
+    vendor: hrodrig
+    homepage: https://github.com/hrodrig/groot
+    maintainer: hrodrig
+    description: |-
+      GROOT is a Go CLI that collects Kubernetes diagnostics (resources, events,
+      pod logs, node details, and optional notifications).
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
+    section: utils
+    priority: optional
+    contents:
+      - src: configs/config.yaml
+        dst: /etc/groot/config.yaml
+        type: config|noreplace
+    deb:
+      lintian_overrides:
+        - statically-linked-binary
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: git
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - "^\\.github:"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+# Multi-arch images via pre-built binaries (Dockerfile.release).
+# sbom: false — many buildx setups lack attestation support for the docker driver.
+dockers_v2:
+  - dockerfile: Dockerfile.release
+    sbom: false
+    ids:
+      - groot
+    extra_files:
+      - configs/config.yaml
+    images:
+      - ghcr.io/hrodrig/groot
+    tags:
+      - "v{{ .Version }}"
+      - "{{ if not .IsSnapshot }}latest{{ end }}"
+    labels:
+      org.opencontainers.image.title: "groot"
+      org.opencontainers.image.description: "Go Kubernetes diagnostics collector CLI"
+      org.opencontainers.image.source: "https://github.com/hrodrig/groot"
+      org.opencontainers.image.version: "{{ .Version }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.created: "{{ .Date }}"

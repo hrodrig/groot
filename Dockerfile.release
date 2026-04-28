@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1
+# Runtime image for GoReleaser dockers_v2: binaries are built by GoReleaser and laid out as
+# linux/<arch>/<binary> in the build context (see https://goreleaser.com/customization/package/dockers_v2/).
+# Local multi-stage compile: use Dockerfile (make docker-build / docker compose).
+ARG TARGETPLATFORM
+FROM gcr.io/distroless/static-debian12:nonroot
+ARG TARGETPLATFORM
+WORKDIR /app
+LABEL org.opencontainers.image.title="groot"
+LABEL org.opencontainers.image.description="Go Kubernetes diagnostics collector CLI"
+LABEL org.opencontainers.image.source="https://github.com/hrodrig/groot"
+LABEL org.opencontainers.image.authors="https://github.com/hrodrig/groot"
+COPY ${TARGETPLATFORM}/groot /app/groot
+COPY configs/config.yaml /app/config.yaml
+USER nonroot:nonroot
+ENTRYPOINT ["/app/groot"]
+CMD ["collect", "--config", "/app/config.yaml"]

@@ -1,0 +1,30 @@
+# Codecov for GROOT (Go). CI should upload `coverage.out` (see `make cover`).
+# https://docs.codecov.com/docs/codecov-yaml
+# Local merged coverage gate: `make cover` (COVER_MIN defaults to 80 — Makefile).
+
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+  status:
+    project:
+      default:
+        # Keep in sync with Makefile COVER_MIN
+        target: 80%
+        threshold: 1%
+    patch:
+      default:
+        informational: true
+
+comment:
+  layout: "header,diff,flags,files,footer"
+  behavior: default
+  require_changes: true
+
+ignore:
+  - "bin/**"
+  - "work/**"
+  - "dist/**"

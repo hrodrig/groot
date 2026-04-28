@@ -1,0 +1,42 @@
+# Deny-all by default (whitelist only what ships in this repo)
+*
+.*
+
+# Repository metadata & root config
+!.gitignore
+!.dockerignore
+!.goreleaser.yaml
+!.github/
+!.github/**
+
+!Dockerfile
+!Dockerfile.release
+!Makefile
+!README.md
+!VERSION
+!LICENSE
+!CHANGELOG.md
+!CONTRIBUTING.md
+!CODE_OF_CONDUCT.md
+!SECURITY.md
+!codecov.yml
+!docker-compose.yml
+!go.mod
+!go.sum
+!configs/
+!configs/**
+
+# Source and documentation
+!cmd/
+!cmd/**
+!pkg/
+!pkg/**
+!docs/
+!docs/**
+
+# Build output dir: keep directory in git with a placeholder only (see Makefile → bin/)
+!bin/
+!bin/.keep
+
+# Local / OS noise (redundant with *; keeps intent visible)
+.DS_Store

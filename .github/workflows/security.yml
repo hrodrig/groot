@@ -1,0 +1,74 @@
+# Security scans on PR/push to develop and main (govulncheck + Grype on the CI image).
+# Aligns with `make security` / optional `STRICT_RELEASE=1` image scan before release.
+
+name: Security
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  govulncheck:
+    name: Go vulnerabilities
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run govulncheck
+        run: govulncheck ./...
+
+  grype:
+    name: Grype (container image)
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build timestamp
+        id: ts
+        run: echo "b=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          push: false
+          tags: groot:scan
+          file: ./Dockerfile
+          build-args: |
+            APP_VERSION=ci
+            GIT_COMMIT=${{ github.sha }}
+            GIT_BRANCH=${{ github.ref_name }}
+            BUILD_DATE=${{ steps.ts.outputs.b }}
+
+      # Same idea as `make docker-scan`: Grype via official image + --pull=always.
+      - name: Run Grype on image
+        run: |
+          docker run --rm --pull=always \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            anchore/grype:latest \
+            groot:scan --fail-on high

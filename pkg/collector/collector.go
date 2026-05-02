@@ -44,6 +44,7 @@ type Service struct {
 	onStart  func(name string, args []string)
 	onDone   func(name string)
 	onFailed func(name string, err error)
+	hooksMu  sync.Mutex // serializes hook callbacks; workers invoke hooks concurrently otherwise
 }
 
 // New returns a collector service.
@@ -56,15 +57,42 @@ func (s *Service) SetMessage(message string) {
 	s.message = message
 }
 
-// SetHooks attaches command execution hooks.
+// SetHooks attaches command execution hooks. Callbacks run under an internal
+// mutex so they are not invoked concurrently from collection workers.
 func (s *Service) SetHooks(
 	onStart func(name string, args []string),
 	onDone func(name string),
 	onFailed func(name string, err error),
 ) {
+	s.hooksMu.Lock()
+	defer s.hooksMu.Unlock()
 	s.onStart = onStart
 	s.onDone = onDone
 	s.onFailed = onFailed
+}
+
+func (s *Service) invokeOnStart(name string, args []string) {
+	s.hooksMu.Lock()
+	defer s.hooksMu.Unlock()
+	if s.onStart != nil {
+		s.onStart(name, args)
+	}
+}
+
+func (s *Service) invokeOnDone(name string) {
+	s.hooksMu.Lock()
+	defer s.hooksMu.Unlock()
+	if s.onDone != nil {
+		s.onDone(name)
+	}
+}
+
+func (s *Service) invokeOnFailed(name string, err error) {
+	s.hooksMu.Lock()
+	defer s.hooksMu.Unlock()
+	if s.onFailed != nil {
+		s.onFailed(name, err)
+	}
 }
 
 // Run executes the collection workflow.
@@ -79,8 +107,8 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	if err := s.ensureGroupDirs(captureDir); err != nil {
 		return Summary{}, fmt.Errorf("prepare output groups: %w", err)
 	}
-	if err := s.writeMetadata(ctx, captureDir); err != nil && s.onFailed != nil {
-		s.onFailed("metadata", err)
+	if err := s.writeMetadata(ctx, captureDir); err != nil {
+		s.invokeOnFailed("metadata", err)
 	}
 
 	jobs, err := s.buildJobs(ctx)
@@ -97,8 +125,8 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		if strings.TrimSpace(meta.Cluster) != "" {
 			clusterName = sanitize(meta.Cluster)
 		}
-	} else if s.onFailed != nil {
-		s.onFailed("cluster-name", err)
+	} else {
+		s.invokeOnFailed("cluster-name", err)
 	}
 
 	archiveName := fmt.Sprintf("%s-%s", timestamp, clusterName)
@@ -320,9 +348,7 @@ func (s *Service) runJobs(ctx context.Context, captureDir string, jobs []job) Su
 }
 
 func (s *Service) execToFile(ctx context.Context, captureDir string, j job) error {
-	if s.onStart != nil {
-		s.onStart(j.Name, j.Args)
-	}
+	s.invokeOnStart(j.Name, j.Args)
 
 	cmd := exec.CommandContext(ctx, "kubectl", s.kubectlArgs(j.Args)...)
 	var out bytes.Buffer
@@ -349,15 +375,11 @@ func (s *Service) execToFile(ctx context.Context, captureDir string, j job) erro
 		if j.Optional {
 			return nil
 		}
-		if s.onFailed != nil {
-			s.onFailed(j.Name, err)
-		}
+		s.invokeOnFailed(j.Name, err)
 		return fmt.Errorf("kubectl %s: %w", strings.Join(j.Args, " "), err)
 	}
 
-	if s.onDone != nil {
-		s.onDone(j.Name)
-	}
+	s.invokeOnDone(j.Name)
 	return nil
 }
 

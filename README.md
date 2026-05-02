@@ -3,7 +3,7 @@
 </p>
 
 # GROOT — Kubernetes diagnostics CLI
-[![Version](https://img.shields.io/badge/version-0.1.3-blue)](#)
+[![Version](https://img.shields.io/badge/version-0.1.4-blue)](#)
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?label=release)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)

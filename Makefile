@@ -46,7 +46,7 @@ help:
 	@echo "  make help         Show this help"
 	@echo "  make all          fmt, vet, test, gocyclo, cover, build"
 	@echo "  make build        Build local binary"
-	@echo "  make test         Run Go tests"
+	@echo "  make test         Run Go tests (-count=1 -race, same as CI)"
 	@echo "  make fmt          gofmt -w . (no simplify; use lint-fix for gofmt -s)"
 	@echo "  make lint-fix     gofmt -s -w . (simplify with gofmt -s)"
 	@echo "  make lint         Run go vet"
@@ -82,11 +82,11 @@ build:
 	go build -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/$(APP_NAME) ./cmd/groot
 
 test:
-	go test ./...
+	go test -count=1 ./... -race
 
 # Merged report across all packages. When COVER_MIN > 0, fails if total statement coverage is below that value (needs bc).
 cover:
-	go test -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
+	go test -count=1 ./... -race -covermode=atomic -coverpkg=./... -coverprofile=coverage.out
 	@P=$$(go tool cover -func=coverage.out | tail -1 | sed 's/^.*[[:space:]]\([0-9.]*\)%.*/\1/'); \
 		echo "total (merged) statement coverage: $$P% (minimum $(COVER_MIN)%)"; \
 		if [ "$(COVER_MIN)" -gt 0 ]; then \

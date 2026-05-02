@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -115,6 +118,51 @@ func TestCollect_kubectlMissing(t *testing.T) {
 	rootCmd.SetArgs([]string{"collect", "--quiet", "--config", cfgPath})
 	if err := rootCmd.Execute(); err == nil {
 		t.Fatal("expected error when kubectl missing")
+	}
+}
+
+func TestCollect_noNotifySkipsFailedSlack(t *testing.T) {
+	resetPersistentFlags(t)
+	cleanup := kubemock.Install(t)
+	defer cleanup()
+
+	failSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(failSrv.Close)
+
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "c.yaml")
+	yaml := fmt.Sprintf(`
+output_dir: %s
+notify:
+  slack:
+    enabled: true
+    webhook_url: %q
+collection:
+  timeout: 30s
+  worker_concurrency: 2
+  namespaces: []
+  include_pod_logs: false
+  include_node_details: false
+`, filepath.ToSlash(dir), failSrv.URL)
+	if err := os.WriteFile(cfgPath, []byte(yaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	rootCmd.SetOut(bytes.NewBuffer(nil))
+	rootCmd.SetErr(bytes.NewBuffer(nil))
+	rootCmd.SetArgs([]string{"collect", "--quiet", "--config", cfgPath})
+	if err := rootCmd.Execute(); err == nil {
+		t.Fatal("expected error when slack webhook returns 500")
+	}
+
+	resetPersistentFlags(t)
+	rootCmd.SetOut(bytes.NewBuffer(nil))
+	rootCmd.SetErr(bytes.NewBuffer(nil))
+	rootCmd.SetArgs([]string{"collect", "--quiet", "--no-notify", "--config", cfgPath})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("with --no-notify expected success: %v", err)
 	}
 }
 

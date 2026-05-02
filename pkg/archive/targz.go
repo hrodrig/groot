@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // DirToTarGz creates a tar.gz file from sourceDir.
@@ -22,6 +23,10 @@ func DirToTarGz(sourceDir, archivePath string) error {
 
 	tarWriter := tar.NewWriter(gzWriter)
 	defer tarWriter.Close()
+
+	// Prefix every member with the capture folder name so extraction creates
+	// "<timestamp>/…" instead of dumping kube-system/, extras/, etc. at the tar root.
+	rootPrefix := strings.Trim(filepath.ToSlash(filepath.Base(sourceDir)), "/")
 
 	return filepath.Walk(sourceDir, func(path string, info os.FileInfo, walkErr error) error {
 		if walkErr != nil {
@@ -40,7 +45,11 @@ func DirToTarGz(sourceDir, archivePath string) error {
 		if err != nil {
 			return fmt.Errorf("header: %w", err)
 		}
-		header.Name = relPath
+		if rootPrefix == "" {
+			header.Name = filepath.ToSlash(relPath)
+		} else {
+			header.Name = rootPrefix + "/" + filepath.ToSlash(relPath)
+		}
 
 		if err := tarWriter.WriteHeader(header); err != nil {
 			return fmt.Errorf("write header: %w", err)

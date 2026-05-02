@@ -2,8 +2,8 @@
   <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes diagnostics CLI" width="100%" />
 </p>
 
-# GROOT - Go Kubernetes Emergency Logger
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](#)
+# GROOT — Kubernetes diagnostics CLI
+[![Version](https://img.shields.io/badge/version-0.1.3-blue)](#)
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?label=release)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
@@ -16,6 +16,7 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 - [Requirements](#requirements)
 - [Quick start](#quick-start)
 - [First run](#first-run)
+- [Usage examples](#usage-examples)
 - [Config](#config)
 - [Resolution and precedence](#resolution-and-precedence)
 - [Output naming](#output-naming)
@@ -32,7 +33,7 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 - Concurrent `kubectl` execution for faster collection
 - Worker/node and control plane oriented log gathering
 - Output folder + `.tar.gz` archive generation
-- Optional notifications to Slack, Telegram, and Teams
+- Optional notifications (Slack, Discord, Teams, PagerDuty, Telegram, generic webhooks)
 - Rootless container image support
 
 ## Requirements
@@ -56,9 +57,10 @@ Useful runtime flags (global or with `collect`):
 - `--version` prints version, commit, branch, and build date
 - `--test-connection` validates Kubernetes connectivity and exits
 - `--verbose` shows each executed command as `CMD`, plus `OK`/`ERR` results
-- `--quiet` suppresses normal console output and only prints errors
+- `--quiet` suppresses normal **console** output (INFO/WARN/CMD/OK) and only prints errors; **notify integrations still run** (Slack, Discord, Teams, PagerDuty, Telegram, generic) unless you disable them in config or use `--no-notify`
+- `--no-notify` skips all notifications after a successful collect (useful for cron when you only want the archive). Same effect as env `GROOT_NO_NOTIFY=1` (or `true` / `yes`, case-insensitive)
 - `--no-color` disables ANSI colors
-- `--message "RCA text"` appends a sanitized suffix to output names
+- `--message "label text"` appends a sanitized suffix to archive and capture-related output names
 - `--kubeconfig /path/to/config` overrides kubeconfig from file/env
 
 ## First run
@@ -83,10 +85,59 @@ Default config discovery order (when `--config` is not provided):
 2. `~/.groot/groot.yml`
 3. built-in defaults and `GROOT_*` environment variables
 
-You can always override file discovery with:
+You can always override file discovery with `--config` (see [Usage examples](#usage-examples)).
+
+## Usage examples
+
+Paths below use `./bin/groot` after `make build`; if you used `make install`, use the `groot` binary from your `PATH` the same way (for example `groot collect ...`).
+
+### Use a specific config file
+
+Only `./groot.yml` and `~/.groot/groot.yml` are discovered automatically. Any other filename **must** be passed explicitly:
 
 ```bash
-./bin/groot collect --config /path/to/custom.yml
+./bin/groot collect --config /path/to/my-groot.yml
+./bin/groot collect --config ./groot-mi-test.yml
+```
+
+From the repository root, after editing your copy:
+
+```bash
+./bin/groot collect --config groot-mi-test.yml
+```
+
+### Check Kubernetes access and config (no collection)
+
+```bash
+./bin/groot --config ./groot-mi-test.yml --test-connection
+./bin/groot collect --config ./groot-mi-test.yml --test-connection
+```
+
+### Cron: quiet console, no outbound notifications
+
+Console only (Slack/Discord/etc. still run if enabled in YAML):
+
+```bash
+./bin/groot collect --config /path/to/groot.yml --quiet
+```
+
+Skip **all** notify channels for this run (archive still created); same as env `GROOT_NO_NOTIFY=1` / `true` / `yes`:
+
+```bash
+./bin/groot collect --config /path/to/groot.yml --quiet --no-notify
+0 * * * * GROOT_NO_NOTIFY=1 /usr/local/bin/groot collect --config /home/you/.groot/prod.yml --quiet
+```
+
+### Custom capture label (`--message`)
+
+```bash
+./bin/groot collect --config groot.yml --message "staging-network-audit-2026-04-28"
+```
+
+### Override kubeconfig for one run
+
+```bash
+./bin/groot collect --config groot.yml --kubeconfig /path/to/other-kubeconfig
 ```
 
 ## Config
@@ -174,7 +225,7 @@ Workload filter behavior (`collection.targets`):
 
 `pod_log_tail_lines` behavior:
 
-- `0`: collect full logs (no `--tail`, recommended for RCA)
+- `0`: collect full logs (no `--tail`; use when you need the entire log stream)
 - `>0`: collect only the last N lines per pod
 - applies to both current and `--previous` pod logs
 
@@ -215,13 +266,17 @@ Directory layout:
 - `nodes/`
 - `extras/`
 - one directory per configured namespace (for example `kube-system/`, `default/`)
+- pod log files: `<pod>__<node>.log` (and `.previous.log` when enabled), same pattern for control-plane pods under `kube-system/`
 - after archive creation, the timestamp directory is automatically removed
+
+Inside the `.tar.gz`, every path is prefixed with the capture folder name (`<timestamp>/…`, for example `20260502-174207/kube-system/…`). Extracting into a shared directory (for example `~/tmp/groot-out`) keeps each run under its own subdirectory instead of mixing `kube-system/`, `cloudbridge/`, etc. at the extraction root. Archives produced by older Groot versions may still have a flat layout at the tar root.
 
 ## Console output modes
 
 - default: summary `INFO` lines
 - `--verbose`: adds per-command `CMD` / `OK` / `ERR`
-- `--quiet`: suppresses normal output, prints only errors
+- `--quiet`: suppresses normal **console** output, prints only errors; does **not** disable webhooks/API notifications
+- `--no-notify`: skips every notify channel for this run (config can still have `enabled: true`; use from cron when you want silence to external systems). Env equivalent: `GROOT_NO_NOTIFY=1`
 - `--no-color`: disables ANSI colors
 
 ## Typical collected data
@@ -232,17 +287,27 @@ Directory layout:
 - `kubectl get events -A`
 - `kubectl describe node <node>`
 - `kubectl top node <node>`
-- `kubectl logs -n <ns> <pod> --all-containers`
-- Control plane pod logs in `kube-system` (`tier=control-plane`, when available)
+- `kubectl logs -n <ns> <pod> --all-containers` → files named `<pod>__<node>.log` under each namespace directory (pending/unscheduled pods use `unknown-node`)
+- Control plane pod logs in `kube-system` (`tier=control-plane`, when available) use the same `<pod>__<node>.log` pattern
 - `extras/kubeconfig.txt` derived from kubeconfig (`context`, `cluster`, `user`, `server`)
 
 ## Notifications
 
 Enable each channel in config:
 
-- Slack Incoming Webhook
-- Teams Incoming Webhook
-- Telegram bot token + chat id
+- Slack Incoming Webhook (`notify.slack.webhook_url` or `GROOT_NOTIFY_SLACK_WEBHOOK_URL`). For multiple channels, put several full webhook URLs on the same value separated by `;` (spaces optional); Groot notifies each URL in order and reports combined errors if any request fails.
+- **Discord** Incoming Webhook (`notify.discord.webhook_url` or `GROOT_NOTIFY_DISCORD_WEBHOOK_URL`): same `;`-separated URL list. Payload is `{"content":"<summary>"}` per [Discord webhook API](https://discord.com/developers/docs/resources/webhook#execute-webhook). Messages longer than 2000 characters are truncated with `...` so the request stays valid.
+- Teams Incoming Webhook — same `;`-separated list for `notify.teams.webhook_url` / `GROOT_NOTIFY_TEAMS_WEBHOOK_URL`.
+- **PagerDuty** [Events API v2](https://developer.pagerduty.com/docs/events-api-v2-overview) (`notify.pagerduty` or `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`): `routing_key` is the Events v2 integration key (several keys separated by `;` each gets its own `trigger` event). `severity` must be `critical`, `error`, `warning`, or `info` (default `warning`). `source` defaults to `groot`. The event `payload.summary` is the same line as other channels; `payload.custom_details` includes `total`, `success`, `failed`, `duration`, `output_dir`, and `archive_path`. Successful delivery expects HTTP **202** from PagerDuty.
+- Telegram Bot API (`notify.telegram.token` + `chat_id`, or `GROOT_NOTIFY_TELEGRAM_TOKEN` / `GROOT_NOTIFY_TELEGRAM_CHAT_ID`). One bot token; multiple destinations use several chat ids in one `chat_id` string separated by `;` (same message to each chat).
+- **Generic HTTP webhook** (`notify.generic` or `GROOT_NOTIFY_GENERIC_WEBHOOK_URL`): `POST` with `Content-Type: application/json` and body `{"<json_key>":"<summary text>"}`. Default `json_key` is `text`. For Discord, use **`notify.discord`** instead (correct `content` field and length limit). Optional `headers` (YAML map) are sent on every request. Multiple endpoints: separate full URLs with `;` in `webhook_url`.
+
+**Generic webhook — scope (read this before relying on it):**
+
+- **What it sends:** exactly one JSON object at the root, with **one string field** whose name you set via `json_key`. The value is always Groot’s single-line collection summary (same text as other channels). Example: `{"text":"GROOT finished. total=…"}`.
+- **What it does not do:** no arbitrary body templates (you cannot place the summary in several fields, wrap it in nested objects, or mix fixed keys beyond that single pair). No non-JSON bodies (no raw text, `application/x-www-form-urlencoded`, XML). If an integration needs extra fields, signing (HMAC), or a custom layout, use a small proxy service or extend Groot later.
+
+**Implemented channels:** Slack, Discord, Teams, PagerDuty (Events v2), Telegram, and generic JSON webhooks as above. There is no built-in email, etc.
 
 ## Rootless container
 

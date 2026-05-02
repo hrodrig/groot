@@ -87,7 +87,7 @@ func TestService_Run_fullFeatures(t *testing.T) {
 	}
 
 	svc := New(cfg)
-	svc.SetMessage("RCA  test")
+	svc.SetMessage("run-label-test")
 	svc.SetHooks(
 		func(string, []string) {},
 		func(string) {},

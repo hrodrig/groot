@@ -243,22 +243,27 @@ func (s *Service) appendWorkloadPodLogJobs(ctx context.Context, jobs []job) ([]j
 }
 
 func (s *Service) appendControlPlanePodLogJobs(ctx context.Context, jobs []job) []job {
-	controlPlanePods, _ := s.list(ctx, []string{"get", "pods", "-n", "kube-system", "-l", "tier=control-plane", "--no-headers", "-o", "custom-columns=NAME:.metadata.name"})
+	lines, _ := s.list(ctx, []string{"get", "pods", "-n", "kube-system", "-l", "tier=control-plane", "--no-headers", "-o", "custom-columns=NAME:.metadata.name,NODE:.spec.nodeName"})
 	tail := s.cfg.Collection.PodLogTailLines
-	for _, pod := range controlPlanePods {
-		if pod == "" {
+	for _, item := range parseNameNodeLines(lines) {
+		if item.Name == "" {
 			continue
 		}
+		node := item.Node
+		if node == "" {
+			node = "unknown-node"
+		}
+		baseName := sanitize(item.Name) + "__" + sanitize(node)
 		jobs = append(jobs, job{
-			Name:     "control-plane-" + pod,
-			Args:     controlPlanePodLogArgs(pod, false, tail),
-			FileName: filepath.Join("kube-system", "control-plane-"+sanitize(pod)+".log"),
+			Name:     "control-plane-" + item.Name,
+			Args:     controlPlanePodLogArgs(item.Name, false, tail),
+			FileName: filepath.Join("kube-system", baseName+".log"),
 		})
 		if s.cfg.Collection.IncludePreviousLogs {
 			jobs = append(jobs, job{
-				Name:     "control-plane-previous-" + pod,
-				Args:     controlPlanePodLogArgs(pod, true, tail),
-				FileName: filepath.Join("kube-system", "control-plane-"+sanitize(pod)+".previous.log"),
+				Name:     "control-plane-previous-" + item.Name,
+				Args:     controlPlanePodLogArgs(item.Name, true, tail),
+				FileName: filepath.Join("kube-system", baseName+".previous.log"),
 				Optional: true,
 			})
 		}
@@ -564,6 +569,30 @@ func parsePodLines(lines []string) []podRef {
 			Name:      parts[1],
 			Node:      node,
 		})
+	}
+	return out
+}
+
+// parseNameNodeLines parses kubectl NAME,NODE custom-columns rows (first field pod name, rest node).
+func parseNameNodeLines(lines []string) []podRef {
+	out := make([]podRef, 0, len(lines))
+	for _, item := range lines {
+		parts := strings.Fields(item)
+		if len(parts) < 1 {
+			continue
+		}
+		name := strings.TrimSpace(parts[0])
+		if name == "" {
+			continue
+		}
+		node := "unknown-node"
+		if len(parts) >= 2 {
+			node = strings.TrimSpace(strings.Join(parts[1:], " "))
+			if node == "" {
+				node = "unknown-node"
+			}
+		}
+		out = append(out, podRef{Name: name, Node: node})
 	}
 	return out
 }

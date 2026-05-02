@@ -33,15 +33,37 @@ collection:
 notify:
   slack:
     enabled: false
+    # One URL, or several separated by ';' (e.g. team A; team B webhooks)
+    webhook_url: ""
+
+  discord:
+    enabled: false
+    # Discord server Settings → Integrations → Webhooks (same ';' for multiple URLs)
     webhook_url: ""
 
   teams:
     enabled: false
+    # Same ';' convention as Slack for multiple Teams incoming webhooks
     webhook_url: ""
+
+  pagerduty:
+    enabled: false
+    # Events API v2 integration key(s); multiple keys separated by ';'
+    routing_key: ""
+    severity: "warning"
+    source: "groot"
 
   telegram:
     enabled: false
     token: ""
+    # One chat id, or several (group/user) ids separated by ';' with the same bot
     chat_id: ""
+
+  generic:
+    enabled: false
+    # POST JSON with one root string field only: {"<json_key>":"<summary>"} (see README → Notifications).
+    webhook_url: ""
+    json_key: "text"
+    headers: {}
 `
 }

@@ -50,6 +50,24 @@ func TestParsePodLines(t *testing.T) {
 	}
 }
 
+func TestParseNameNodeLines(t *testing.T) {
+	refs := parseNameNodeLines([]string{
+		"kube-apiserver-node1	node1",
+		"etcd-masternode",
+		"",
+		"   ",
+	})
+	if len(refs) != 2 {
+		t.Fatalf("len=%d %#v", len(refs), refs)
+	}
+	if refs[0].Name != "kube-apiserver-node1" || refs[0].Node != "node1" {
+		t.Fatalf("first %#v", refs[0])
+	}
+	if refs[1].Name != "etcd-masternode" || refs[1].Node != "unknown-node" {
+		t.Fatalf("second %#v", refs[1])
+	}
+}
+
 func TestHasTargets(t *testing.T) {
 	if hasTargets(config.NamespaceTargets{}) {
 		t.Fatal("empty should be false")

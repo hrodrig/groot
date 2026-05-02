@@ -41,7 +41,7 @@ case "$j" in
   printf '%s' '{"items":[{"metadata":{"namespace":"default","name":"pod-a","labels":{"app.kubernetes.io/name":"api"}},"spec":{"nodeName":"node1"}}]}'
   ;;
 *tier=control-plane*)
-  echo "kube-apiserver-node1"
+  printf '%s\t%s\n' "kube-apiserver-node1" "node1"
   ;;
 *get*nodes*-o*name*)
   echo "node/node1"

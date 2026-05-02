@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -20,6 +21,7 @@ var cfgFile string
 var printSampleConfig bool
 var verbose bool
 var quiet bool
+var noNotify bool
 var noColor bool
 var message string
 var kubeconfigOverride string
@@ -127,10 +129,12 @@ var collectCmd = &cobra.Command{
 			return fmt.Errorf("collect logs: %w", err)
 		}
 
-		notifierSvc := notifier.NewFanOut(cfg)
-		if notifyErr := notifierSvc.Notify(ctx, summary); notifyErr != nil {
-			logger.Error("notification failed: %v", notifyErr)
-			return fmt.Errorf("send notifications: %w", notifyErr)
+		if !skipNotifications() {
+			notifierSvc := notifier.NewFanOut(cfg)
+			if notifyErr := notifierSvc.Notify(ctx, summary); notifyErr != nil {
+				logger.Error("notification failed: %v", notifyErr)
+				return fmt.Errorf("send notifications: %w", notifyErr)
+			}
 		}
 
 		if !quiet {
@@ -177,7 +181,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&printSampleConfig, "print-sample-config", false, "Print sample groot.yml and exit")
 	rootCmd.PersistentFlags().BoolVar(&testConnection, "test-connection", false, "Validate Kubernetes connectivity and exit")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Enable detailed command execution output")
-	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress normal output, show errors only")
+	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress normal console output (INFO/WARN/CMD/OK); does not affect webhooks or other notify integrations")
+	rootCmd.PersistentFlags().BoolVar(&noNotify, "no-notify", false, "Skip all notify integrations after collect (Slack, Discord, Teams, PagerDuty, Telegram, generic). Also honored when env GROOT_NO_NOTIFY is 1/true/yes")
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable colorized console output")
 	rootCmd.PersistentFlags().StringVar(&message, "message", "", "Custom suffix appended to capture output names")
 	rootCmd.PersistentFlags().StringVar(&kubeconfigOverride, "kubeconfig", "", "Override kubeconfig path for kubectl commands")
@@ -225,4 +230,12 @@ func valueOrUnknown(value string) string {
 		return "unknown"
 	}
 	return value
+}
+
+func skipNotifications() bool {
+	if noNotify {
+		return true
+	}
+	v := strings.TrimSpace(strings.ToLower(os.Getenv("GROOT_NO_NOTIFY")))
+	return v == "1" || v == "true" || v == "yes"
 }

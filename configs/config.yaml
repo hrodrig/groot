@@ -29,13 +29,33 @@ collection:
 notify:
   slack:
     enabled: false
+    # Multiple Slack incoming webhooks: separate full URLs with ';'
+    webhook_url: ""
+
+  discord:
+    enabled: false
     webhook_url: ""
 
   teams:
     enabled: false
+    # Multiple Teams incoming webhooks: same ';' separator
     webhook_url: ""
+
+  pagerduty:
+    enabled: false
+    routing_key: ""
+    severity: "warning"
+    source: "groot"
 
   telegram:
     enabled: false
     token: ""
+    # Multiple chats: same bot token, separate chat ids with ';'
     chat_id: ""
+
+  generic:
+    enabled: false
+    # One JSON field only (json_key + summary text); see README Notifications
+    webhook_url: ""
+    json_key: "text"
+    headers: {}

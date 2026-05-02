@@ -40,9 +40,12 @@ type NamespaceTargets struct {
 }
 
 type NotifyCfg struct {
-	Slack    WebhookCfg  `mapstructure:"slack"`
-	Telegram TelegramCfg `mapstructure:"telegram"`
-	Teams    WebhookCfg  `mapstructure:"teams"`
+	Slack     WebhookCfg        `mapstructure:"slack"`
+	Discord   WebhookCfg        `mapstructure:"discord"`
+	Telegram  TelegramCfg       `mapstructure:"telegram"`
+	Teams     WebhookCfg        `mapstructure:"teams"`
+	Generic   GenericWebhookCfg `mapstructure:"generic"`
+	PagerDuty PagerDutyCfg      `mapstructure:"pagerduty"`
 }
 
 type WebhookCfg struct {
@@ -54,6 +57,22 @@ type TelegramCfg struct {
 	Enabled bool   `mapstructure:"enabled"`
 	Token   string `mapstructure:"token"`
 	ChatID  string `mapstructure:"chat_id"`
+}
+
+// GenericWebhookCfg is an optional HTTP POST JSON notifier (custom services, Discord-style webhooks, etc.).
+type GenericWebhookCfg struct {
+	Enabled    bool              `mapstructure:"enabled"`
+	WebhookURL string            `mapstructure:"webhook_url"`
+	JSONKey    string            `mapstructure:"json_key"`
+	Headers    map[string]string `mapstructure:"headers"`
+}
+
+// PagerDutyCfg sends Events API v2 triggers (https://developer.pagerduty.com/docs/events-api-v2-overview).
+type PagerDutyCfg struct {
+	Enabled    bool   `mapstructure:"enabled"`
+	RoutingKey string `mapstructure:"routing_key"`
+	Severity   string `mapstructure:"severity"`
+	Source     string `mapstructure:"source"`
 }
 
 // Load reads configuration from YAML and environment.
@@ -94,6 +113,14 @@ func Load(configFile string) (Config, error) {
 	if cfg.Collection.PodLogTailLines < 0 {
 		cfg.Collection.PodLogTailLines = 1000
 	}
+	if strings.TrimSpace(cfg.Notify.Generic.JSONKey) == "" {
+		cfg.Notify.Generic.JSONKey = "text"
+	} else {
+		cfg.Notify.Generic.JSONKey = strings.TrimSpace(cfg.Notify.Generic.JSONKey)
+	}
+	if err := normalizePagerDuty(&cfg); err != nil {
+		return Config{}, err
+	}
 	cfg.OutputDir = expandPath(cfg.OutputDir)
 	resolveNotificationSecrets(&cfg)
 	if err := validateNotificationConfig(cfg); err != nil {
@@ -116,8 +143,14 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("collection.include_node_details", true)
 	v.SetDefault("collection.pod_log_tail_lines", 1500)
 	v.SetDefault("notify.slack.enabled", false)
+	v.SetDefault("notify.discord.enabled", false)
 	v.SetDefault("notify.teams.enabled", false)
 	v.SetDefault("notify.telegram.enabled", false)
+	v.SetDefault("notify.generic.enabled", false)
+	v.SetDefault("notify.generic.json_key", "text")
+	v.SetDefault("notify.pagerduty.enabled", false)
+	v.SetDefault("notify.pagerduty.severity", "warning")
+	v.SetDefault("notify.pagerduty.source", "groot")
 }
 
 func readDefaultConfig(v *viper.Viper) error {
@@ -170,6 +203,10 @@ func resolveNotificationSecrets(cfg *Config) {
 		cfg.Notify.Slack.WebhookURL,
 		os.Getenv("GROOT_NOTIFY_SLACK_WEBHOOK_URL"),
 	)
+	cfg.Notify.Discord.WebhookURL = firstNonEmpty(
+		cfg.Notify.Discord.WebhookURL,
+		os.Getenv("GROOT_NOTIFY_DISCORD_WEBHOOK_URL"),
+	)
 	cfg.Notify.Teams.WebhookURL = firstNonEmpty(
 		cfg.Notify.Teams.WebhookURL,
 		os.Getenv("GROOT_NOTIFY_TEAMS_WEBHOOK_URL"),
@@ -182,24 +219,68 @@ func resolveNotificationSecrets(cfg *Config) {
 		cfg.Notify.Telegram.ChatID,
 		os.Getenv("GROOT_NOTIFY_TELEGRAM_CHAT_ID"),
 	)
+	cfg.Notify.Generic.WebhookURL = firstNonEmpty(
+		cfg.Notify.Generic.WebhookURL,
+		os.Getenv("GROOT_NOTIFY_GENERIC_WEBHOOK_URL"),
+	)
+	cfg.Notify.PagerDuty.RoutingKey = firstNonEmpty(
+		cfg.Notify.PagerDuty.RoutingKey,
+		os.Getenv("GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY"),
+	)
 }
 
 func validateNotificationConfig(cfg Config) error {
-	if cfg.Notify.Slack.Enabled && strings.TrimSpace(cfg.Notify.Slack.WebhookURL) == "" {
-		return fmt.Errorf("notify.slack.enabled=true requires webhook_url or env GROOT_NOTIFY_SLACK_WEBHOOK_URL")
+	if cfg.Notify.Slack.Enabled && len(SplitSemicolonList(cfg.Notify.Slack.WebhookURL)) == 0 {
+		return fmt.Errorf("notify.slack.enabled=true requires webhook_url or env GROOT_NOTIFY_SLACK_WEBHOOK_URL (semicolon-separated for multiple webhooks)")
 	}
-	if cfg.Notify.Teams.Enabled && strings.TrimSpace(cfg.Notify.Teams.WebhookURL) == "" {
-		return fmt.Errorf("notify.teams.enabled=true requires webhook_url or env GROOT_NOTIFY_TEAMS_WEBHOOK_URL")
+	if cfg.Notify.Discord.Enabled && len(SplitSemicolonList(cfg.Notify.Discord.WebhookURL)) == 0 {
+		return fmt.Errorf("notify.discord.enabled=true requires webhook_url or env GROOT_NOTIFY_DISCORD_WEBHOOK_URL (semicolon-separated for multiple webhooks)")
+	}
+	if cfg.Notify.Teams.Enabled && len(SplitSemicolonList(cfg.Notify.Teams.WebhookURL)) == 0 {
+		return fmt.Errorf("notify.teams.enabled=true requires webhook_url or env GROOT_NOTIFY_TEAMS_WEBHOOK_URL (semicolon-separated for multiple webhooks)")
 	}
 	if cfg.Notify.Telegram.Enabled {
 		if strings.TrimSpace(cfg.Notify.Telegram.Token) == "" {
 			return fmt.Errorf("notify.telegram.enabled=true requires token or env GROOT_NOTIFY_TELEGRAM_TOKEN")
 		}
-		if strings.TrimSpace(cfg.Notify.Telegram.ChatID) == "" {
-			return fmt.Errorf("notify.telegram.enabled=true requires chat_id or env GROOT_NOTIFY_TELEGRAM_CHAT_ID")
+		if len(SplitSemicolonList(cfg.Notify.Telegram.ChatID)) == 0 {
+			return fmt.Errorf("notify.telegram.enabled=true requires chat_id or env GROOT_NOTIFY_TELEGRAM_CHAT_ID (semicolon-separated for multiple chat ids)")
 		}
 	}
+	if cfg.Notify.Generic.Enabled && len(SplitSemicolonList(cfg.Notify.Generic.WebhookURL)) == 0 {
+		return fmt.Errorf("notify.generic.enabled=true requires webhook_url or env GROOT_NOTIFY_GENERIC_WEBHOOK_URL (semicolon-separated for multiple URLs)")
+	}
+	if cfg.Notify.PagerDuty.Enabled && len(SplitSemicolonList(cfg.Notify.PagerDuty.RoutingKey)) == 0 {
+		return fmt.Errorf("notify.pagerduty.enabled=true requires routing_key or env GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY (semicolon-separated for multiple integration keys)")
+	}
 	return nil
+}
+
+func normalizePagerDuty(cfg *Config) error {
+	p := &cfg.Notify.PagerDuty
+	if strings.TrimSpace(p.Severity) == "" {
+		p.Severity = "warning"
+	} else {
+		p.Severity = strings.ToLower(strings.TrimSpace(p.Severity))
+	}
+	if strings.TrimSpace(p.Source) == "" {
+		p.Source = "groot"
+	} else {
+		p.Source = strings.TrimSpace(p.Source)
+	}
+	if p.Enabled && !isPagerDutySeverity(p.Severity) {
+		return fmt.Errorf("notify.pagerduty.severity must be one of: critical, error, warning, info (got %q)", p.Severity)
+	}
+	return nil
+}
+
+func isPagerDutySeverity(s string) bool {
+	switch s {
+	case "critical", "error", "warning", "info":
+		return true
+	default:
+		return false
+	}
 }
 
 func firstNonEmpty(values ...string) string {
@@ -209,6 +290,25 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+// SplitSemicolonList splits a string into non-empty trimmed segments separated by ';'.
+// Used for Slack/Discord/Teams/generic webhook URLs, Telegram chat_id lists, and PagerDuty routing keys.
+func SplitSemicolonList(raw string) []string {
+	parts := strings.Split(raw, ";")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		u := strings.TrimSpace(p)
+		if u != "" {
+			out = append(out, u)
+		}
+	}
+	return out
+}
+
+// SplitWebhookURLs splits Slack or Teams webhook_url values (alias of SplitSemicolonList).
+func SplitWebhookURLs(raw string) []string {
+	return SplitSemicolonList(raw)
 }
 
 func expandPath(value string) string {

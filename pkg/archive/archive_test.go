@@ -63,12 +63,23 @@ func TestDirToTarGz_roundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(files["a.txt"]) != "hello" {
-		t.Fatalf("a.txt: %q", files["a.txt"])
+	base := filepath.Base(src)
+	keyA := base + "/a.txt"
+	keyB := base + "/nested/b.txt"
+	if string(files[keyA]) != "hello" {
+		t.Fatalf("%s: %q (keys=%v)", keyA, files[keyA], fileKeys(files))
 	}
-	if string(files[filepath.Join("nested", "b.txt")]) != "world" {
-		t.Fatalf("nested b: %v", files)
+	if string(files[keyB]) != "world" {
+		t.Fatalf("%s: %v", keyB, files)
 	}
+}
+
+func fileKeys(m map[string][]byte) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 func TestDirToTarGz_createFails(t *testing.T) {

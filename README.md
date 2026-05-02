@@ -1,9 +1,11 @@
 # GROOT — Kubernetes diagnostics CLI
 
+<a id="readme-top"></a>
+
 **☸** _Collect cluster diagnostics into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.1.4-blue)](#)
+[![Version](https://img.shields.io/badge/version-0.1.5-blue)](#)
 [![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![CI](https://github.com/hrodrig/groot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hrodrig/groot/actions/workflows/ci.yml)
@@ -16,6 +18,8 @@
 </p>
 
 GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, including worker/node details, control plane logs, namespace resources, pod logs, and events.
+
+[↑ Back to top](#readme-top)
 
 ## Table of contents
 
@@ -32,6 +36,9 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 - [Notifications](#notifications)
 - [Rootless container](#rootless-container)
 - [Security note](#security-note)
+- [Get involved](#get-involved)
+
+[↑ Back to top](#readme-top)
 
 ## Features
 
@@ -43,11 +50,15 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 - Optional notifications (Slack, Discord, Teams, PagerDuty, Telegram, generic webhooks)
 - Rootless container image support
 
+[↑ Back to top](#readme-top)
+
 ## Requirements
 
 - Go 1.26+
 - `kubectl` configured against target cluster
 - RBAC permissions to read logs/resources
+
+[↑ Back to top](#readme-top)
 
 ## Quick start
 
@@ -69,6 +80,8 @@ Useful runtime flags (global or with `collect`):
 - `--no-color` disables ANSI colors
 - `--message "label text"` appends a sanitized suffix to archive and capture-related output names
 - `--kubeconfig /path/to/config` overrides kubeconfig from file/env
+
+[↑ Back to top](#readme-top)
 
 ## First run
 
@@ -93,6 +106,8 @@ Default config discovery order (when `--config` is not provided):
 3. built-in defaults and `GROOT_*` environment variables
 
 You can always override file discovery with `--config` (see [Usage examples](#usage-examples)).
+
+[↑ Back to top](#readme-top)
 
 ## Usage examples
 
@@ -146,6 +161,8 @@ Skip **all** notify channels for this run (archive still created); same as env `
 ```bash
 ./bin/groot collect --config groot.yml --kubeconfig /path/to/other-kubeconfig
 ```
+
+[↑ Back to top](#readme-top)
 
 ## Config
 
@@ -230,6 +247,8 @@ Common examples:
 
 When a notification channel is enabled and required credentials are missing, `groot` fails fast with a clear configuration error.
 
+[↑ Back to top](#readme-top)
+
 ## Resolution and precedence
 
 Configuration file precedence:
@@ -269,6 +288,8 @@ Workload filter behavior (`collection.targets`):
 - supports `~` (home directory), for example `~/tmp/groot-out`
 - supports environment variables, for example `${HOME}/tmp/groot-out`
 
+[↑ Back to top](#readme-top)
+
 ## Output naming
 
 Capture output names are:
@@ -301,6 +322,8 @@ Directory layout:
 
 Inside the `.tar.gz`, every path is prefixed with the capture folder name (`<timestamp>/…`, for example `20260502-174207/kube-system/…`). Extracting into a shared directory (for example `~/tmp/groot-out`) keeps each run under its own subdirectory instead of mixing `kube-system/`, `cloudbridge/`, etc. at the extraction root. Archives produced by older Groot versions may still have a flat layout at the tar root.
 
+[↑ Back to top](#readme-top)
+
 ## Console output modes
 
 - default: summary `INFO` lines
@@ -308,6 +331,8 @@ Inside the `.tar.gz`, every path is prefixed with the capture folder name (`<tim
 - `--quiet`: suppresses normal **console** output, prints only errors; does **not** disable webhooks/API notifications
 - `--no-notify`: skips every notify channel for this run (config can still have `enabled: true`; use from cron when you want silence to external systems). Env equivalent: `GROOT_NO_NOTIFY=1`
 - `--no-color`: disables ANSI colors
+
+[↑ Back to top](#readme-top)
 
 ## Typical collected data
 
@@ -320,6 +345,8 @@ Inside the `.tar.gz`, every path is prefixed with the capture folder name (`<tim
 - `kubectl logs -n <ns> <pod> --all-containers` → files named `<pod>__<node>.log` under each namespace directory (pending/unscheduled pods use `unknown-node`)
 - Control plane pod logs in `kube-system` (`tier=control-plane`, when available) use the same `<pod>__<node>.log` pattern
 - `extras/kubeconfig.txt` derived from kubeconfig (`context`, `cluster`, `user`, `server`)
+
+[↑ Back to top](#readme-top)
 
 ## Notifications
 
@@ -338,6 +365,8 @@ Enable each channel in config:
 - **What it does not do:** no arbitrary body templates (you cannot place the summary in several fields, wrap it in nested objects, or mix fixed keys beyond that single pair). No non-JSON bodies (no raw text, `application/x-www-form-urlencoded`, XML). If an integration needs extra fields, signing (HMAC), or a custom layout, use a small proxy service or extend Groot later.
 
 **Implemented channels:** Slack, Discord, Teams, PagerDuty (Events v2), Telegram, and generic JSON webhooks as above. There is no built-in email, etc.
+
+[↑ Back to top](#readme-top)
 
 ## Rootless container
 
@@ -362,6 +391,22 @@ podman run --rm \
   groot:local
 ```
 
+[↑ Back to top](#readme-top)
+
 ## Security note
 
 Collected logs may contain sensitive data. Handle archives according to your security policy.
+
+[↑ Back to top](#readme-top)
+
+## Get involved
+
+Found Groot useful? We'd love your help to make it better. You can:
+
+- **Report bugs** or **suggest features** — [open an issue](https://github.com/hrodrig/groot/issues)
+- **Contribute code** — see [CONTRIBUTING.md](./CONTRIBUTING.md) for how to submit a pull request
+- **Star the repo** — it helps others discover Groot
+
+Thanks for using Groot.
+
+[↑ Back to top](#readme-top)

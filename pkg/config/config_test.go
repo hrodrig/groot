@@ -329,6 +329,50 @@ notify:
 	}
 }
 
+func TestLoad_extraKubectlAllowed(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "extra.yaml")
+	content := `
+collection:
+  extra_kubectl:
+    - "get ns -o name"
+    - "config view --minify"
+    - "auth can-i list pods"
+notify:
+  slack: { enabled: false }
+`
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("KUBECONFIG", "")
+	if _, err := Load(path); err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+}
+
+func TestLoad_extraKubectlRejected(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "bad-extra.yaml")
+	content := `
+collection:
+  extra_kubectl:
+    - "delete pods --all"
+notify:
+  slack: { enabled: false }
+`
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("KUBECONFIG", "")
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error for disallowed extra_kubectl")
+	}
+	if !strings.Contains(err.Error(), "extra_kubectl") {
+		t.Fatalf("error should mention extra_kubectl: %v", err)
+	}
+}
+
 func TestLoad_podLogTailLinesNegativeCoerced(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "tail.yaml")

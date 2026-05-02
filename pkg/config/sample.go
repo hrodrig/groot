@@ -26,6 +26,7 @@ collection:
   include_previous_logs: true
   pod_log_tail_lines: 1500
   include_node_details: true
+  # Optional read-only kubectl fragments (allowlisted subcommands only; see README).
   extra_kubectl:
     - "get componentstatuses"
     - "get csr"

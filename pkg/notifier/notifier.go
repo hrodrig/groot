@@ -18,6 +18,10 @@ import (
 // telegramAPIBase is the Bot API origin (overridable in tests).
 var telegramAPIBase = "https://api.telegram.org"
 
+// notifyHTTPClient is used for all outbound HTTP notification requests (webhooks, Telegram, PagerDuty).
+// A bounded timeout avoids hanging collect when a remote endpoint stalls.
+var notifyHTTPClient = &http.Client{Timeout: 30 * time.Second}
+
 // FanOut dispatches notifications to enabled channels.
 type FanOut struct {
 	senders   []Sender
@@ -173,7 +177,7 @@ func (w *webhookSender) Send(ctx context.Context, text string) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := notifyHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("send webhook: %w", err)
 	}
@@ -209,7 +213,7 @@ func (w *genericWebhookSender) Send(ctx context.Context, text string) error {
 		}
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := notifyHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("send generic webhook: %w", err)
 	}
@@ -238,7 +242,7 @@ func (t *telegramSender) Send(ctx context.Context, text string) error {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := notifyHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("send telegram message: %w", err)
 	}

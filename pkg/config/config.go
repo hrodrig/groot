@@ -121,6 +121,9 @@ func Load(configFile string) (Config, error) {
 	if err := normalizePagerDuty(&cfg); err != nil {
 		return Config{}, err
 	}
+	if err := ValidateExtraKubectl(cfg.Collection.ExtraKubectl); err != nil {
+		return Config{}, err
+	}
 	cfg.OutputDir = expandPath(cfg.OutputDir)
 	resolveNotificationSecrets(&cfg)
 	if err := validateNotificationConfig(cfg); err != nil {

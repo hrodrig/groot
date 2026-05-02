@@ -5,7 +5,7 @@
 **☸** _Collect cluster diagnostics into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.1.5-blue)](#)
+[![Version](https://img.shields.io/badge/version-0.1.6-blue)](#)
 [![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![CI](https://github.com/hrodrig/groot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hrodrig/groot/actions/workflows/ci.yml)
@@ -244,6 +244,8 @@ Common examples:
 - `GROOT_COLLECTION_TIMEOUT`, `GROOT_COLLECTION_WORKER_CONCURRENCY`, `GROOT_COLLECTION_INCLUDE_POD_LOGS` (boolean), `GROOT_COLLECTION_POD_LOG_TAIL_LINES`, …
 - Notify secrets (also read when `enabled: true` and the YAML field is empty): `GROOT_NOTIFY_SLACK_WEBHOOK_URL`, `GROOT_NOTIFY_DISCORD_WEBHOOK_URL`, `GROOT_NOTIFY_TEAMS_WEBHOOK_URL`, `GROOT_NOTIFY_TELEGRAM_TOKEN`, `GROOT_NOTIFY_TELEGRAM_CHAT_ID`, `GROOT_NOTIFY_GENERIC_WEBHOOK_URL`, `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`
 - `GROOT_NO_NOTIFY=1` (or `true` / `yes`): same as `--no-notify` for a run
+
+**`collection.extra_kubectl`:** Each string is split on whitespace and passed as additional `kubectl` arguments (no shell). At load time, Groot only accepts **read-oriented** subcommands: `get`, `describe`, `explain`, `top`, `logs`, `api-resources`, `api-versions`, `version`, `cluster-info`, `wait`, plus `config view …` and `auth can-i …`. Anything else fails `collect` immediately with a configuration error so a typo or copy-paste cannot turn extras into destructive verbs (`delete`, `exec`, `apply`, etc.).
 
 When a notification channel is enabled and required credentials are missing, `groot` fails fast with a clear configuration error.
 

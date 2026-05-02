@@ -1,12 +1,19 @@
+# GROOT — Kubernetes diagnostics CLI
+
+**☸** _Collect cluster diagnostics into one archive_
+
+[![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.1.4-blue)](#)
+[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](https://go.dev/)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![CI](https://github.com/hrodrig/groot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hrodrig/groot/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hrodrig/groot)](https://goreportcard.com/report/github.com/hrodrig/groot)
+
+**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases)
+
 <p align="center">
   <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes diagnostics CLI" width="100%" />
 </p>
-
-# GROOT — Kubernetes diagnostics CLI
-[![Version](https://img.shields.io/badge/version-0.1.4-blue)](#)
-[![Release](https://img.shields.io/github/v/release/hrodrig/groot?label=release)](https://github.com/hrodrig/groot/releases)
-[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](https://go.dev/)
-[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, including worker/node details, control plane logs, namespace resources, pod logs, and events.
 
@@ -144,7 +151,7 @@ Skip **all** notify channels for this run (archive still created); same as env `
 
 Edit `groot.yml` (or any file passed with `--config`) and align every section with your cluster and operational needs. Do not rely on the shipped sample as a drop-in configuration.
 
-Sample config:
+Sample config (same as `groot --print-sample-config` and `configs/config.yaml` in the repo):
 
 ```yaml
 kubeconfig: ""
@@ -178,25 +185,48 @@ collection:
 notify:
   slack:
     enabled: false
+    # One URL, or several separated by ';' (e.g. team A; team B webhooks)
     webhook_url: ""
+
+  discord:
+    enabled: false
+    # Discord server Settings → Integrations → Webhooks (same ';' for multiple URLs)
+    webhook_url: ""
+
   teams:
     enabled: false
+    # Same ';' convention as Slack for multiple Teams incoming webhooks
     webhook_url: ""
+
+  pagerduty:
+    enabled: false
+    # Events API v2 integration key(s); multiple keys separated by ';'
+    routing_key: ""
+    severity: "warning"
+    source: "groot"
+
   telegram:
     enabled: false
     token: ""
+    # One chat id, or several (group/user) ids separated by ';' with the same bot
     chat_id: ""
+
+  generic:
+    enabled: false
+    # POST JSON with one root string field only: {"<json_key>":"<summary>"} (see README → Notifications).
+    webhook_url: ""
+    json_key: "text"
+    headers: {}
 ```
 
-Environment variables are also supported via Viper prefix `GROOT_`, for example:
+Environment variables use the `GROOT_` prefix (Viper). Nested YAML keys map to env names by replacing `.` with `_` (for example `collection.timeout` → `GROOT_COLLECTION_TIMEOUT`). `kubeconfig` in YAML still loses to the process `KUBECONFIG` env when that is set (see [Resolution and precedence](#resolution-and-precedence)).
 
-- `GROOT_KUBECONFIG`
-- `GROOT_OUTPUT_DIR`
-- `GROOT_COLLECTION_TIMEOUT`
-- `GROOT_NOTIFY_SLACK_WEBHOOK_URL`
-- `GROOT_NOTIFY_TEAMS_WEBHOOK_URL`
-- `GROOT_NOTIFY_TELEGRAM_TOKEN`
-- `GROOT_NOTIFY_TELEGRAM_CHAT_ID`
+Common examples:
+
+- `GROOT_OUTPUT_DIR`, `GROOT_FILE_PREFIX`
+- `GROOT_COLLECTION_TIMEOUT`, `GROOT_COLLECTION_WORKER_CONCURRENCY`, `GROOT_COLLECTION_INCLUDE_POD_LOGS` (boolean), `GROOT_COLLECTION_POD_LOG_TAIL_LINES`, …
+- Notify secrets (also read when `enabled: true` and the YAML field is empty): `GROOT_NOTIFY_SLACK_WEBHOOK_URL`, `GROOT_NOTIFY_DISCORD_WEBHOOK_URL`, `GROOT_NOTIFY_TEAMS_WEBHOOK_URL`, `GROOT_NOTIFY_TELEGRAM_TOKEN`, `GROOT_NOTIFY_TELEGRAM_CHAT_ID`, `GROOT_NOTIFY_GENERIC_WEBHOOK_URL`, `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`
+- `GROOT_NO_NOTIFY=1` (or `true` / `yes`): same as `--no-notify` for a run
 
 When a notification channel is enabled and required credentials are missing, `groot` fails fast with a clear configuration error.
 

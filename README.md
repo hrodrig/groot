@@ -13,10 +13,11 @@
 [![Codecov](https://codecov.io/gh/hrodrig/groot/branch/main/graph/badge.svg)](https://codecov.io/gh/hrodrig/groot)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hrodrig/groot)](https://goreportcard.com/report/github.com/hrodrig/groot)
 [![Article on DEV](https://img.shields.io/badge/dev.to-article-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/groot/)
 
 **Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 
-*Badges:* **release** = latest [GitHub *Release*](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) (published notes/assets). **version** = latest **git tag** on the repo. They can differ if a tag was pushed without publishing a Release yet—install artifacts are still on the [tags](https://github.com/hrodrig/groot/tags) / release page for that tag. The `VERSION` file in the default branch is the source of truth for the next release number. **Codecov** shows merged test coverage from the CI upload on **`main`** (see [Codecov](https://codecov.io/gh/hrodrig/groot)). **dev.to** links to the companion walkthrough on [DEV Community](https://dev.to/).
+*Badges:* **release** = latest [GitHub *Release*](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) (published notes/assets). **version** = latest **git tag** on the repo. They can differ if a tag was pushed without publishing a Release yet—install artifacts are still on the [tags](https://github.com/hrodrig/groot/tags) / release page for that tag. The `VERSION` file in the default branch is the source of truth for the next release number. **Codecov** shows merged test coverage from the CI upload on **`main`** (see [Codecov](https://codecov.io/gh/hrodrig/groot)). **dev.to** links to the companion walkthrough on [DEV Community](https://dev.to/). **Ask DeepWiki** opens the [DeepWiki](https://deepwiki.com/hrodrig/groot/) documentation index for this repo.
 
 <p align="center">
   <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes diagnostics CLI" width="100%" />

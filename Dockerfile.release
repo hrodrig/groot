@@ -11,7 +11,7 @@ LABEL org.opencontainers.image.description="Go Kubernetes diagnostics collector 
 LABEL org.opencontainers.image.source="https://github.com/hrodrig/groot"
 LABEL org.opencontainers.image.authors="https://github.com/hrodrig/groot"
 COPY ${TARGETPLATFORM}/groot /app/groot
-COPY configs/config.yaml /app/config.yaml
+COPY configs/groot.yml.sample /app/groot.yml.sample
 USER nonroot:nonroot
 ENTRYPOINT ["/app/groot"]
-CMD ["collect", "--config", "/app/config.yaml"]
+CMD ["collect", "--config", "/app/groot.yml.sample"]

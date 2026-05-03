@@ -109,7 +109,7 @@ vet:
 	go vet ./...
 
 run:
-	go run -ldflags "$(LDFLAGS)" ./cmd/groot collect --config configs/config.yaml
+	go run -ldflags "$(LDFLAGS)" ./cmd/groot collect --config configs/groot.yml.sample
 
 clean:
 	@mkdir -p "$(BIN_DIR)"

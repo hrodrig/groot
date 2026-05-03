@@ -156,6 +156,13 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("notify.pagerduty.source", "groot")
 }
 
+// defaultEtcConfigPaths are tried after ./groot.yml and ~/.groot/groot.yml (first existing file wins).
+// Packages ship a sample at /etc/groot/groot.yml.sample; site-wide overrides use /etc/groot/groot.yml.
+var defaultEtcConfigPaths = []string{
+	"/etc/groot/groot.yml",
+	"/etc/groot/groot.yml.sample",
+}
+
 func readDefaultConfig(v *viper.Viper) error {
 	local := viper.New()
 	local.SetConfigType("yaml")
@@ -178,6 +185,17 @@ func readDefaultConfig(v *viper.Viper) error {
 		return mergeConfig(v, home)
 	} else if !isConfigNotFound(err) {
 		return err
+	}
+
+	for _, p := range defaultEtcConfigPaths {
+		etc := viper.New()
+		etc.SetConfigType("yaml")
+		etc.SetConfigFile(p)
+		if err := etc.ReadInConfig(); err == nil {
+			return mergeConfig(v, etc)
+		} else if !isConfigNotFound(err) {
+			return err
+		}
 	}
 
 	return nil

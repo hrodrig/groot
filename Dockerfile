@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath \
 FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 COPY --from=builder /out/groot /app/groot
-COPY configs/config.yaml /app/config.yaml
+COPY configs/groot.yml.sample /app/groot.yml.sample
 USER nonroot:nonroot
 ENTRYPOINT ["/app/groot"]
-CMD ["collect", "--config", "/app/config.yaml"]
+CMD ["collect", "--config", "/app/groot.yml.sample"]

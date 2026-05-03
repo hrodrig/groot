@@ -34,6 +34,10 @@ func TestLoad_defaultsWhenNoFiles(t *testing.T) {
 	t.Setenv("GROOT_NOTIFY_TELEGRAM_TOKEN", "")
 	t.Setenv("GROOT_NOTIFY_TELEGRAM_CHAT_ID", "")
 
+	oldEtc := defaultEtcConfigPaths
+	defaultEtcConfigPaths = nil
+	t.Cleanup(func() { defaultEtcConfigPaths = oldEtc })
+
 	cfg, err := Load("")
 	if err != nil {
 		t.Fatalf("Load: %v", err)
@@ -43,6 +47,53 @@ func TestLoad_defaultsWhenNoFiles(t *testing.T) {
 	}
 	if !strings.HasSuffix(cfg.OutputDir, "out") && cfg.OutputDir != "" {
 		t.Fatalf("unexpected output_dir: %q", cfg.OutputDir)
+	}
+}
+
+func TestLoad_systemEtcWhenNoLocalOrHome(t *testing.T) {
+	root := t.TempDir()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("HOME", root)
+	t.Setenv("KUBECONFIG", "")
+
+	sysPath := filepath.Join(root, "site.yaml")
+	wantOut := filepath.Join(root, "from-etc")
+	content := `
+kubeconfig: ""
+output_dir: "` + wantOut + `"
+file_prefix: "etc-site"
+collection:
+  timeout: 1m
+  worker_concurrency: 2
+  namespaces: ["ns-etc"]
+notify:
+  slack:
+    enabled: false
+`
+	if err := os.WriteFile(sysPath, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	oldEtc := defaultEtcConfigPaths
+	defaultEtcConfigPaths = []string{sysPath}
+	t.Cleanup(func() { defaultEtcConfigPaths = oldEtc })
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.OutputDir != wantOut {
+		t.Fatalf("output_dir: got %q want %q", cfg.OutputDir, wantOut)
+	}
+	if cfg.FilePrefix != "etc-site" {
+		t.Fatalf("file_prefix: %q", cfg.FilePrefix)
 	}
 }
 

@@ -66,25 +66,49 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 
 Pre-built **`.deb`**, **`.rpm`**, **`.tar.gz`** (and **`.zip`** on Windows) are on **[GitHub Releases](https://github.com/hrodrig/groot/releases)** and **[latest release](https://github.com/hrodrig/groot/releases/latest)**. The **release** badge at the top of this README shows the current tag at a glance.
 
-**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser names packages with the **version in the filename** (for example `groot_v0.1.7_amd64.deb`), so the path changes each tag. Options are: **pick the tag from the UI**, use the **badge**, or use the **snippet below** (needs `curl` and `jq`).
+**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser puts the **semver without `v`** in filenames (for example **`groot_0.1.8_amd64.deb`**), while the download URL path uses the **git tag with `v`** (`…/download/v0.1.8/…`). Do not use `groot_${TAG}_…` with `TAG=v0.1.8` in the filename—that causes **404**. Options: **pick names from the release page**, use the **snippet below**, or use the **badge**.
 
 ### Install latest `.deb` (Debian / Ubuntu, `amd64`)
 
 ```bash
-TAG="$(curl -fsSL https://api.github.com/repos/hrodrig/groot/releases/latest | jq -r .tag_name)"
-curl -fsSLO "https://github.com/hrodrig/groot/releases/download/${TAG}/groot_${TAG}_amd64.deb"
-sudo apt install "./groot_${TAG}_amd64.deb"
+# Latest published release tag (python3 or jq). Asset basename has NO "v" — see VER below.
+TAG="$(curl -fsSL https://api.github.com/repos/hrodrig/groot/releases/latest | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')"
+# Alternative: TAG="$(curl -fsSL https://api.github.com/repos/hrodrig/groot/releases/latest | jq -r .tag_name)"
+
+[ -n "$TAG" ] || { echo "Could not resolve tag (empty). Install python3 or jq, or set TAG manually from the Releases page." >&2; exit 1; }
+
+VER="${TAG#v}"   # e.g. v0.1.8 -> 0.1.8 (matches GoReleaser .deb filename)
+DEB="groot_${VER}_amd64.deb"
+URL="https://github.com/hrodrig/groot/releases/download/${TAG}/${DEB}"
+TMP="/tmp/${DEB}"
+
+# Download to /tmp so user _apt can read the file (apt often cannot read ~/.deb when $HOME is mode 700).
+if ! curl -fsSL "$URL" -o "$TMP"; then
+  echo "Download failed (curl exit $?). Check URL: $URL" >&2
+  exit 1
+fi
+if [ ! -f "$TMP" ]; then
+  echo "Expected $TMP after download — not found." >&2
+  exit 1
+fi
+sudo apt install "$TMP"
 ```
 
-`groot` is installed to `/usr/bin`. The package also drops a **sample YAML** at **`/etc/groot/config.yaml`**. By default `groot collect` looks for **`./groot.yml`** then **`~/.groot/groot.yml`** (not that path)—so either copy the sample (`sudo cp /etc/groot/config.yaml ~/.groot/groot.yml` and edit), or pass **`--config /etc/groot/config.yaml`**. Use `arm64` in the download filename on ARM64.
+Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** after a failed **`curl`**. **`curl -f`** exits non‑zero on HTTP errors (404, etc.).
+
+**`apt` + `_apt` / “Permission denied” under `$HOME`:** if you `curl` the `.deb` into **`~`** and run `sudo apt install ./groot_….deb`, Debian/Ubuntu may warn that **`_apt` cannot read the file** (home directory not world-executable). Use **`/tmp`** as above, or `sudo cp "$DEB" /tmp/` then `sudo apt install "/tmp/$DEB"`.
+
+**404 on `groot_v0.1.6_amd64.deb`:** the file on GitHub is **`groot_0.1.6_amd64.deb`** (no `v` in the basename). **Empty `TAG`:** if `jq`/`python3` failed, you get `.../download//groot__amd64.deb` and **`./groot__amd64.deb`** from `apt`.
+
+`groot` is installed to `/usr/bin`. The package drops a **sample** at **`/etc/groot/groot.yml.sample`** (from `configs/groot.yml.sample` in the repo). With no **`--config`**, discovery is **`./groot.yml`**, then **`~/.groot/groot.yml`**, then **`/etc/groot/groot.yml`**, then **`/etc/groot/groot.yml.sample`**. Use a per-user copy under **`~/.groot/`**, **`sudo cp /etc/groot/groot.yml.sample /etc/groot/groot.yml`** for a machine-wide config, or **`--config /path/to/file.yaml`**. Use `arm64` in the download filename on ARM64.
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
-| Format | Example (`v0.1.7` / `amd64` / `linux` — change to match the release you want) |
+| Format | Example (tag **`v0.1.8`** in the URL path; artifact basename uses **`0.1.8`** without `v`) |
 |--------|------------------------------------------------------------------|
-| **`.deb`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.7/groot_v0.1.7_amd64.deb` then `sudo apt install ./groot_v0.1.7_amd64.deb` |
-| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.7/groot_v0.1.7_amd64.rpm` then `sudo rpm -Uvh groot_v0.1.7_amd64.rpm` or `sudo dnf install ./groot_v0.1.7_amd64.rpm` |
-| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.7/groot_v0.1.7_linux_amd64.tar.gz` then `tar xzf groot_v0.1.7_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
+| **`.deb`** | `curl -fsSL -o /tmp/groot_0.1.8_amd64.deb https://github.com/hrodrig/groot/releases/download/v0.1.8/groot_0.1.8_amd64.deb` then `sudo apt install /tmp/groot_0.1.8_amd64.deb` (use `/tmp` so `_apt` can read the file if `$HOME` is `700`) |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.8/groot_0.1.8_amd64.rpm` then `sudo rpm -Uvh groot_0.1.8_amd64.rpm` or `sudo dnf install ./groot_0.1.8_amd64.rpm` |
+| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.8/groot_0.1.8_linux_amd64.tar.gz` then `tar xzf groot_0.1.8_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
@@ -137,11 +161,12 @@ Then run:
 ./bin/groot collect
 ```
 
-Default config discovery order (when `--config` is not provided):
+Default config discovery order (when `--config` is not provided). The **first existing file** wins; if none exist, built-in defaults apply, then `GROOT_*` environment variables override where applicable:
 
 1. `./groot.yml`
 2. `~/.groot/groot.yml`
-3. built-in defaults and `GROOT_*` environment variables
+3. `/etc/groot/groot.yml`
+4. `/etc/groot/groot.yml.sample` (sample from the `.deb` / `.rpm` package)
 
 You can always override file discovery with `--config` (see [Usage examples](#usage-examples)).
 
@@ -153,7 +178,7 @@ Paths below use `./bin/groot` after `make build`; if you installed from [Release
 
 ### Use a specific config file
 
-Only `./groot.yml` and `~/.groot/groot.yml` are discovered automatically. Any other filename **must** be passed explicitly:
+Paths under **`./`**, **`~/.groot/`**, and **`/etc/groot/`** (`groot.yml`, `groot.yml.sample`) are discovered automatically (see [First run](#first-run)). Any other path **must** be passed explicitly:
 
 ```bash
 ./bin/groot collect --config /path/to/my-groot.yml
@@ -206,7 +231,7 @@ Skip **all** notify channels for this run (archive still created); same as env `
 
 Edit `groot.yml` (or any file passed with `--config`) and align every section with your cluster and operational needs. Do not rely on the shipped sample as a drop-in configuration.
 
-Sample config (same as `groot --print-sample-config` and `configs/config.yaml` in the repo):
+Sample config (same as `groot --print-sample-config` and `configs/groot.yml.sample` in the repo):
 
 ```yaml
 kubeconfig: ""
@@ -296,7 +321,9 @@ Configuration file precedence:
 1. `--config` explicit path
 2. `./groot.yml`
 3. `~/.groot/groot.yml`
-4. defaults
+4. `/etc/groot/groot.yml`
+5. `/etc/groot/groot.yml.sample`
+6. defaults
 
 `kubeconfig` precedence:
 

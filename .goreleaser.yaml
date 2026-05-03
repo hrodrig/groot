@@ -63,8 +63,8 @@ nfpms:
     section: utils
     priority: optional
     contents:
-      - src: configs/config.yaml
-        dst: /etc/groot/config.yaml
+      - src: configs/groot.yml.sample
+        dst: /etc/groot/groot.yml.sample
         type: config|noreplace
     deb:
       lintian_overrides:
@@ -95,7 +95,7 @@ dockers_v2:
     ids:
       - groot
     extra_files:
-      - configs/config.yaml
+      - configs/groot.yml.sample
     images:
       - ghcr.io/hrodrig/groot
     tags:

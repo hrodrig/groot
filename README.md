@@ -5,13 +5,16 @@
 **☸** _Collect cluster diagnostics into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.1.6-blue)](#)
+[![Version](https://img.shields.io/github/v/tag/hrodrig/groot?label=version&logo=github)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
 [![CI](https://github.com/hrodrig/groot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hrodrig/groot/actions/workflows/ci.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hrodrig/groot)](https://goreportcard.com/report/github.com/hrodrig/groot)
 
 **Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases)
+
+*Badges:* **release** = latest [GitHub *Release*](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) (published notes/assets). **version** = latest **git tag** on the repo. They can differ if a tag was pushed without publishing a Release yet—install artifacts are still on the [tags](https://github.com/hrodrig/groot/tags) / release page for that tag. The `VERSION` file in the default branch is the source of truth for the next release number.
 
 <p align="center">
   <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes diagnostics CLI" width="100%" />
@@ -19,12 +22,11 @@
 
 GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, including worker/node details, control plane logs, namespace resources, pod logs, and events.
 
-[↑ Back to top](#readme-top)
-
 ## Table of contents
 
 - [Features](#features)
 - [Requirements](#requirements)
+- [Install or update](#install-or-update)
 - [Quick start](#quick-start)
 - [First run](#first-run)
 - [Usage examples](#usage-examples)
@@ -54,13 +56,47 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 
 ## Requirements
 
-- Go 1.26+
-- `kubectl` configured against target cluster
+- `kubectl` configured against the target cluster
 - RBAC permissions to read logs/resources
+- **Go 1.26+** only if you [build from source](#quick-start) (`make build`)
+
+[↑ Back to top](#readme-top)
+
+## Install or update
+
+Pre-built **`.deb`**, **`.rpm`**, **`.tar.gz`** (and **`.zip`** on Windows) are on **[GitHub Releases](https://github.com/hrodrig/groot/releases)** and **[latest release](https://github.com/hrodrig/groot/releases/latest)**. The **release** badge at the top of this README shows the current tag at a glance.
+
+**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser names packages with the **version in the filename** (for example `groot_v0.1.7_amd64.deb`), so the path changes each tag. Options are: **pick the tag from the UI**, use the **badge**, or use the **snippet below** (needs `curl` and `jq`).
+
+### Install latest `.deb` (Debian / Ubuntu, `amd64`)
+
+```bash
+TAG="$(curl -fsSL https://api.github.com/repos/hrodrig/groot/releases/latest | jq -r .tag_name)"
+curl -fsSLO "https://github.com/hrodrig/groot/releases/download/${TAG}/groot_${TAG}_amd64.deb"
+sudo apt install "./groot_${TAG}_amd64.deb"
+```
+
+`groot` is installed to `/usr/bin`. The package also drops a **sample YAML** at **`/etc/groot/config.yaml`**. By default `groot collect` looks for **`./groot.yml`** then **`~/.groot/groot.yml`** (not that path)—so either copy the sample (`sudo cp /etc/groot/config.yaml ~/.groot/groot.yml` and edit), or pass **`--config /etc/groot/config.yaml`**. Use `arm64` in the download filename on ARM64.
+
+### Fixed-tag examples (copy from the release page if you prefer)
+
+| Format | Example (`v0.1.7` / `amd64` / `linux` — change to match the release you want) |
+|--------|------------------------------------------------------------------|
+| **`.deb`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.7/groot_v0.1.7_amd64.deb` then `sudo apt install ./groot_v0.1.7_amd64.deb` |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.7/groot_v0.1.7_amd64.rpm` then `sudo rpm -Uvh groot_v0.1.7_amd64.rpm` or `sudo dnf install ./groot_v0.1.7_amd64.rpm` |
+| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.7/groot_v0.1.7_linux_amd64.tar.gz` then `tar xzf groot_v0.1.7_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
+
+**Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
+
+**Windows:** use the **`.zip`** asset for your arch, unpack, run `groot.exe` where `kubectl` is available.
+
+Then [configure](#first-run) and run `groot collect` (or `groot --print-sample-config > groot.yml` first).
 
 [↑ Back to top](#readme-top)
 
 ## Quick start
+
+Build from a clone of this repository:
 
 ```bash
 make build
@@ -69,6 +105,8 @@ make build
 # kubeconfig, output paths, optional notify webhooks/tokens) before collecting.
 ./bin/groot collect
 ```
+
+If you installed from a **release package**, use `groot` on your `PATH` instead of `./bin/groot`.
 
 Useful runtime flags (global or with `collect`):
 
@@ -111,7 +149,7 @@ You can always override file discovery with `--config` (see [Usage examples](#us
 
 ## Usage examples
 
-Paths below use `./bin/groot` after `make build`; if you used `make install`, use the `groot` binary from your `PATH` the same way (for example `groot collect ...`).
+Paths below use `./bin/groot` after `make build`; if you installed from [Releases](#install-or-update) or `make install`, use `groot` on your `PATH` the same way (for example `groot collect ...`).
 
 ### Use a specific config file
 

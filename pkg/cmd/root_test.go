@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"groot/pkg/kubemock"
+	"github.com/hrodrig/groot/pkg/kubemock"
 )
 
 func resetPersistentFlags(t *testing.T) {

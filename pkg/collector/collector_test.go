@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"groot/pkg/config"
+	"github.com/hrodrig/groot/pkg/config"
 )
 
 func TestSanitize(t *testing.T) {
@@ -112,29 +112,59 @@ func TestMatchesTargetsByLabels(t *testing.T) {
 }
 
 func TestWorkloadPodLogArgs(t *testing.T) {
-	args := workloadPodLogArgs("ns", "pod", false, 0)
+	args := workloadPodLogArgs("ns", "pod", false, 0, "")
 	if len(args) < 4 {
 		t.Fatalf("%#v", args)
 	}
-	argsPrev := workloadPodLogArgs("ns", "pod", true, 10)
-	found := false
+	argsPrev := workloadPodLogArgs("ns", "pod", true, 10, "")
+	foundPrev := false
+	foundTail := false
 	for i, a := range argsPrev {
 		if a == "--previous" {
-			found = true
+			foundPrev = true
 		}
 		if a == "--tail" && i+1 < len(argsPrev) && argsPrev[i+1] == "10" {
-			found = true
+			foundTail = true
 		}
 	}
-	if !found {
-		t.Fatalf("expected tail/previous: %#v", argsPrev)
+	if !foundPrev || !foundTail {
+		t.Fatalf("expected tail and previous: %#v", argsPrev)
+	}
+}
+
+func TestWorkloadPodLogArgs_since(t *testing.T) {
+	args := workloadPodLogArgs("ns", "pod", false, 100, "24h")
+	foundSince := false
+	foundTail := false
+	for i, a := range args {
+		if a == "--since=24h" {
+			foundSince = true
+		}
+		if a == "--tail" && i+1 < len(args) && args[i+1] == "100" {
+			foundTail = true
+		}
+	}
+	if !foundSince || !foundTail {
+		t.Fatalf("expected --since and --tail: %#v", args)
 	}
 }
 
 func TestControlPlanePodLogArgs(t *testing.T) {
-	args := controlPlanePodLogArgs("kube-apiserver", true, 0)
+	args := controlPlanePodLogArgs("kube-apiserver", true, 0, "")
 	if len(args) < 4 {
 		t.Fatalf("%#v", args)
+	}
+}
+
+func TestCaptureSessionBase(t *testing.T) {
+	if got := captureSessionBase("20260102-150405", ""); got != "20260102-150405" {
+		t.Fatalf("empty since: %q", got)
+	}
+	if got := captureSessionBase("20260102-150405", "12h"); got != "20260102-150405-since-12h" {
+		t.Fatalf("12h: %q", got)
+	}
+	if got := captureSessionBase("20260102-150405", "45m"); got != "20260102-150405-since-45m" {
+		t.Fatalf("45m: %q", got)
 	}
 }
 

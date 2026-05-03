@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"groot/pkg/config"
-	"groot/pkg/kubemock"
+	"github.com/hrodrig/groot/pkg/config"
+	"github.com/hrodrig/groot/pkg/kubemock"
 )
 
 func TestService_Run_minimal(t *testing.T) {

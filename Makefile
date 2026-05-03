@@ -43,37 +43,38 @@ DOCKER_BUILD_ARGS := \
 
 help:
 	@echo "Available targets:"
-	@echo "  make help         Show this help"
-	@echo "  make all          fmt, vet, test, gocyclo, cover, build"
-	@echo "  make build        Build local binary"
-	@echo "  make test         Run Go tests (-count=1 -race, same as CI)"
-	@echo "  make fmt          gofmt -w . (no simplify; use lint-fix for gofmt -s)"
-	@echo "  make lint-fix     gofmt -s -w . (simplify with gofmt -s)"
-	@echo "  make lint         Run go vet"
-	@echo "  make vet          go vet ./..."
-	@echo "  make run          Run collector with default config"
-	@echo "  make install      Install binary to GOPATH bin (user-writable)"
-	@echo "  make clean        Remove everything under bin/ except bin/.keep"
-	@echo "  make docker-build Build container image with Docker"
-	@echo "  make docker-buildx Build multi-arch image (amd64, arm64) with Docker buildx"
-	@echo "  make scan         Build amd64/arm64 images and scan both with Grype"
-	@echo "  make govulncheck  govulncheck via go run (no install)"
-	@echo "  make vulncheck    alias for govulncheck"
-	@echo "  make ci           Run lint and tests (same bundle as local CI)"
-	@echo "  make gocyclo      Fail if any function has cyclomatic complexity >= 15"
-	@echo "  make grype        Grype directory scan (excludes bin/work/dist; Docker fallback if grype missing)"
-	@echo "  make security     govulncheck + gocyclo + grype (dir scan)"
-	@echo "  make release-check  VERSION semver + goreleaser check + lint + test + security"
-	@echo "  make docker-scan  docker-build + Grype image scan (optional: STRICT_RELEASE=1 in release-check)"
+	@echo "  make all            fmt, vet, test, gocyclo, cover, build"
+	@echo "  make build          Build local binary"
+	@echo "  make ci             Run lint and tests (same bundle as local CI)"
+	@echo "  make clean          Remove everything under bin/ except bin/.keep"
+	@echo "  make cover          Merged coverage (coverage.out); gate with COVER_MIN (default 80; needs bc)"
+	@echo "  make docker-build   Build container image with Docker"
+	@echo "  make docker-buildx  Build multi-arch image (amd64, arm64) with Docker buildx"
+	@echo "  make docker-scan    docker-build + Grype image scan (optional: STRICT_RELEASE=1 in release-check)"
+	@echo "  make fmt            gofmt -w . (no simplify; use lint-fix for gofmt -s)"
+	@echo "  make gocyclo        Fail if any function has cyclomatic complexity >= 15"
+	@echo "  make govulncheck    govulncheck via go run (no install)"
+	@echo "  make grype          Grype directory scan (excludes bin/work/dist; Docker fallback if grype missing)"
+	@echo "  make help           Show this help"
+	@echo "  make install        Install binary to GOPATH bin (user-writable)"
+	@echo "  make lint           Run go vet"
+	@echo "  make lint-fix       gofmt -s -w . (simplify with gofmt -s)"
+	@echo "  make release-check  VERSION semver + goreleaser check + lint + cover + security"
+	@echo "  make run            Run collector with default config"
+	@echo "  make scan           Build amd64/arm64 images and scan both with Grype"
+	@echo "  make security       govulncheck + gocyclo + grype (dir scan)"
+	@echo "  make test           Run Go tests (-count=1 -race, same as CI)"
+	@echo "  make vet            go vet ./..."
+	@echo "  make vulncheck      alias for govulncheck"
 	@echo ""
 	@echo "Variables:"
-	@echo "  IMAGE=<name:tag>  Override image tag (default: $(IMAGE))"
-	@echo "  PLATFORMS=<list>  buildx platforms (default: $(PLATFORMS))"
-	@echo "  PREFIX=<dir>      Install prefix (default: $(PREFIX))"
-	@echo "  BINDIR=<dir>      Install bin dir (default: $(BINDIR))"
-	@echo "  GRYPE_FAIL_ON=    Grype severity gate (default: $(GRYPE_FAIL_ON))"
-	@echo "  STRICT_RELEASE=1  release-check also runs docker-scan (default: $(STRICT_RELEASE))"
-	@echo "  COVER_MIN=<n>     Minimum merged statement %% for cover/all (default: $(COVER_MIN); needs bc)"
+	@echo "  BINDIR=<dir>        Install bin dir (default: $(BINDIR))"
+	@echo "  COVER_MIN=<n>       Minimum merged statement %% for cover/all (default: $(COVER_MIN); needs bc)"
+	@echo "  GRYPE_FAIL_ON=      Grype severity gate (default: $(GRYPE_FAIL_ON))"
+	@echo "  IMAGE=<name:tag>    Override image tag (default: $(IMAGE))"
+	@echo "  PLATFORMS=<list>    buildx platforms (default: $(PLATFORMS))"
+	@echo "  PREFIX=<dir>        Install prefix (default: $(PREFIX))"
+	@echo "  STRICT_RELEASE=1    release-check also runs docker-scan (default: $(STRICT_RELEASE))"
 
 all: fmt vet test gocyclo cover build
 
@@ -172,7 +173,7 @@ grype:
 security: govulncheck gocyclo grype
 	@echo "OK: security (govulncheck, gocyclo, grype)"
 
-# Semver + goreleaser check + lint + test + security (+ optional docker-scan when STRICT_RELEASE=1).
+# Semver + goreleaser check + lint + cover + security (+ optional docker-scan when STRICT_RELEASE=1).
 release-check:
 	@test -f VERSION || { echo "VERSION file is required"; exit 1; }
 	@echo "Release version: $(VERSION) (tag: $(TAG))"
@@ -182,7 +183,7 @@ release-check:
 	@command -v goreleaser >/dev/null 2>&1 || { echo "goreleaser is required. Install from https://goreleaser.com/install/"; exit 1; }
 	goreleaser check
 	@$(MAKE) lint
-	@$(MAKE) test
+	@$(MAKE) cover
 	@$(MAKE) security
 	@if [ "$(STRICT_RELEASE)" = "1" ]; then \
 		echo "STRICT_RELEASE=1 -> running docker-scan"; \

@@ -29,6 +29,7 @@ type CollectionCfg struct {
 	IncludePodLogs      bool                        `mapstructure:"include_pod_logs"`
 	IncludePreviousLogs bool                        `mapstructure:"include_previous_logs"`
 	PodLogTailLines     int                         `mapstructure:"pod_log_tail_lines"`
+	PodLogsSince        string                      `mapstructure:"pod_logs_since"`
 	IncludeNodeDetails  bool                        `mapstructure:"include_node_details"`
 }
 
@@ -124,6 +125,11 @@ func Load(configFile string) (Config, error) {
 	if err := ValidateExtraKubectl(cfg.Collection.ExtraKubectl); err != nil {
 		return Config{}, err
 	}
+	since, err := NormalizePodLogsSince(cfg.Collection.PodLogsSince)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.Collection.PodLogsSince = since
 	cfg.OutputDir = expandPath(cfg.OutputDir)
 	resolveNotificationSecrets(&cfg)
 	if err := validateNotificationConfig(cfg); err != nil {

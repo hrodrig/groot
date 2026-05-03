@@ -36,6 +36,10 @@ jobs:
           version: latest
           install-only: true
 
+      # make cover enforces COVER_MIN via bc (not preinstalled on ubuntu-latest).
+      - name: Install bc (coverage gate)
+        run: sudo apt-get update && sudo apt-get install -y bc
+
       - name: Run release checks
         run: make release-check
 

@@ -1,13 +1,35 @@
+# GROOT sample configuration (see README → Config and Configuration reference).
+# Boolean env overrides use GROOT_* (e.g. GROOT_COLLECTION_INCLUDE_POD_LOGS).
+
+# Path to kubeconfig for kubectl. Empty = use process KUBECONFIG or kubectl default rules
+# (CLI flag --kubeconfig still overrides when passed).
 kubeconfig: ""
+
+# Base directory for each run: a timestamped folder is created here, then archived to a .tar.gz
+# beside it. Supports ~ and ${VAR} expansion.
 output_dir: "./out"
+
+# Logical prefix kept for forward-compatible naming (default groot-capture). Capture directory
+# and archive names today use <timestamp>-<cluster> plus optional --message suffix.
 file_prefix: "groot-capture"
 
 collection:
+  # Maximum duration for the whole collect run (context deadline); entire job aborts after this.
   timeout: 20m
+
+  # Parallel kubectl executions (worker pool size).
   worker_concurrency: 6
+
+  # Namespaces where Groot runs kubectl get all -o wide into <ns>/resources.txt and
+  # creates per-namespace directories under the capture tree.
   namespaces:
     - kube-system
     - default
+
+  # Per-namespace workload filters for POD LOGS ONLY. If a namespace is listed here with at
+  # least one target list, only pods matching those workloads get log jobs. Namespaces with
+  # no entry, or an entry with all lists empty, keep broad pod log collection for that NS.
+  # Matching uses labels: app.kubernetes.io/name, app.kubernetes.io/instance, and app.
   targets:
     default:
       deployments:
@@ -18,11 +40,25 @@ collection:
         - node-agent
       helm_releases:
         - my-release
+
+  # When true, run kubectl logs for workload and control-plane pods (subject to targets/tail/since).
   include_pod_logs: true
+
+  # When true, also kubectl logs --previous (crashed/exited container) into *.previous.log (optional jobs).
   include_previous_logs: true
+
+  # Max lines per log stream when >0; 0 means no --tail (full logs, can be large).
   pod_log_tail_lines: 1500
+
+  # Optional: kubectl logs --since for pod logs only. Digits-only string = hours (24 -> 24h);
+  # or a Go duration (24h, 45m). collect --since overrides this when set.
+  # When set, capture dir and .tar.gz name include "-since-<slug>" after the timestamp (e.g. …-since-12h-…).
+  # pod_logs_since: "24"
+
+  # When true, describe and top per node under nodes/ (extra kubectl per node).
   include_node_details: true
-  # Optional read-only kubectl fragments (allowlisted subcommands only; see README).
+
+  # Optional extra read-only kubectl lines (split on spaces, no shell). Allowlisted verbs only; see README.
   extra_kubectl:
     - "get componentstatuses"
     - "get csr"
@@ -47,7 +83,9 @@ notify:
     enabled: false
     # Events API v2 integration key(s); multiple keys separated by ';'
     routing_key: ""
+    # critical | error | warning | info
     severity: "warning"
+    # Shown as the event source in PagerDuty
     source: "groot"
 
   telegram:
@@ -61,4 +99,5 @@ notify:
     # POST JSON with one root string field only: {"<json_key>":"<summary>"} (see README → Notifications).
     webhook_url: ""
     json_key: "text"
+    # Optional HTTP headers on the POST (e.g. Authorization)
     headers: {}

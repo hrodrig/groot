@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"groot/pkg/collector"
-	"groot/pkg/config"
+	"github.com/hrodrig/groot/pkg/collector"
+	"github.com/hrodrig/groot/pkg/config"
 )
 
 func TestNewFanOut_empty(t *testing.T) {

@@ -443,3 +443,45 @@ notify:
 		t.Fatalf("expected negative coerced to 1000, got %d", cfg.Collection.PodLogTailLines)
 	}
 }
+
+func TestLoad_podLogsSinceInvalid(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "since.yaml")
+	if err := os.WriteFile(path, []byte(`
+collection:
+  pod_logs_since: "not-a-duration"
+notify:
+  slack: { enabled: false }
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("KUBECONFIG", "")
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("expected error for invalid pod_logs_since")
+	}
+	if !strings.Contains(err.Error(), "pod_logs_since") {
+		t.Fatalf("error should mention pod_logs_since: %v", err)
+	}
+}
+
+func TestLoad_podLogsSinceNormalized(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "since-ok.yaml")
+	if err := os.WriteFile(path, []byte(`
+collection:
+  pod_logs_since: "48"
+notify:
+  slack: { enabled: false }
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("KUBECONFIG", "")
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Collection.PodLogsSince != "48h" {
+		t.Fatalf("pod_logs_since: got %q want 48h", cfg.Collection.PodLogsSince)
+	}
+}

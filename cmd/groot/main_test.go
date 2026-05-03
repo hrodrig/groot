@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"groot/pkg/cmd"
-	"groot/pkg/kubemock"
+	"github.com/hrodrig/groot/pkg/cmd"
+	"github.com/hrodrig/groot/pkg/kubemock"
 )
 
 func TestExitCode(t *testing.T) {

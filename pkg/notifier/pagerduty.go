@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"groot/pkg/collector"
+	"github.com/hrodrig/groot/pkg/collector"
 )
 
 // pagerDutyEventsURL is the Events API v2 enqueue endpoint (overridable in tests).

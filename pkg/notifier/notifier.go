@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"groot/pkg/collector"
-	"groot/pkg/config"
+	"github.com/hrodrig/groot/pkg/collector"
+	"github.com/hrodrig/groot/pkg/config"
 )
 
 // telegramAPIBase is the Bot API origin (overridable in tests).

@@ -14,9 +14,9 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/hrodrig/groot/pkg/archive"
+	"github.com/hrodrig/groot/pkg/config"
 	"golang.org/x/text/unicode/norm"
-	"groot/pkg/archive"
-	"groot/pkg/config"
 )
 
 // Summary reports collection execution details.
@@ -100,7 +100,8 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	start := time.Now()
 
 	timestamp := time.Now().Format("20060102-150405")
-	captureDir := filepath.Join(s.cfg.OutputDir, timestamp)
+	sessionBase := captureSessionBase(timestamp, s.cfg.Collection.PodLogsSince)
+	captureDir := filepath.Join(s.cfg.OutputDir, sessionBase)
 	if err := os.MkdirAll(captureDir, 0o755); err != nil {
 		return Summary{}, fmt.Errorf("create output dir: %w", err)
 	}
@@ -129,7 +130,7 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		s.invokeOnFailed("cluster-name", err)
 	}
 
-	archiveName := fmt.Sprintf("%s-%s", timestamp, clusterName)
+	archiveName := fmt.Sprintf("%s-%s", sessionBase, clusterName)
 	if suffix := sanitizeMessage(s.message); suffix != "" {
 		archiveName += "-" + suffix
 	}
@@ -220,10 +221,13 @@ func (s *Service) appendNamespaceResourceJobs(jobs []job) []job {
 	return jobs
 }
 
-func workloadPodLogArgs(ns, name string, previous bool, tail int) []string {
+func workloadPodLogArgs(ns, name string, previous bool, tail int, since string) []string {
 	args := []string{"logs", "-n", ns, name, "--all-containers=true", "--timestamps=true"}
 	if previous {
 		args = append(args, "--previous")
+	}
+	if since != "" {
+		args = append(args, "--since="+since)
 	}
 	if tail > 0 {
 		args = append(args, "--tail", fmt.Sprintf("%d", tail))
@@ -231,10 +235,13 @@ func workloadPodLogArgs(ns, name string, previous bool, tail int) []string {
 	return args
 }
 
-func controlPlanePodLogArgs(pod string, previous bool, tail int) []string {
+func controlPlanePodLogArgs(pod string, previous bool, tail int, since string) []string {
 	args := []string{"logs", "-n", "kube-system", pod, "--timestamps=true"}
 	if previous {
 		args = append(args, "--previous")
+	}
+	if since != "" {
+		args = append(args, "--since="+since)
 	}
 	if tail > 0 {
 		args = append(args, "--tail", fmt.Sprintf("%d", tail))
@@ -251,17 +258,18 @@ func (s *Service) appendWorkloadPodLogJobs(ctx context.Context, jobs []job) ([]j
 		return nil, fmt.Errorf("list pods: %w", err)
 	}
 	tail := s.cfg.Collection.PodLogTailLines
+	since := s.cfg.Collection.PodLogsSince
 	for _, item := range pods {
 		baseName := sanitize(item.Name) + "__" + sanitize(item.Node)
 		jobs = append(jobs, job{
 			Name:     fmt.Sprintf("pod-log-%s-%s", item.Namespace, item.Name),
-			Args:     workloadPodLogArgs(item.Namespace, item.Name, false, tail),
+			Args:     workloadPodLogArgs(item.Namespace, item.Name, false, tail, since),
 			FileName: filepath.Join(item.Namespace, baseName+".log"),
 		})
 		if s.cfg.Collection.IncludePreviousLogs {
 			jobs = append(jobs, job{
 				Name:     fmt.Sprintf("pod-log-previous-%s-%s", item.Namespace, item.Name),
-				Args:     workloadPodLogArgs(item.Namespace, item.Name, true, tail),
+				Args:     workloadPodLogArgs(item.Namespace, item.Name, true, tail, since),
 				FileName: filepath.Join(item.Namespace, baseName+".previous.log"),
 				Optional: true,
 			})
@@ -273,6 +281,7 @@ func (s *Service) appendWorkloadPodLogJobs(ctx context.Context, jobs []job) ([]j
 func (s *Service) appendControlPlanePodLogJobs(ctx context.Context, jobs []job) []job {
 	lines, _ := s.list(ctx, []string{"get", "pods", "-n", "kube-system", "-l", "tier=control-plane", "--no-headers", "-o", "custom-columns=NAME:.metadata.name,NODE:.spec.nodeName"})
 	tail := s.cfg.Collection.PodLogTailLines
+	since := s.cfg.Collection.PodLogsSince
 	for _, item := range parseNameNodeLines(lines) {
 		if item.Name == "" {
 			continue
@@ -284,13 +293,13 @@ func (s *Service) appendControlPlanePodLogJobs(ctx context.Context, jobs []job) 
 		baseName := sanitize(item.Name) + "__" + sanitize(node)
 		jobs = append(jobs, job{
 			Name:     "control-plane-" + item.Name,
-			Args:     controlPlanePodLogArgs(item.Name, false, tail),
+			Args:     controlPlanePodLogArgs(item.Name, false, tail, since),
 			FileName: filepath.Join("kube-system", baseName+".log"),
 		})
 		if s.cfg.Collection.IncludePreviousLogs {
 			jobs = append(jobs, job{
 				Name:     "control-plane-previous-" + item.Name,
-				Args:     controlPlanePodLogArgs(item.Name, true, tail),
+				Args:     controlPlanePodLogArgs(item.Name, true, tail, since),
 				FileName: filepath.Join("kube-system", baseName+".previous.log"),
 				Optional: true,
 			})
@@ -406,6 +415,21 @@ func (s *Service) kubectlArgs(args []string) []string {
 		return args
 	}
 	return append([]string{"--kubeconfig", s.cfg.Kubeconfig}, args...)
+}
+
+// captureSessionBase is the capture folder name and the leading part of the archive basename.
+// When pod_logs_since is set (kubectl --since value, e.g. 12h), it becomes "<timestamp>-since-<slug>"
+// so full runs and time-windowed log captures are easy to tell apart without opening the tarball.
+func captureSessionBase(timestamp, podLogsSince string) string {
+	s := strings.TrimSpace(podLogsSince)
+	if s == "" {
+		return timestamp
+	}
+	slug := sanitizeMessage(s)
+	if slug == "" {
+		return timestamp
+	}
+	return timestamp + "-since-" + slug
 }
 
 func sanitize(value string) string {

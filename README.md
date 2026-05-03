@@ -10,11 +10,13 @@
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
 [![CI](https://github.com/hrodrig/groot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hrodrig/groot/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/gh/hrodrig/groot/branch/main/graph/badge.svg)](https://codecov.io/gh/hrodrig/groot)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hrodrig/groot)](https://goreportcard.com/report/github.com/hrodrig/groot)
+[![Article on DEV](https://img.shields.io/badge/dev.to-article-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 
-**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases)
+**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 
-*Badges:* **release** = latest [GitHub *Release*](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) (published notes/assets). **version** = latest **git tag** on the repo. They can differ if a tag was pushed without publishing a Release yet—install artifacts are still on the [tags](https://github.com/hrodrig/groot/tags) / release page for that tag. The `VERSION` file in the default branch is the source of truth for the next release number.
+*Badges:* **release** = latest [GitHub *Release*](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases) (published notes/assets). **version** = latest **git tag** on the repo. They can differ if a tag was pushed without publishing a Release yet—install artifacts are still on the [tags](https://github.com/hrodrig/groot/tags) / release page for that tag. The `VERSION` file in the default branch is the source of truth for the next release number. **Codecov** shows merged test coverage from the CI upload on **`main`** (see [Codecov](https://codecov.io/gh/hrodrig/groot)). **dev.to** links to the companion walkthrough on [DEV Community](https://dev.to/).
 
 <p align="center">
   <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes diagnostics CLI" width="100%" />
@@ -31,6 +33,7 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 - [First run](#first-run)
 - [Usage examples](#usage-examples)
 - [Config](#config)
+- [Configuration reference (all keys)](#configuration-reference-all-keys)
 - [Resolution and precedence](#resolution-and-precedence)
 - [Output naming](#output-naming)
 - [Console output modes](#console-output-modes)
@@ -58,7 +61,7 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 
 - `kubectl` configured against the target cluster
 - RBAC permissions to read logs/resources
-- **Go 1.26+** only if you [build from source](#quick-start) (`make build`)
+- **Go 1.26+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go) for the CLI
 
 [↑ Back to top](#readme-top)
 
@@ -66,7 +69,7 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 
 Pre-built **`.deb`**, **`.rpm`**, **`.tar.gz`** (and **`.zip`** on Windows) are on **[GitHub Releases](https://github.com/hrodrig/groot/releases)** and **[latest release](https://github.com/hrodrig/groot/releases/latest)**. The **release** badge at the top of this README shows the current tag at a glance.
 
-**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser puts the **semver without `v`** in filenames (for example **`groot_0.1.8_amd64.deb`**), while the download URL path uses the **git tag with `v`** (`…/download/v0.1.8/…`). Do not use `groot_${TAG}_…` with `TAG=v0.1.8` in the filename—that causes **404**. Options: **pick names from the release page**, use the **snippet below**, or use the **badge**.
+**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser puts the **semver without `v`** in filenames (for example **`groot_0.1.10_amd64.deb`**), while the download URL path uses the **git tag with `v`** (`…/download/v0.1.10/…`). Do not use `groot_${TAG}_…` with `TAG=v0.1.10` in the filename—that causes **404**. Options: **pick names from the release page**, use the **snippet below**, or use the **badge**.
 
 ### Install latest `.deb` (Debian / Ubuntu, `amd64`)
 
@@ -77,7 +80,7 @@ TAG="$(curl -fsSL https://api.github.com/repos/hrodrig/groot/releases/latest | p
 
 [ -n "$TAG" ] || { echo "Could not resolve tag (empty). Install python3 or jq, or set TAG manually from the Releases page." >&2; exit 1; }
 
-VER="${TAG#v}"   # e.g. v0.1.8 -> 0.1.8 (matches GoReleaser .deb filename)
+VER="${TAG#v}"   # e.g. v0.1.10 -> 0.1.10 (matches GoReleaser .deb filename)
 DEB="groot_${VER}_amd64.deb"
 URL="https://github.com/hrodrig/groot/releases/download/${TAG}/${DEB}"
 TMP="/tmp/${DEB}"
@@ -104,11 +107,11 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
-| Format | Example (tag **`v0.1.8`** in the URL path; artifact basename uses **`0.1.8`** without `v`) |
+| Format | Example (tag **`v0.1.10`** in the URL path; artifact basename uses **`0.1.10`** without `v`) |
 |--------|------------------------------------------------------------------|
-| **`.deb`** | `curl -fsSL -o /tmp/groot_0.1.8_amd64.deb https://github.com/hrodrig/groot/releases/download/v0.1.8/groot_0.1.8_amd64.deb` then `sudo apt install /tmp/groot_0.1.8_amd64.deb` (use `/tmp` so `_apt` can read the file if `$HOME` is `700`) |
-| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.8/groot_0.1.8_amd64.rpm` then `sudo rpm -Uvh groot_0.1.8_amd64.rpm` or `sudo dnf install ./groot_0.1.8_amd64.rpm` |
-| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.8/groot_0.1.8_linux_amd64.tar.gz` then `tar xzf groot_0.1.8_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
+| **`.deb`** | `curl -fsSL -o /tmp/groot_0.1.10_amd64.deb https://github.com/hrodrig/groot/releases/download/v0.1.10/groot_0.1.10_amd64.deb` then `sudo apt install /tmp/groot_0.1.10_amd64.deb` (use `/tmp` so `_apt` can read the file if `$HOME` is `700`) |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.10/groot_0.1.10_amd64.rpm` then `sudo rpm -Uvh groot_0.1.10_amd64.rpm` or `sudo dnf install ./groot_0.1.10_amd64.rpm` |
+| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.1.10/groot_0.1.10_linux_amd64.tar.gz` then `tar xzf groot_0.1.10_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
@@ -132,6 +135,16 @@ make build
 
 If you installed from a **release package**, use `groot` on your `PATH` instead of `./bin/groot`.
 
+### Install with Go
+
+From any machine with Go **1.26+** (installs to `$(go env GOPATH)/bin`; ensure that directory is on your `PATH`):
+
+```bash
+go install github.com/hrodrig/groot/cmd/groot@latest
+```
+
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.1.10`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
+
 Useful runtime flags (global or with `collect`):
 
 - `--version` prints version, commit, branch, and build date
@@ -142,6 +155,7 @@ Useful runtime flags (global or with `collect`):
 - `--no-color` disables ANSI colors
 - `--message "label text"` appends a sanitized suffix to archive and capture-related output names
 - `--kubeconfig /path/to/config` overrides kubeconfig from file/env
+- **`collect` only:** `--since` limits **pod** log collection to lines newer than a duration (`kubectl logs --since`). A **bare number** is treated as **hours** (for example `--since=24` → `24h`). Other forms follow Go durations (`24h`, `45m`, `90s`). Overrides `collection.pod_logs_since` from config when passed.
 
 [↑ Back to top](#readme-top)
 
@@ -219,6 +233,16 @@ Skip **all** notify channels for this run (archive still created); same as env `
 ./bin/groot collect --config groot.yml --message "staging-network-audit-2026-04-28"
 ```
 
+### Pod logs: last N hours (`--since`)
+
+Same as `collection.pod_logs_since` in YAML; **bare number = hours** (here, last 24 hours of pod logs):
+
+```bash
+./bin/groot collect --config groot.yml --since=24
+```
+
+**Empty `*.log` files are normal** when you narrow the window: `kubectl logs --since=…` only returns lines **newer than that duration**. If a pod was quiet during the window, Groot still writes the file (often **0 bytes**) — that is **not** a Groot bug, it means **no stdout/stderr in that interval**. Compare with `kubectl logs … --tail=50` (no `--since`) to see recent activity and pick a window that matches what you need.
+
 ### Override kubeconfig for one run
 
 ```bash
@@ -231,7 +255,9 @@ Skip **all** notify channels for this run (archive still created); same as env `
 
 Edit `groot.yml` (or any file passed with `--config`) and align every section with your cluster and operational needs. Do not rely on the shipped sample as a drop-in configuration.
 
-Sample config (same as `groot --print-sample-config` and `configs/groot.yml.sample` in the repo):
+The **annotated** template (every key explained in comments) is **[`configs/groot.yml.sample`](configs/groot.yml.sample)** — identical to `groot --print-sample-config` output. Use that file when you want line-by-line guidance next to the YAML.
+
+Sample config (abbreviated; full comments in the repo file above):
 
 ```yaml
 kubeconfig: ""
@@ -257,6 +283,7 @@ collection:
   include_pod_logs: true
   include_previous_logs: true
   pod_log_tail_lines: 1500
+  # pod_logs_since: "24"   # optional: pod logs only; bare hours or duration (24h, 45m)
   include_node_details: true
   extra_kubectl:
     - "get componentstatuses"
@@ -299,12 +326,48 @@ notify:
     headers: {}
 ```
 
+### Configuration reference (all keys)
+
+#### Top-level
+
+| Key | What it does |
+|-----|----------------|
+| **`kubeconfig`** | Path passed to `kubectl --kubeconfig` on every invocation. Empty uses the process **`KUBECONFIG`** env or kubectl’s default search order. **`groot --kubeconfig`** still overrides this for a single run (see [Resolution and precedence](#resolution-and-precedence)). |
+| **`output_dir`** | Base directory: each run creates a **timestamped** folder here, then writes **`<timestamp>-<cluster>.tar.gz`** next to it. Supports **`~`** and **`${VAR}`** expansion. |
+| **`file_prefix`** | Logical prefix in configs (default `groot-capture`). **Reserved** for future capture naming; today archives use **`<timestamp>-<cluster>`** plus optional **`--message`**. |
+| **`collection`** | Tuning for timeouts, parallelism, namespaces, pod logs, extra read-only kubectl, etc. (see below). |
+| **`notify`** | Optional webhooks and APIs after a **successful** collect (see [Notifications](#notifications)). |
+
+#### `collection`
+
+| Key | What it does |
+|-----|----------------|
+| **`timeout`** | Maximum wall time for the whole **`groot collect`** run (Go `context` deadline). |
+| **`worker_concurrency`** | Number of **parallel** kubectl workers. |
+| **`namespaces`** | For each entry, Groot runs **`kubectl get all -n <ns> -o wide`** into **`<ns>/resources.txt`** and ensures **`<ns>/`** exists under the capture tree. |
+| **`targets`** | Per-namespace **pod log** filters only. Keys are **namespace names**. Under each: **`deployments`**, **`statefulsets`**, **`daemonsets`**, **`helm_releases`** (string lists). If a namespace has **at least one** non-empty list, only pods whose labels match those workloads get **log** jobs. If there is **no** `targets` entry for a namespace, or the entry has **all lists empty**, pod logs for that namespace stay **broad** (all pods). Matching uses **`app.kubernetes.io/name`**, **`app.kubernetes.io/instance`**, **`app`**, and Helm instance vs **`helm_releases`** (see **Workload filter behavior** under [Resolution and precedence](#resolution-and-precedence)). |
+| **`include_pod_logs`** | When **`true`**, enqueues **`kubectl logs`** for workload pods and control-plane pods (subject to **`targets`**, **`pod_log_tail_lines`**, **`pod_logs_since`**). When **`false`**, skips all pod log jobs. |
+| **`include_previous_logs`** | When **`true`**, also runs **`kubectl logs --previous`** into **`*.previous.log`** (marked optional so a missing previous container does not fail the run). |
+| **`pod_log_tail_lines`** | When **`>0`**, passes **`--tail N`** to pod log commands. **`0`** means **no `--tail`** (full log stream — can be very large). |
+| **`pod_logs_since`** | When set, passes **`--since=…`** to **pod log** commands only (digits-only = **hours**, e.g. **`24`** → **`24h`**; otherwise a Go duration like **`24h`**, **`45m`**). **`groot collect --since`** overrides this when the flag is set. The capture directory and **`.tar.gz`** basename include **`since-<slug>`** after the timestamp so runs with a log window are identifiable on disk (see [Output naming](#output-naming)). |
+| **`include_node_details`** | When **`true`**, for each node runs **`kubectl describe`** and **`kubectl top node`** under **`nodes/`**. |
+| **`extra_kubectl`** | List of extra **read-only** kubectl command lines (split on whitespace, **no shell**). Allowlisted at load time; see the note below on allowed verbs. |
+
+#### `notify` (each channel)
+
+| Block / field | What it does |
+|----------------|----------------|
+| **`slack`**, **`discord`**, **`teams`**: **`enabled`**, **`webhook_url`** | When **`enabled: true`**, POST a one-line summary to the incoming webhook URL(s). Multiple URLs: separate with **`;`**. URLs may also come from **`GROOT_NOTIFY_*_WEBHOOK_URL`** env vars when YAML is empty. |
+| **`pagerduty`**: **`enabled`**, **`routing_key`**, **`severity`**, **`source`** | Events API v2 trigger; **`severity`** is **`critical`**, **`error`**, **`warning`**, or **`info`**. Multiple routing keys: **`;`**. Env: **`GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`**. |
+| **`telegram`**: **`enabled`**, **`token`**, **`chat_id`** | Bot token and chat id(s); multiple chat ids: **`;`**. Env fallbacks: **`GROOT_NOTIFY_TELEGRAM_TOKEN`**, **`GROOT_NOTIFY_TELEGRAM_CHAT_ID`**. |
+| **`generic`**: **`enabled`**, **`webhook_url`**, **`json_key`**, **`headers`** | Custom POST: one JSON string field named **`json_key`** (default **`text`**) whose value is the summary. Optional **`headers`** for auth, etc. Env: **`GROOT_NOTIFY_GENERIC_WEBHOOK_URL`**. |
+
 Environment variables use the `GROOT_` prefix (Viper). Nested YAML keys map to env names by replacing `.` with `_` (for example `collection.timeout` → `GROOT_COLLECTION_TIMEOUT`). `kubeconfig` in YAML still loses to the process `KUBECONFIG` env when that is set (see [Resolution and precedence](#resolution-and-precedence)).
 
 Common examples:
 
 - `GROOT_OUTPUT_DIR`, `GROOT_FILE_PREFIX`
-- `GROOT_COLLECTION_TIMEOUT`, `GROOT_COLLECTION_WORKER_CONCURRENCY`, `GROOT_COLLECTION_INCLUDE_POD_LOGS` (boolean), `GROOT_COLLECTION_POD_LOG_TAIL_LINES`, …
+- `GROOT_COLLECTION_TIMEOUT`, `GROOT_COLLECTION_WORKER_CONCURRENCY`, `GROOT_COLLECTION_INCLUDE_POD_LOGS` (boolean), `GROOT_COLLECTION_POD_LOG_TAIL_LINES`, `GROOT_COLLECTION_POD_LOGS_SINCE`, …
 - Notify secrets (also read when `enabled: true` and the YAML field is empty): `GROOT_NOTIFY_SLACK_WEBHOOK_URL`, `GROOT_NOTIFY_DISCORD_WEBHOOK_URL`, `GROOT_NOTIFY_TEAMS_WEBHOOK_URL`, `GROOT_NOTIFY_TELEGRAM_TOKEN`, `GROOT_NOTIFY_TELEGRAM_CHAT_ID`, `GROOT_NOTIFY_GENERIC_WEBHOOK_URL`, `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`
 - `GROOT_NO_NOTIFY=1` (or `true` / `yes`): same as `--no-notify` for a run
 
@@ -345,6 +408,12 @@ Workload filter behavior (`collection.targets`):
 - `>0`: collect only the last N lines per pod
 - applies to both current and `--previous` pod logs
 
+`pod_logs_since` and **`collect --since`** (pod logs only):
+
+- adds `kubectl logs --since=…` for workload and control-plane pod log jobs; other diagnostics are unchanged
+- in YAML or env, a **string of digits only** is interpreted as **whole hours** (`"24"` → `24h`); otherwise the value must parse as a Go duration (`24h`, `45m`, …)
+- **`groot collect --since=…`** overrides `collection.pod_logs_since` for that run when the flag is set
+
 `include_previous_logs` behavior:
 
 - `true`: also collects `kubectl logs --previous` per pod into `*.previous.log`
@@ -361,8 +430,8 @@ Workload filter behavior (`collection.targets`):
 
 Capture output names are:
 
-- directory: `<timestamp>`
-- archive: `<timestamp>-<cluster>[-<message>].tar.gz`
+- directory: `<timestamp>` or, when **`collection.pod_logs_since`** is set (or **`collect --since`**), **`<timestamp>-since-<slug>`** where **`<slug>`** is a filesystem-safe form of the duration (for example **`12h`**, **`45m`**) so you can see the log window at a glance without opening the archive
+- archive: same leading token as the directory, then **`-<cluster>[-<message>].tar.gz`** (for example `20260503-081049-since-12h-my-cluster.tar.gz`)
 
 `--message` is sanitized before use:
 
@@ -378,6 +447,7 @@ Example:
 - input: `--message "network routing issue"`
 - suffix: `network-routing-issue`
 - output: `20260428-123200-my-cluster-network-routing-issue.tar.gz`
+- with **`pod_logs_since`** (or **`--since`**) set to **`12h`** and no message: `20260428-123200-since-12h-my-cluster.tar.gz`
 
 Directory layout:
 
@@ -387,7 +457,7 @@ Directory layout:
 - pod log files: `<pod>__<node>.log` (and `.previous.log` when enabled), same pattern for control-plane pods under `kube-system/`
 - after archive creation, the timestamp directory is automatically removed
 
-Inside the `.tar.gz`, every path is prefixed with the capture folder name (`<timestamp>/…`, for example `20260502-174207/kube-system/…`). Extracting into a shared directory (for example `~/tmp/groot-out`) keeps each run under its own subdirectory instead of mixing `kube-system/`, `cloudbridge/`, etc. at the extraction root. Archives produced by older Groot versions may still have a flat layout at the tar root.
+Inside the `.tar.gz`, every path is prefixed with the capture folder name (`<session>/…`, for example `20260502-174207/kube-system/…` or `20260503-081049-since-12h/kube-system/…`). Extracting into a shared directory (for example `~/tmp/groot-out`) keeps each run under its own subdirectory instead of mixing `kube-system/`, `cloudbridge/`, etc. at the extraction root. Archives produced by older Groot versions may still have a flat layout at the tar root.
 
 [↑ Back to top](#readme-top)
 

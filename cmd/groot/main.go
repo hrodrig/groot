@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"groot/pkg/cmd"
+	"github.com/hrodrig/groot/pkg/cmd"
 )
 
 var (

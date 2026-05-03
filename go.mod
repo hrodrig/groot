@@ -1,4 +1,4 @@
-module groot
+module github.com/hrodrig/groot
 
 go 1.26
 

@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"groot/pkg/collector"
-	"groot/pkg/config"
-	"groot/pkg/logx"
-	"groot/pkg/notifier"
+	"github.com/hrodrig/groot/pkg/collector"
+	"github.com/hrodrig/groot/pkg/config"
+	"github.com/hrodrig/groot/pkg/logx"
+	"github.com/hrodrig/groot/pkg/notifier"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -30,6 +30,7 @@ var buildCommit = "unknown"
 var buildBranch = "unknown"
 var buildDate = "unknown"
 var testConnection bool
+var collectLogsSince string
 
 var rootCmd = &cobra.Command{
 	Use:   "groot",
@@ -86,6 +87,13 @@ var collectCmd = &cobra.Command{
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
 			return fmt.Errorf("load config: %w", err)
+		}
+		if cmd.Flags().Lookup("since").Changed {
+			norm, normErr := config.NormalizePodLogsSince(collectLogsSince)
+			if normErr != nil {
+				return fmt.Errorf("invalid --since: %w", normErr)
+			}
+			cfg.Collection.PodLogsSince = norm
 		}
 		if kubeconfigOverride != "" {
 			cfg.Kubeconfig = kubeconfigOverride
@@ -186,6 +194,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable colorized console output")
 	rootCmd.PersistentFlags().StringVar(&message, "message", "", "Custom suffix appended to capture output names")
 	rootCmd.PersistentFlags().StringVar(&kubeconfigOverride, "kubeconfig", "", "Override kubeconfig path for kubectl commands")
+	collectCmd.Flags().StringVar(&collectLogsSince, "since", "", "Pod logs only: kubectl --since (duration like 24h, 45m; bare number means hours, e.g. 24 -> 24h). Overrides collection.pod_logs_since in config when set")
 	rootCmd.AddCommand(collectCmd)
 }
 

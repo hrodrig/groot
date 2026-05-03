@@ -66,5 +66,6 @@ jobs:
         with:
           files: coverage.out
           fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          # Repository upload token from https://app.codecov.io/gh/hrodrig/groot/settings
+          # GitHub: Settings → Secrets and variables → Actions → CODECOV_TOKEN
+          token: ${{ secrets.CODECOV_TOKEN }}

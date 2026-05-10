@@ -5,10 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -111,6 +113,9 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	if err := s.writeMetadata(ctx, captureDir); err != nil {
 		s.invokeOnFailed("metadata", err)
 	}
+	if err := s.writePodNodePlacement(ctx, captureDir); err != nil {
+		s.invokeOnFailed("pod-node-placement", err)
+	}
 
 	jobs, err := s.buildJobs(ctx)
 	if err != nil {
@@ -156,6 +161,11 @@ func (s *Service) buildJobs(ctx context.Context) ([]job, error) {
 		return nil, err
 	}
 
+	jobs, err = s.appendNodeKubeletLogJobs(ctx, jobs)
+	if err != nil {
+		return nil, err
+	}
+
 	jobs = s.appendNamespaceResourceJobs(jobs)
 
 	jobs, err = s.appendWorkloadPodLogJobs(ctx, jobs)
@@ -168,12 +178,20 @@ func (s *Service) buildJobs(ctx context.Context) ([]job, error) {
 }
 
 func (s *Service) baseKubectlJobs() []job {
-	return []job{
+	jobs := []job{
 		{Name: "cluster-info", Args: []string{"cluster-info"}, FileName: filepath.Join("extras", "cluster-info.txt")},
 		{Name: "nodes-wide", Args: []string{"get", "nodes", "-o", "wide"}, FileName: filepath.Join("extras", "nodes-wide.txt")},
 		{Name: "events-all", Args: []string{"get", "events", "-A", "--sort-by=.lastTimestamp"}, FileName: filepath.Join("extras", "all-cluster-events.log")},
 		{Name: "pods-all", Args: []string{"get", "pods", "-A", "-o", "wide"}, FileName: filepath.Join("extras", "all-pods-wide.txt")},
 	}
+	if s.cfg.Collection.IncludePodMetrics {
+		jobs = append(jobs, job{
+			Name:     "pods-top-all",
+			Args:     []string{"top", "pods", "-A"},
+			FileName: filepath.Join("extras", "all-pods-top.txt"),
+		})
+	}
+	return jobs
 }
 
 func (s *Service) appendExtraKubectlJobs(jobs []job) []job {
@@ -206,6 +224,51 @@ func (s *Service) appendNodeDetailJobs(ctx context.Context, jobs []job) ([]job, 
 			job{Name: "describe-" + nodeSafe, Args: []string{"describe", node}, FileName: filepath.Join("nodes", nodeSafe+"-describe.txt")},
 			job{Name: "top-" + nodeSafe, Args: []string{"top", "node", nodeName}, FileName: filepath.Join("nodes", nodeSafe+"-top.txt")},
 		)
+	}
+	return jobs, nil
+}
+
+// kubeletLogQueryRawPath is the apiserver raw URL for kubelet logs via the node log query API
+// (Kubernetes 1.27+; kubelet must expose log query — see README).
+func kubeletLogQueryRawPath(nodeName string, tailLines int) string {
+	q := url.Values{}
+	q.Set("query", "kubelet")
+	if tailLines > 0 {
+		q.Set("tailLines", strconv.Itoa(tailLines))
+	}
+	return fmt.Sprintf("/api/v1/nodes/%s/proxy/logs/?%s", url.PathEscape(nodeName), q.Encode())
+}
+
+// nodeVarLogMessagesRawPath matches kubectl get --raw …/proxy/logs/messages (host /var/log/messages
+// when the kubelet exposes it; same pattern as node emergency log scripts).
+func nodeVarLogMessagesRawPath(nodeName string) string {
+	return fmt.Sprintf("/api/v1/nodes/%s/proxy/logs/messages", url.PathEscape(nodeName))
+}
+
+func (s *Service) appendNodeKubeletLogJobs(ctx context.Context, jobs []job) ([]job, error) {
+	if !s.cfg.Collection.IncludeNodeLogs {
+		return jobs, nil
+	}
+	nodes, err := s.list(ctx, []string{"get", "nodes", "-o", "name"})
+	if err != nil {
+		return nil, fmt.Errorf("list nodes for kubelet logs: %w", err)
+	}
+	tail := s.cfg.Collection.NodeLogTailLines
+	for _, node := range nodes {
+		nodeSafe := sanitize(node)
+		nodeName := strings.TrimPrefix(node, "node/")
+		raw := kubeletLogQueryRawPath(nodeName, tail)
+		jobs = append(jobs, job{
+			Name:     "node-log-kubelet-" + nodeSafe,
+			Args:     []string{"get", "--raw", raw},
+			FileName: filepath.Join("nodes", nodeSafe+"-kubelet.log"),
+		})
+		jobs = append(jobs, job{
+			Name:     "node-log-messages-" + nodeSafe,
+			Args:     []string{"get", "--raw", nodeVarLogMessagesRawPath(nodeName)},
+			FileName: filepath.Join("nodes", nodeSafe+"-messages.log"),
+			Optional: true,
+		})
 	}
 	return jobs, nil
 }
@@ -464,6 +527,77 @@ func sanitizeMessage(value string) string {
 	clean = dashes.ReplaceAllString(clean, "-")
 	clean = strings.Trim(clean, "-.")
 	return clean
+}
+
+// podLogArtifactRelPath is the capture-relative path for the main pod log file
+// (same pattern as kel: <namespace>/<pod>__<node>.log with sanitized segments).
+func podLogArtifactRelPath(namespace, podName, node string) string {
+	n := strings.TrimSpace(node)
+	if n == "" {
+		n = "unknown-node"
+	}
+	return filepath.ToSlash(filepath.Join(namespace, sanitize(podName)+"__"+sanitize(n)+".log"))
+}
+
+// buildPodLogPathIndex maps "namespace/podName" to the relative log path groot writes when it
+// collects logs (workloads when include_pod_logs; kube-system control-plane pods always).
+func (s *Service) buildPodLogPathIndex(ctx context.Context) map[string]string {
+	out := make(map[string]string)
+	if s.cfg.Collection.IncludePodLogs {
+		if refs, err := s.resolvePodsForLogs(ctx); err == nil {
+			for _, r := range refs {
+				name := strings.TrimSpace(r.Name)
+				if name == "" {
+					continue
+				}
+				ns := strings.TrimSpace(r.Namespace)
+				node := strings.TrimSpace(r.Node)
+				if node == "" {
+					node = "unknown-node"
+				}
+				out[ns+"/"+name] = podLogArtifactRelPath(ns, name, node)
+			}
+		}
+	}
+	lines, _ := s.list(ctx, []string{"get", "pods", "-n", "kube-system", "-l", "tier=control-plane", "--no-headers", "-o", "custom-columns=NAME:.metadata.name,NODE:.spec.nodeName"})
+	for _, item := range parseNameNodeLines(lines) {
+		if item.Name == "" {
+			continue
+		}
+		node := item.Node
+		if node == "" {
+			node = "unknown-node"
+		}
+		out["kube-system/"+item.Name] = podLogArtifactRelPath("kube-system", item.Name, node)
+	}
+	return out
+}
+
+func (s *Service) writePodNodePlacement(ctx context.Context, captureDir string) error {
+	raw, err := s.list(ctx, []string{"get", "pods", "-A", "--no-headers", "-o", "custom-columns=NS:.metadata.namespace,NAME:.metadata.name,NODE:.spec.nodeName"})
+	if err != nil {
+		return fmt.Errorf("list pods for placement: %w", err)
+	}
+	logPaths := s.buildPodLogPathIndex(ctx)
+
+	var b strings.Builder
+	b.WriteString("namespace\tpod\tnode\tpod_log_file\n")
+	for _, ref := range parsePodLines(raw) {
+		logRel := ""
+		if p, ok := logPaths[ref.Namespace+"/"+ref.Name]; ok {
+			logRel = p
+		}
+		b.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\n", ref.Namespace, ref.Name, ref.Node, logRel))
+	}
+
+	target := filepath.Join(captureDir, "extras", "all-pod-node-placement.tsv")
+	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+		return fmt.Errorf("create placement dir: %w", err)
+	}
+	if err := os.WriteFile(target, []byte(b.String()), 0o644); err != nil {
+		return fmt.Errorf("write placement: %w", err)
+	}
+	return nil
 }
 
 func (s *Service) writeMetadata(ctx context.Context, captureDir string) error {

@@ -1,9 +1,14 @@
 package collector
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -29,6 +34,8 @@ func TestService_Run_minimal(t *testing.T) {
 			IncludePodLogs:      false,
 			IncludePreviousLogs: false,
 			IncludeNodeDetails:  false,
+			IncludeNodeLogs:     false,
+			IncludePodMetrics:   false,
 			PodLogTailLines:     0,
 		},
 	}
@@ -82,7 +89,10 @@ func TestService_Run_fullFeatures(t *testing.T) {
 			IncludePodLogs:      true,
 			IncludePreviousLogs: true,
 			IncludeNodeDetails:  true,
+			IncludeNodeLogs:     true,
+			IncludePodMetrics:   true,
 			PodLogTailLines:     50,
+			NodeLogTailLines:    100,
 		},
 	}
 
@@ -103,6 +113,70 @@ func TestService_Run_fullFeatures(t *testing.T) {
 	}
 	if sum.ArchivePath == "" {
 		t.Fatal("no archive")
+	}
+}
+
+func TestService_Run_writesPodNodePlacementInArchive(t *testing.T) {
+	cleanup := kubemock.Install(t)
+	defer cleanup()
+
+	out := t.TempDir()
+	cfg := config.Config{
+		OutputDir: out,
+		Collection: config.CollectionCfg{
+			Timeout:             30 * time.Second,
+			WorkerConcurrency:   2,
+			IncludePodLogs:      true,
+			IncludeNodeDetails:  false,
+			IncludeNodeLogs:     false,
+			IncludePodMetrics:   false,
+			PodLogTailLines:     10,
+		},
+	}
+
+	sum, err := New(cfg).Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f, err := os.Open(sum.ArchivePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	gzr, err := gzip.NewReader(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer gzr.Close()
+
+	var placement []byte
+	tr := tar.NewReader(gzr)
+	for {
+		h, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasSuffix(h.Name, "extras/all-pod-node-placement.tsv") {
+			continue
+		}
+		placement, err = io.ReadAll(tr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		break
+	}
+	if len(placement) == 0 {
+		t.Fatal("all-pod-node-placement.tsv missing from archive")
+	}
+	if !bytes.Contains(placement, []byte("namespace\tpod\tnode\tpod_log_file")) {
+		t.Fatalf("header missing: %s", placement)
+	}
+	if !bytes.Contains(placement, []byte("default\tpod-a\tnode1")) {
+		t.Fatalf("row missing: %s", placement)
 	}
 }
 
@@ -133,6 +207,8 @@ func TestService_Run_noKubectlInPath(t *testing.T) {
 			WorkerConcurrency:  1,
 			IncludePodLogs:     false,
 			IncludeNodeDetails: false,
+			IncludeNodeLogs:    false,
+			IncludePodMetrics:  false,
 		},
 	}
 	svc := New(cfg)

@@ -57,6 +57,8 @@ collection:
   namespaces: []
   include_pod_logs: false
   include_node_details: false
+  include_node_logs: false
+  include_pod_metrics: false
 `
 	if err := os.WriteFile(cfgPath, []byte(yaml), 0o644); err != nil {
 		t.Fatal(err)

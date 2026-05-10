@@ -31,6 +31,9 @@ type CollectionCfg struct {
 	PodLogTailLines     int                         `mapstructure:"pod_log_tail_lines"`
 	PodLogsSince        string                      `mapstructure:"pod_logs_since"`
 	IncludeNodeDetails  bool                        `mapstructure:"include_node_details"`
+	IncludeNodeLogs     bool                        `mapstructure:"include_node_logs"`
+	NodeLogTailLines    int                         `mapstructure:"node_log_tail_lines"`
+	IncludePodMetrics   bool                        `mapstructure:"include_pod_metrics"`
 }
 
 type NamespaceTargets struct {
@@ -150,6 +153,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("collection.include_pod_logs", true)
 	v.SetDefault("collection.include_previous_logs", true)
 	v.SetDefault("collection.include_node_details", true)
+	v.SetDefault("collection.include_node_logs", true)
+	v.SetDefault("collection.node_log_tail_lines", 5000)
+	v.SetDefault("collection.include_pod_metrics", true)
 	v.SetDefault("collection.pod_log_tail_lines", 1500)
 	v.SetDefault("notify.slack.enabled", false)
 	v.SetDefault("notify.discord.enabled", false)

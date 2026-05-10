@@ -53,6 +53,16 @@ case "$j" in
   echo "NAME CPU(cores) CPU% MEMORY(bytes) MEMORY%"
   echo "node1 100m 1% 1000Mi 5%"
   ;;
+*top*pods*-A*)
+  echo "NAMESPACE NAME CPU(cores) MEMORY(bytes)"
+  echo "default pod-a 5m 10Mi"
+  ;;
+*proxy*logs*messages*)
+  echo "mock /var/log/messages line"
+  ;;
+*get*--raw*)
+  echo "kubelet mock log line"
+  ;;
 *get*all*-n*)
   echo "NAME READY UP-TO-DATE AVAILABLE AGE"
   ;;

@@ -62,6 +62,16 @@ collection:
   # When true, describe and top per node under nodes/ (extra kubectl per node).
   include_node_details: true
 
+  # When true, per-node: …/proxy/logs/?query=kubelet → nodes/<name>-kubelet.log and …/proxy/logs/messages → nodes/<name>-messages.log (optional).
+  # Needs nodes/proxy; kubelet/node log APIs vary by cluster (see README).
+  include_node_logs: true
+
+  # Max log lines per node kubelet capture when >0; 0 omits tailLines (API default).
+  node_log_tail_lines: 5000
+
+  # When true, kubectl top pods -A into extras/all-pods-top.txt (needs metrics-server; same instant as other jobs in the run).
+  include_pod_metrics: true
+
   # Optional extra read-only kubectl lines (split on spaces, no shell). Allowlisted verbs only; see README.
   extra_kubectl:
     - "get componentstatuses"

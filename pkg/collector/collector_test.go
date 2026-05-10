@@ -8,6 +8,31 @@ import (
 	"github.com/hrodrig/groot/pkg/config"
 )
 
+func TestKubeletLogQueryRawPath(t *testing.T) {
+	if got := kubeletLogQueryRawPath("node-1", 100); got != "/api/v1/nodes/node-1/proxy/logs/?query=kubelet&tailLines=100" {
+		t.Fatalf("got %q", got)
+	}
+	if got := kubeletLogQueryRawPath("my.node.local", 0); got != "/api/v1/nodes/my.node.local/proxy/logs/?query=kubelet" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestNodeVarLogMessagesRawPath(t *testing.T) {
+	if got := nodeVarLogMessagesRawPath("node-1"); got != "/api/v1/nodes/node-1/proxy/logs/messages" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestPodLogArtifactRelPath(t *testing.T) {
+	got := podLogArtifactRelPath("default", "my-pod", "node-1")
+	if got != "default/my-pod__node-1.log" {
+		t.Fatalf("got %q", got)
+	}
+	if podLogArtifactRelPath("ns", "p", "") != "ns/p__unknown-node.log" {
+		t.Fatal("empty node")
+	}
+}
+
 func TestSanitize(t *testing.T) {
 	if got := sanitize("a/b:c d"); got != "a_b_c_d" {
 		t.Fatalf("got %q", got)

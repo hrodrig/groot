@@ -124,13 +124,13 @@ func TestService_Run_writesPodNodePlacementInArchive(t *testing.T) {
 	cfg := config.Config{
 		OutputDir: out,
 		Collection: config.CollectionCfg{
-			Timeout:             30 * time.Second,
-			WorkerConcurrency:   2,
-			IncludePodLogs:      true,
-			IncludeNodeDetails:  false,
-			IncludeNodeLogs:     false,
-			IncludePodMetrics:   false,
-			PodLogTailLines:     10,
+			Timeout:            30 * time.Second,
+			WorkerConcurrency:  2,
+			IncludePodLogs:     true,
+			IncludeNodeDetails: false,
+			IncludeNodeLogs:    false,
+			IncludePodMetrics:  false,
+			PodLogTailLines:    10,
 		},
 	}
 

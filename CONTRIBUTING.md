@@ -17,8 +17,8 @@ Use focused branches, for example `fix/short-topic` or `feat/short-topic`.
 ## Before you open a PR
 
 1. **Format:** `make lint-fix` (applies `gofmt -s` across the tree).
-2. **Verify:** `make ci` runs `go vet` and `go test -race` (same idea as the GitHub Actions test job).
-3. **Broader check (optional):** `make all` adds coverage and cyclomatic complexity checks; maintainers use `make release-check` before releases (includes merged coverage gate `COVER_MIN`, security scans, and GoReleaser config validation). That target runs `make cover` (tests with `-race` plus coverage floor), `lint`, and `security`.
+2. **Verify:** `make ci` runs **`fmt-check`** (same `gofmt -s` gate as CI), **`go vet`**, **`gocyclo`**, and **`go test -race`** — it matches the GitHub Actions **lint** and **test** jobs.
+3. **Broader check (optional):** `make all` adds merged coverage and a build; maintainers run **`make release-check`** before tagging a release (GoReleaser config, **`fmt-check`**, **`lint`**, **`cover`** with `COVER_MIN`, **`security`**, and optionally **`STRICT_RELEASE=1`** for **`docker-scan`**).
 
 Keep commits scoped and messages understandable.
 

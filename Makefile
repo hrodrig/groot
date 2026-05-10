@@ -39,13 +39,13 @@ DOCKER_BUILD_ARGS := \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build test cover fmt lint-fix lint vet run clean install docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan
+.PHONY: help all build test cover fmt fmt-check lint-fix lint vet run clean install docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan
 
 help:
 	@echo "Available targets:"
 	@echo "  make all            fmt, vet, test, gocyclo, cover, build"
 	@echo "  make build          Build local binary"
-	@echo "  make ci             Run lint and tests (same bundle as local CI)"
+	@echo "  make ci             gofmt -s check, go vet, gocyclo, tests (matches GitHub CI lint + test jobs)"
 	@echo "  make clean          Remove everything under bin/ except bin/.keep"
 	@echo "  make cover          Merged coverage (coverage.out); gate with COVER_MIN (default 80; needs bc)"
 	@echo "  make docker-build   Build container image with Docker"
@@ -59,7 +59,8 @@ help:
 	@echo "  make install        Install binary to GOPATH bin (user-writable)"
 	@echo "  make lint           Run go vet"
 	@echo "  make lint-fix       gofmt -s -w . (simplify with gofmt -s)"
-	@echo "  make release-check  VERSION semver + goreleaser check + lint + cover + security"
+	@echo "  make fmt-check      Fail if gofmt -s would change any file (same as CI)"
+	@echo "  make release-check  VERSION semver + goreleaser + fmt-check + vet + cover + security"
 	@echo "  make run            Run collector with default config"
 	@echo "  make scan           Build amd64/arm64 images and scan both with Grype"
 	@echo "  make security       govulncheck + gocyclo + grype (dir scan)"
@@ -102,6 +103,15 @@ fmt:
 
 lint-fix:
 	gofmt -s -w .
+
+# Same check as .github/workflows/ci.yml (lint job, formatting step).
+fmt-check:
+	@out=$$(gofmt -s -l .); \
+	if [ -n "$$out" ]; then \
+		echo "Run: make lint-fix"; \
+		echo "$$out"; \
+		exit 1; \
+	fi
 
 lint:
 	go vet ./...
@@ -153,8 +163,8 @@ govulncheck:
 
 vulncheck: govulncheck
 
-ci: lint test
-	@echo "OK: lint, test"
+ci: fmt-check lint gocyclo test
+	@echo "OK: ci (fmt-check, vet, gocyclo, test)"
 
 # Fail if any function has cyclomatic complexity >= 15 (gocyclo: complexity > 14).
 gocyclo:
@@ -173,7 +183,7 @@ grype:
 security: govulncheck gocyclo grype
 	@echo "OK: security (govulncheck, gocyclo, grype)"
 
-# Semver + goreleaser check + lint + cover + security (+ optional docker-scan when STRICT_RELEASE=1).
+# Semver + goreleaser + fmt-check (CI parity) + vet + cover + security (+ optional docker-scan when STRICT_RELEASE=1).
 release-check:
 	@test -f VERSION || { echo "VERSION file is required"; exit 1; }
 	@echo "Release version: $(VERSION) (tag: $(TAG))"
@@ -182,6 +192,7 @@ release-check:
 	@git remote get-url origin >/dev/null 2>&1 || { echo "release-check requires git remote origin (GoReleaser scm validation)"; exit 1; }
 	@command -v goreleaser >/dev/null 2>&1 || { echo "goreleaser is required. Install from https://goreleaser.com/install/"; exit 1; }
 	goreleaser check
+	@$(MAKE) fmt-check
 	@$(MAKE) lint
 	@$(MAKE) cover
 	@$(MAKE) security

@@ -23,6 +23,18 @@ func TestNodeVarLogMessagesRawPath(t *testing.T) {
 	}
 }
 
+func TestParseKubectlTopPodsAll(t *testing.T) {
+	in := "NAMESPACE     NAME                     CPU(cores)   MEMORY(bytes)   \ndefault       pod-a                    5m           10Mi\n"
+	m := parseKubectlTopPodsAll(in)
+	got, ok := m["default/pod-a"]
+	if !ok || got.CPU != "5m" || got.Mem != "10Mi" {
+		t.Fatalf("%#v", m)
+	}
+	if len(m) != 1 {
+		t.Fatalf("expected 1 row, got %d", len(m))
+	}
+}
+
 func TestPodLogArtifactRelPath(t *testing.T) {
 	got := podLogArtifactRelPath("default", "my-pod", "node-1")
 	if got != "default/my-pod__node-1.log" {

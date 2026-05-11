@@ -180,6 +180,70 @@ func TestService_Run_writesPodNodePlacementInArchive(t *testing.T) {
 	}
 }
 
+func TestService_Run_writesPodRCAInArchive(t *testing.T) {
+	cleanup := kubemock.Install(t)
+	defer cleanup()
+
+	out := t.TempDir()
+	cfg := config.Config{
+		OutputDir: out,
+		Collection: config.CollectionCfg{
+			Timeout:            30 * time.Second,
+			WorkerConcurrency:  2,
+			IncludePodLogs:     true,
+			IncludeNodeDetails: false,
+			IncludeNodeLogs:    false,
+			IncludePodMetrics:  true,
+			PodLogTailLines:    10,
+		},
+	}
+
+	sum, err := New(cfg).Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f, err := os.Open(sum.ArchivePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	gzr, err := gzip.NewReader(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer gzr.Close()
+
+	var rca []byte
+	tr := tar.NewReader(gzr)
+	for {
+		h, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasSuffix(h.Name, "extras/all-pods-rca.tsv") {
+			continue
+		}
+		rca, err = io.ReadAll(tr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		break
+	}
+	if len(rca) == 0 {
+		t.Fatal("all-pods-rca.tsv missing from archive")
+	}
+	if !bytes.Contains(rca, []byte("namespace\tpod\tnode\tcpu_cores\tmemory_bytes\tpod_log_file")) {
+		t.Fatalf("header: %s", rca)
+	}
+	if !bytes.Contains(rca, []byte("default\tpod-a\tnode1\t5m\t10Mi")) {
+		t.Fatalf("expected merged metrics row: %s", rca)
+	}
+}
+
 func TestReadKubeMetadata_withMock(t *testing.T) {
 	cleanup := kubemock.Install(t)
 	defer cleanup()

@@ -126,6 +126,10 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	summary.OutputDir = captureDir
 	summary.Duration = time.Since(start)
 
+	if err := s.writePodRCATable(captureDir); err != nil {
+		s.invokeOnFailed("pod-rca-table", err)
+	}
+
 	clusterName := "unknown-cluster"
 	if meta, err := s.ReadKubeMetadata(ctx); err == nil {
 		if strings.TrimSpace(meta.Cluster) != "" {
@@ -571,6 +575,77 @@ func (s *Service) buildPodLogPathIndex(ctx context.Context) map[string]string {
 		out["kube-system/"+item.Name] = podLogArtifactRelPath("kube-system", item.Name, node)
 	}
 	return out
+}
+
+type topPodMetrics struct {
+	CPU string
+	Mem string
+}
+
+// parseKubectlTopPodsAll parses kubectl top pods -A output (tab- or space-separated rows).
+func parseKubectlTopPodsAll(content string) map[string]topPodMetrics {
+	out := make(map[string]topPodMetrics)
+	for _, line := range strings.Split(strings.ReplaceAll(content, "\r\n", "\n"), "\n") {
+		line = strings.TrimSpace(strings.TrimSuffix(line, "\r"))
+		if line == "" {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 4 {
+			continue
+		}
+		if fields[0] == "NAMESPACE" {
+			continue
+		}
+		ns, name, cpu, mem := fields[0], fields[1], fields[2], fields[3]
+		out[ns+"/"+name] = topPodMetrics{CPU: cpu, Mem: mem}
+	}
+	return out
+}
+
+// writePodRCATable merges all-pod-node-placement.tsv with all-pods-top.txt (when present)
+// into extras/all-pods-rca.tsv — one table for RCA (kel-style pod/node + CPU/RAM + log path).
+func (s *Service) writePodRCATable(captureDir string) error {
+	placementPath := filepath.Join(captureDir, "extras", "all-pod-node-placement.tsv")
+	raw, err := os.ReadFile(placementPath)
+	if err != nil {
+		return fmt.Errorf("read all-pod-node-placement.tsv: %w", err)
+	}
+	topPath := filepath.Join(captureDir, "extras", "all-pods-top.txt")
+	var metrics map[string]topPodMetrics
+	if b, readErr := os.ReadFile(topPath); readErr == nil {
+		metrics = parseKubectlTopPodsAll(string(b))
+	}
+
+	var b strings.Builder
+	b.WriteString("namespace\tpod\tnode\tcpu_cores\tmemory_bytes\tpod_log_file\n")
+	for _, line := range strings.Split(strings.ReplaceAll(string(raw), "\r\n", "\n"), "\n") {
+		line = strings.TrimSpace(strings.TrimSuffix(line, "\r"))
+		if line == "" {
+			continue
+		}
+		if strings.HasPrefix(line, "namespace\tpod\tnode\tpod_log_file") {
+			continue
+		}
+		parts := strings.Split(line, "\t")
+		if len(parts) < 4 {
+			continue
+		}
+		ns, pod, node, logFile := parts[0], parts[1], parts[2], parts[3]
+		cpu, mem := "", ""
+		if metrics != nil {
+			if m, ok := metrics[ns+"/"+pod]; ok {
+				cpu, mem = m.CPU, m.Mem
+			}
+		}
+		b.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", ns, pod, node, cpu, mem, logFile))
+	}
+
+	target := filepath.Join(captureDir, "extras", "all-pods-rca.tsv")
+	if err := os.WriteFile(target, []byte(b.String()), 0o644); err != nil {
+		return fmt.Errorf("write all-pods-rca.tsv: %w", err)
+	}
+	return nil
 }
 
 func (s *Service) writePodNodePlacement(ctx context.Context, captureDir string) error {

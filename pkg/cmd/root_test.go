@@ -32,6 +32,23 @@ func TestRoot_printSampleConfig(t *testing.T) {
 	}
 }
 
+func TestRoot_printSampleConfig_goesToStdout(t *testing.T) {
+	resetPersistentFlags(t)
+	var out, errBuf bytes.Buffer
+	rootCmd.SetOut(&out)
+	rootCmd.SetErr(&errBuf)
+	rootCmd.SetArgs([]string{"--print-sample-config"})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if out.Len() == 0 || !strings.Contains(out.String(), "collection:") {
+		t.Fatalf("expected sample on stdout, got %q", out.String())
+	}
+	if errBuf.Len() != 0 {
+		t.Fatalf("sample must not go to stderr (breaks shell redirect); stderr=%q", errBuf.String())
+	}
+}
+
 func TestCollect_printSampleConfig(t *testing.T) {
 	resetPersistentFlags(t)
 	var buf bytes.Buffer

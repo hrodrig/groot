@@ -38,8 +38,9 @@ var rootCmd = &cobra.Command{
 	Long:  "groot collects as many Kubernetes logs and diagnostics as possible for worker nodes, control plane components, and workloads.",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if printSampleConfig {
-			cmd.Print(config.SampleYAML())
-			return nil
+			// Write to stdout so shell redirects (`> file`) work. Cobra's cmd.Print uses stderr.
+			_, err := fmt.Fprint(cmd.OutOrStdout(), config.SampleYAML())
+			return err
 		}
 		if testConnection {
 			cfg, err := config.Load(cfgFile)
@@ -75,8 +76,9 @@ var collectCmd = &cobra.Command{
 		logger := logx.New(verbose, quiet, noColor)
 
 		if printSampleConfig {
-			cmd.Print(config.SampleYAML())
-			return nil
+			// Write to stdout so shell redirects (`> file`) work. Cobra's cmd.Print uses stderr.
+			_, err := fmt.Fprint(cmd.OutOrStdout(), config.SampleYAML())
+			return err
 		}
 
 		if _, err := exec.LookPath("kubectl"); err != nil {

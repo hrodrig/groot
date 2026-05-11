@@ -56,6 +56,8 @@ GROOT is a Go CLI (Cobra + Viper) that collects broad Kubernetes diagnostics, in
 - Optional notifications (Slack, Discord, Teams, PagerDuty, Telegram, generic webhooks)
 - Rootless container image support
 
+**Libraries** (see [`go.mod`](go.mod)): [Cobra](https://github.com/spf13/cobra) **v1.10.2**, [Viper](https://github.com/spf13/viper) **v1.21.0**.
+
 [↑ Back to top](#readme-top)
 
 ## Requirements
@@ -167,6 +169,8 @@ If you do not have a config file yet, print a sample and save it:
 ```bash
 ./bin/groot --print-sample-config > groot.yml
 ```
+
+The sample YAML is written to **standard output**, so shell redirection (`>`) works as shown. If you use an **older** `groot` binary where `>` produced an empty file, redirect **stderr** instead: `groot --print-sample-config 2> groot.yml`.
 
 The generated file is a **template only**. Open `groot.yml` and set **your own** values for your environment—for example `kubeconfig` (if not using the default), `collection.namespaces`, workloads under `collection.targets` (deployments, StatefulSets, DaemonSets, Helm releases), `output_dir` / `file_prefix`, and any `notify.*` URLs or secrets. Until you do, the sample names and disabled notification blocks will not match a real cluster.
 

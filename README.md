@@ -106,7 +106,7 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 **404 on `groot_v0.1.6_amd64.deb`:** the file on GitHub is **`groot_0.1.6_amd64.deb`** (no `v` in the basename). **Empty `TAG`:** if `jq`/`python3` failed, you get `.../download//groot__amd64.deb` and **`./groot__amd64.deb`** from `apt`.
 
-`groot` is installed to `/usr/bin`. The package drops a **sample** at **`/etc/groot/groot.yml.sample`** (from `configs/groot.yml.sample` in the repo). With no **`--config`**, discovery is **`./groot.yml`**, then **`~/.groot/groot.yml`**, then **`/etc/groot/groot.yml`**, then **`/etc/groot/groot.yml.sample`**. Use a per-user copy under **`~/.groot/`**, **`sudo cp /etc/groot/groot.yml.sample /etc/groot/groot.yml`** for a machine-wide config, or **`--config /path/to/file.yaml`**. Use `arm64` in the download filename on ARM64.
+`groot` is installed to `/usr/bin`. The package drops a **sample** at **`/etc/groot/groot.yml.sample`** (from `configs/groot.yml.sample` in the repo) as a **template**; it is **not** read unless you pass **`--config`**. With no **`--config`**, discovery is **`./groot.yml`**, then **`~/.groot/groot.yml`**, then **`/etc/groot/groot.yml`**, then built-in defaults. Use a per-user file under **`~/.groot/`**, **`sudo cp /etc/groot/groot.yml.sample /etc/groot/groot.yml`** for a machine-wide config, or **`--config /path/to/file.yaml`**. Use `arm64` in the download filename on ARM64.
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
@@ -185,7 +185,9 @@ Default config discovery order (when `--config` is not provided). The **first ex
 1. `./groot.yml`
 2. `~/.groot/groot.yml`
 3. `/etc/groot/groot.yml`
-4. `/etc/groot/groot.yml.sample` (sample from the `.deb` / `.rpm` package)
+4. built-in defaults (then `GROOT_*` env overrides where applicable)
+
+The **`.deb` / `.rpm`** sample at **`/etc/groot/groot.yml.sample`** is not part of this chain; copy it to **`groot.yml`** or pass **`--config /etc/groot/groot.yml.sample`** explicitly.
 
 You can always override file discovery with `--config` (see [Usage examples](#usage-examples)).
 
@@ -197,7 +199,7 @@ Paths below use `./bin/groot` after `make build`; if you installed from [Release
 
 ### Use a specific config file
 
-Paths under **`./`**, **`~/.groot/`**, and **`/etc/groot/`** (`groot.yml`, `groot.yml.sample`) are discovered automatically (see [First run](#first-run)). Any other path **must** be passed explicitly:
+Paths **`./groot.yml`**, **`~/.groot/groot.yml`**, and **`/etc/groot/groot.yml`** are discovered automatically (see [First run](#first-run)). Any other path—including **`/etc/groot/groot.yml.sample`**—**must** be passed explicitly:
 
 ```bash
 ./bin/groot collect --config /path/to/my-groot.yml
@@ -398,8 +400,7 @@ Configuration file precedence:
 2. `./groot.yml`
 3. `~/.groot/groot.yml`
 4. `/etc/groot/groot.yml`
-5. `/etc/groot/groot.yml.sample`
-6. defaults
+5. defaults
 
 `kubeconfig` precedence:
 

@@ -169,10 +169,10 @@ func setDefaults(v *viper.Viper) {
 }
 
 // defaultEtcConfigPaths are tried after ./groot.yml and ~/.groot/groot.yml (first existing file wins).
-// Packages ship a sample at /etc/groot/groot.yml.sample; site-wide overrides use /etc/groot/groot.yml.
+// Site-wide config is /etc/groot/groot.yml. A packaged groot.yml.sample is documentation only;
+// it is not auto-loaded (use --config or copy to groot.yml).
 var defaultEtcConfigPaths = []string{
 	"/etc/groot/groot.yml",
-	"/etc/groot/groot.yml.sample",
 }
 
 func readDefaultConfig(v *viper.Viper) error {

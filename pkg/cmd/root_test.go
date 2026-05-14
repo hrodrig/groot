@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hrodrig/groot/pkg/kubemock"
+	"github.com/hrodrig/groot/pkg/kubetest"
 )
 
 func resetPersistentFlags(t *testing.T) {
@@ -65,12 +65,13 @@ func TestCollect_printSampleConfig(t *testing.T) {
 
 func TestRoot_testConnection(t *testing.T) {
 	resetPersistentFlags(t)
-	cleanup := kubemock.Install(t)
+	kc, cleanup := kubetest.StartAPIServer(t)
 	defer cleanup()
 
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "c.yaml")
-	if err := os.WriteFile(cfgPath, []byte("notify:\n  slack: { enabled: false }\n"), 0o644); err != nil {
+	yaml := "kubeconfig: " + fmt.Sprintf("%q", filepath.ToSlash(kc)) + "\nnotify:\n  slack: { enabled: false }\n"
+	if err := os.WriteFile(cfgPath, []byte(yaml), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -88,12 +89,12 @@ func TestRoot_testConnection(t *testing.T) {
 
 func TestCollect_quietRun(t *testing.T) {
 	resetPersistentFlags(t)
-	cleanup := kubemock.Install(t)
+	kc, cleanup := kubetest.StartAPIServer(t)
 	defer cleanup()
 
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "c.yaml")
-	yaml := `
+	yaml := "kubeconfig: " + fmt.Sprintf("%q", filepath.ToSlash(kc)) + `
 output_dir: ` + filepath.ToSlash(dir) + `
 notify:
   slack: { enabled: false }
@@ -120,29 +121,25 @@ collection:
 	}
 }
 
-func TestCollect_kubectlMissing(t *testing.T) {
+func TestCollect_kubeconfigMissing(t *testing.T) {
 	resetPersistentFlags(t)
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "c.yaml")
-	if err := os.WriteFile(cfgPath, []byte("notify:\n  slack: { enabled: false }\n"), 0o644); err != nil {
+	if err := os.WriteFile(cfgPath, []byte("kubeconfig: \"/no/such/kubeconfig\"\nnotify:\n  slack: { enabled: false }\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-
-	old := os.Getenv("PATH")
-	t.Cleanup(func() { _ = os.Setenv("PATH", old) })
-	_ = os.Setenv("PATH", t.TempDir())
 
 	rootCmd.SetOut(bytes.NewBuffer(nil))
 	rootCmd.SetErr(bytes.NewBuffer(nil))
 	rootCmd.SetArgs([]string{"collect", "--quiet", "--config", cfgPath})
 	if err := rootCmd.Execute(); err == nil {
-		t.Fatal("expected error when kubectl missing")
+		t.Fatal("expected error when kubeconfig file is missing")
 	}
 }
 
 func TestCollect_noNotifySkipsFailedSlack(t *testing.T) {
 	resetPersistentFlags(t)
-	cleanup := kubemock.Install(t)
+	kc, cleanup := kubetest.StartAPIServer(t)
 	defer cleanup()
 
 	failSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -152,7 +149,7 @@ func TestCollect_noNotifySkipsFailedSlack(t *testing.T) {
 
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "c.yaml")
-	yaml := fmt.Sprintf(`
+	yaml := "kubeconfig: " + fmt.Sprintf("%q", filepath.ToSlash(kc)) + fmt.Sprintf(`
 output_dir: %s
 notify:
   slack:

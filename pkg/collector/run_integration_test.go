@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,17 +13,24 @@ import (
 	"testing"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/rest"
+	ktesting "k8s.io/client-go/testing"
+
 	"github.com/hrodrig/groot/pkg/config"
-	"github.com/hrodrig/groot/pkg/kubemock"
+	"github.com/hrodrig/groot/pkg/kubetest"
 )
 
 func TestService_Run_minimal(t *testing.T) {
-	cleanup := kubemock.Install(t)
+	kc, cleanup := kubetest.StartAPIServer(t)
 	defer cleanup()
 
 	out := t.TempDir()
 	cfg := config.Config{
-		Kubeconfig: "",
+		Kubeconfig: kc,
 		OutputDir:  out,
 		FilePrefix: "pfx",
 		Collection: config.CollectionCfg{
@@ -70,12 +78,12 @@ func TestService_Run_minimal(t *testing.T) {
 }
 
 func TestService_Run_fullFeatures(t *testing.T) {
-	cleanup := kubemock.Install(t)
+	kc, cleanup := kubetest.StartAPIServer(t)
 	defer cleanup()
 
 	out := t.TempDir()
 	cfg := config.Config{
-		Kubeconfig: "",
+		Kubeconfig: kc,
 		OutputDir:  out,
 		FilePrefix: "pfx",
 		Collection: config.CollectionCfg{
@@ -117,12 +125,13 @@ func TestService_Run_fullFeatures(t *testing.T) {
 }
 
 func TestService_Run_writesPodNodePlacementInArchive(t *testing.T) {
-	cleanup := kubemock.Install(t)
+	kc, cleanup := kubetest.StartAPIServer(t)
 	defer cleanup()
 
 	out := t.TempDir()
 	cfg := config.Config{
-		OutputDir: out,
+		Kubeconfig: kc,
+		OutputDir:  out,
 		Collection: config.CollectionCfg{
 			Timeout:            30 * time.Second,
 			WorkerConcurrency:  2,
@@ -181,12 +190,13 @@ func TestService_Run_writesPodNodePlacementInArchive(t *testing.T) {
 }
 
 func TestService_Run_writesPodRCAInArchive(t *testing.T) {
-	cleanup := kubemock.Install(t)
+	kc, cleanup := kubetest.StartAPIServer(t)
 	defer cleanup()
 
 	out := t.TempDir()
 	cfg := config.Config{
-		OutputDir: out,
+		Kubeconfig: kc,
+		OutputDir:  out,
 		Collection: config.CollectionCfg{
 			Timeout:            30 * time.Second,
 			WorkerConcurrency:  2,
@@ -244,11 +254,30 @@ func TestService_Run_writesPodRCAInArchive(t *testing.T) {
 	}
 }
 
-func TestReadKubeMetadata_withMock(t *testing.T) {
-	cleanup := kubemock.Install(t)
-	defer cleanup()
+func TestReadKubeMetadata_fromKubeconfigFile(t *testing.T) {
+	dir := t.TempDir()
+	kc := filepath.Join(dir, "kc")
+	content := `apiVersion: v1
+kind: Config
+current-context: ctx1
+contexts:
+- name: ctx1
+  context:
+    cluster: my-cluster
+    user: u1
+clusters:
+- name: my-cluster
+  cluster:
+    server: https://127.0.0.1
+users:
+- name: u1
+  user: {}
+`
+	if err := os.WriteFile(kc, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
-	svc := New(config.Config{})
+	svc := New(config.Config{Kubeconfig: kc})
 	meta, err := svc.ReadKubeMetadata(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -258,14 +287,11 @@ func TestReadKubeMetadata_withMock(t *testing.T) {
 	}
 }
 
-func TestService_Run_noKubectlInPath(t *testing.T) {
+func TestService_Run_invalidKubeconfig(t *testing.T) {
 	out := t.TempDir()
-	old := os.Getenv("PATH")
-	t.Cleanup(func() { _ = os.Setenv("PATH", old) })
-	_ = os.Setenv("PATH", t.TempDir())
-
 	cfg := config.Config{
-		OutputDir: out,
+		Kubeconfig: filepath.Join(t.TempDir(), "nonexistent-kubeconfig"),
+		OutputDir:  out,
 		Collection: config.CollectionCfg{
 			Timeout:            5 * time.Second,
 			WorkerConcurrency:  1,
@@ -275,42 +301,51 @@ func TestService_Run_noKubectlInPath(t *testing.T) {
 			IncludePodMetrics:  false,
 		},
 	}
-	svc := New(cfg)
-	sum, err := svc.Run(context.Background())
-	if err != nil {
-		t.Fatalf("Run returned error (failed jobs are OK): %v", err)
-	}
-	if sum.Failed == 0 || sum.Total == 0 {
-		t.Fatalf("expected kubectl failures when binary missing: total=%d failed=%d", sum.Total, sum.Failed)
+	_, err := New(cfg).Run(context.Background())
+	if err == nil {
+		t.Fatal("expected error when kubeconfig file is missing")
 	}
 }
 
 func TestService_buildJobs_nodeListFails(t *testing.T) {
-	old := os.Getenv("PATH")
-	t.Cleanup(func() { _ = os.Setenv("PATH", old) })
-	_ = os.Setenv("PATH", t.TempDir())
-
+	cs := fake.NewSimpleClientset()
+	cs.Fake.PrependReactor("list", "nodes", func(_ ktesting.Action) (bool, runtime.Object, error) {
+		return true, &corev1.NodeList{}, fmt.Errorf("simulated node list failure")
+	})
 	svc := New(config.Config{
 		Collection: config.CollectionCfg{
 			IncludeNodeDetails: true,
 		},
 	})
+	svc.clientset = cs
+	svc.restConfig = &rest.Config{Host: "http://test.local"}
+	if err := svc.initK8s(); err != nil {
+		t.Fatal(err)
+	}
 	_, err := svc.buildJobs(context.Background())
 	if err == nil {
-		t.Fatal("expected error listing nodes without kubectl")
+		t.Fatal("expected error listing nodes")
 	}
 }
 
 func TestService_resolvePodsForLogs_noTargetsUsesLines(t *testing.T) {
-	cleanup := kubemock.Install(t)
-	defer cleanup()
-
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "pod-a", Labels: map[string]string{"app.kubernetes.io/name": "api"}},
+		Spec:       corev1.PodSpec{NodeName: "node1"},
+		Status:     corev1.PodStatus{Phase: corev1.PodRunning},
+	}
+	cs := fake.NewSimpleClientset(pod)
 	svc := New(config.Config{
 		Collection: config.CollectionCfg{
 			IncludePodLogs: true,
 			Targets:        nil,
 		},
 	})
+	svc.clientset = cs
+	svc.restConfig = &rest.Config{Host: "http://test.local"}
+	if err := svc.initK8s(); err != nil {
+		t.Fatal(err)
+	}
 	refs, err := svc.resolvePodsForLogs(context.Background())
 	if err != nil {
 		t.Fatal(err)

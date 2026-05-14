@@ -2,7 +2,7 @@
 
 ## Scope
 
-This policy covers the GROOT CLI, its configuration handling, optional notification integrations (Slack, Telegram, Teams), and the published container image. GROOT runs `kubectl` and writes diagnostics to disk; treat output archives as potentially sensitive (see [README](README.md)).
+This policy covers the GROOT CLI, its configuration handling, optional notification integrations (Slack, Telegram, Teams), and the published container image. GROOT uses the Kubernetes API (client-go) and writes diagnostics to disk; treat output archives as potentially sensitive (see [README](README.md)).
 
 ## Supported versions
 

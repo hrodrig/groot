@@ -205,18 +205,6 @@ func TestCaptureSessionBase(t *testing.T) {
 	}
 }
 
-func TestKubectlArgs(t *testing.T) {
-	s := New(config.Config{Kubeconfig: ""})
-	if got := s.kubectlArgs([]string{"get", "pods"}); len(got) != 2 || got[0] != "get" {
-		t.Fatalf("%#v", got)
-	}
-	s2 := New(config.Config{Kubeconfig: "/tmp/k"})
-	got2 := s2.kubectlArgs([]string{"get", "pods"})
-	if len(got2) != 4 || got2[0] != "--kubeconfig" || got2[1] != "/tmp/k" {
-		t.Fatalf("%#v", got2)
-	}
-}
-
 func TestEnsureGroupDirs(t *testing.T) {
 	root := t.TempDir()
 	s := New(config.Config{

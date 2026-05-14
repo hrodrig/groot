@@ -6,8 +6,8 @@ import (
 )
 
 // ValidateExtraKubectl ensures each collection.extra_kubectl line uses an allowlisted,
-// read-oriented kubectl subcommand (or config view / auth can-i). Groot invokes kubectl
-// with argv slices (no shell), but limiting verbs reduces risk from mis-edited config.
+// read-oriented subcommand (or config view / auth can-i). Groot runs these via the
+// Kubernetes client with argv slices (no shell), but limiting verbs reduces risk from mis-edited config.
 func ValidateExtraKubectl(cmds []string) error {
 	for i, raw := range cmds {
 		cmd := strings.TrimSpace(raw)
@@ -32,8 +32,8 @@ func ValidateExtraKubectl(cmds []string) error {
 
 func extraKubectlSubcommandAllowed(sub string, parts []string) bool {
 	switch sub {
-	case "get", "describe", "explain", "top", "logs",
-		"api-resources", "api-versions", "version", "cluster-info", "wait":
+	case "get", "describe", "top", "logs",
+		"api-resources", "api-versions", "version", "cluster-info":
 		return true
 	case "config":
 		return len(parts) >= 2 && strings.EqualFold(parts[1], "view")

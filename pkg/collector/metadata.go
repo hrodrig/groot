@@ -2,28 +2,11 @@ package collector
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
-)
 
-type kubeconfigView struct {
-	CurrentContext string `json:"current-context"`
-	Contexts       []struct {
-		Name    string `json:"name"`
-		Context struct {
-			Cluster string `json:"cluster"`
-			User    string `json:"user"`
-		} `json:"context"`
-	} `json:"contexts"`
-	Clusters []struct {
-		Name    string `json:"name"`
-		Cluster struct {
-			Server string `json:"server"`
-		} `json:"cluster"`
-	} `json:"clusters"`
-}
+	"github.com/hrodrig/groot/pkg/kubeloader"
+)
 
 type kubeMeta struct {
 	Context string
@@ -32,39 +15,30 @@ type kubeMeta struct {
 	Server  string
 }
 
-// ReadKubeMetadata extracts context, cluster, and server metadata from kubeconfig.
+// ReadKubeMetadata extracts context, cluster, and server metadata from kubeconfig (no cluster call).
 func (s *Service) ReadKubeMetadata(ctx context.Context) (kubeMeta, error) {
-	cmd := exec.CommandContext(ctx, "kubectl", s.kubectlArgs([]string{"config", "view", "-o", "json"})...)
-	out, err := cmd.Output()
+	_ = ctx
+	raw, err := kubeloader.APIConfig(s.cfg.Kubeconfig)
 	if err != nil {
-		return kubeMeta{}, fmt.Errorf("kubectl config view: %w", err)
-	}
-
-	var view kubeconfigView
-	if err := json.Unmarshal(out, &view); err != nil {
-		return kubeMeta{}, fmt.Errorf("parse kubeconfig json: %w", err)
+		return kubeMeta{}, fmt.Errorf("load kubeconfig: %w", err)
 	}
 
 	meta := kubeMeta{
-		Context: strings.TrimSpace(view.CurrentContext),
+		Context: strings.TrimSpace(raw.CurrentContext),
 	}
 	if meta.Context == "" {
 		return meta, nil
 	}
 
-	for _, item := range view.Contexts {
-		if item.Name == meta.Context {
-			meta.Cluster = strings.TrimSpace(item.Context.Cluster)
-			meta.User = strings.TrimSpace(item.Context.User)
-			break
-		}
+	ctxCfg, ok := raw.Contexts[meta.Context]
+	if !ok {
+		return meta, nil
 	}
+	meta.Cluster = strings.TrimSpace(ctxCfg.Cluster)
+	meta.User = strings.TrimSpace(ctxCfg.AuthInfo)
 
-	for _, item := range view.Clusters {
-		if item.Name == meta.Cluster {
-			meta.Server = strings.TrimSpace(item.Cluster.Server)
-			break
-		}
+	if cl, ok := raw.Clusters[meta.Cluster]; ok {
+		meta.Server = strings.TrimSpace(cl.Server)
 	}
 
 	return meta, nil

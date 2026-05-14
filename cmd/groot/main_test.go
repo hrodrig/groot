@@ -2,12 +2,13 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/hrodrig/groot/pkg/cmd"
-	"github.com/hrodrig/groot/pkg/kubemock"
+	"github.com/hrodrig/groot/pkg/kubetest"
 )
 
 func TestExitCode(t *testing.T) {
@@ -33,7 +34,7 @@ func TestRun_printSampleConfig(t *testing.T) {
 }
 
 func TestRun_collectQuiet(t *testing.T) {
-	cleanupK := kubemock.Install(t)
+	kc, cleanupK := kubetest.StartAPIServer(t)
 	defer cleanupK()
 
 	old := os.Args
@@ -45,7 +46,7 @@ func TestRun_collectQuiet(t *testing.T) {
 
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "c.yaml")
-	yaml := `
+	yaml := "kubeconfig: " + fmt.Sprintf("%q", filepath.ToSlash(kc)) + `
 output_dir: ` + filepath.ToSlash(dir) + `
 notify:
   slack: { enabled: false }

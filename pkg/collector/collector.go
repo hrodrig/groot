@@ -1,13 +1,10 @@
 package collector
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -18,7 +15,11 @@ import (
 
 	"github.com/hrodrig/groot/pkg/archive"
 	"github.com/hrodrig/groot/pkg/config"
+	"github.com/hrodrig/groot/pkg/k8srunner"
 	"golang.org/x/text/unicode/norm"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	metricsversioned "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
 // Summary reports collection execution details.
@@ -39,14 +40,18 @@ type job struct {
 	Optional bool
 }
 
-// Service executes kubectl log collection.
+// Service executes Kubernetes API collection (client-go; no kubectl binary).
 type Service struct {
-	cfg      config.Config
-	message  string
-	onStart  func(name string, args []string)
-	onDone   func(name string)
-	onFailed func(name string, err error)
-	hooksMu  sync.Mutex // serializes hook callbacks; workers invoke hooks concurrently otherwise
+	cfg        config.Config
+	message    string
+	clientset  kubernetes.Interface
+	metricsCS  *metricsversioned.Clientset
+	restConfig *rest.Config
+	k8sRunner  *k8srunner.Runner
+	onStart    func(name string, args []string)
+	onDone     func(name string)
+	onFailed   func(name string, err error)
+	hooksMu    sync.Mutex // serializes hook callbacks; workers invoke hooks concurrently otherwise
 }
 
 // New returns a collector service.
@@ -109,6 +114,9 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	}
 	if err := s.ensureGroupDirs(captureDir); err != nil {
 		return Summary{}, fmt.Errorf("prepare output groups: %w", err)
+	}
+	if err := s.initK8s(); err != nil {
+		return Summary{}, fmt.Errorf("kubernetes client: %w", err)
 	}
 	if err := s.writeMetadata(ctx, captureDir); err != nil {
 		s.invokeOnFailed("metadata", err)
@@ -217,7 +225,7 @@ func (s *Service) appendNodeDetailJobs(ctx context.Context, jobs []job) ([]job, 
 	if !s.cfg.Collection.IncludeNodeDetails {
 		return jobs, nil
 	}
-	nodes, err := s.list(ctx, []string{"get", "nodes", "-o", "name"})
+	nodes, err := s.listNodesAsResources(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list nodes: %w", err)
 	}
@@ -253,7 +261,7 @@ func (s *Service) appendNodeKubeletLogJobs(ctx context.Context, jobs []job) ([]j
 	if !s.cfg.Collection.IncludeNodeLogs {
 		return jobs, nil
 	}
-	nodes, err := s.list(ctx, []string{"get", "nodes", "-o", "name"})
+	nodes, err := s.listNodesAsResources(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list nodes for kubelet logs: %w", err)
 	}
@@ -346,17 +354,14 @@ func (s *Service) appendWorkloadPodLogJobs(ctx context.Context, jobs []job) ([]j
 }
 
 func (s *Service) appendControlPlanePodLogJobs(ctx context.Context, jobs []job) []job {
-	lines, _ := s.list(ctx, []string{"get", "pods", "-n", "kube-system", "-l", "tier=control-plane", "--no-headers", "-o", "custom-columns=NAME:.metadata.name,NODE:.spec.nodeName"})
+	refs, _ := s.listControlPlanePods(ctx)
 	tail := s.cfg.Collection.PodLogTailLines
 	since := s.cfg.Collection.PodLogsSince
-	for _, item := range parseNameNodeLines(lines) {
+	for _, item := range refs {
 		if item.Name == "" {
 			continue
 		}
 		node := item.Node
-		if node == "" {
-			node = "unknown-node"
-		}
 		baseName := sanitize(item.Name) + "__" + sanitize(node)
 		jobs = append(jobs, job{
 			Name:     "control-plane-" + item.Name,
@@ -421,67 +426,6 @@ func (s *Service) runJobs(ctx context.Context, captureDir string, jobs []job) Su
 		Failed:   failed,
 		Failures: failures,
 	}
-}
-
-func (s *Service) execToFile(ctx context.Context, captureDir string, j job) error {
-	s.invokeOnStart(j.Name, j.Args)
-
-	cmd := exec.CommandContext(ctx, "kubectl", s.kubectlArgs(j.Args)...)
-	var out bytes.Buffer
-	var stdErr bytes.Buffer
-	cmd.Stdout = &out
-	cmd.Stderr = &stdErr
-
-	err := cmd.Run()
-	content := out.String()
-	if stdErr.Len() > 0 {
-		content = content + "\n--- stderr ---\n" + stdErr.String()
-	}
-
-	target := filepath.Join(captureDir, j.FileName)
-	if mkErr := os.MkdirAll(filepath.Dir(target), 0o755); mkErr != nil {
-		return fmt.Errorf("create dir for %s: %w", target, mkErr)
-	}
-
-	if writeErr := os.WriteFile(target, []byte(content), 0o644); writeErr != nil {
-		return fmt.Errorf("write %s: %w", target, writeErr)
-	}
-
-	if err != nil {
-		if j.Optional {
-			return nil
-		}
-		s.invokeOnFailed(j.Name, err)
-		return fmt.Errorf("kubectl %s: %w", strings.Join(j.Args, " "), err)
-	}
-
-	s.invokeOnDone(j.Name)
-	return nil
-}
-
-func (s *Service) list(ctx context.Context, args []string) ([]string, error) {
-	cmd := exec.CommandContext(ctx, "kubectl", s.kubectlArgs(args)...)
-	b, err := cmd.Output()
-	if err != nil {
-		return nil, err
-	}
-
-	rows := strings.Split(strings.TrimSpace(string(b)), "\n")
-	clean := make([]string, 0, len(rows))
-	for _, row := range rows {
-		row = strings.TrimSpace(row)
-		if row != "" {
-			clean = append(clean, row)
-		}
-	}
-	return clean, nil
-}
-
-func (s *Service) kubectlArgs(args []string) []string {
-	if s.cfg.Kubeconfig == "" {
-		return args
-	}
-	return append([]string{"--kubeconfig", s.cfg.Kubeconfig}, args...)
 }
 
 // captureSessionBase is the capture folder name and the leading part of the archive basename.
@@ -563,8 +507,8 @@ func (s *Service) buildPodLogPathIndex(ctx context.Context) map[string]string {
 			}
 		}
 	}
-	lines, _ := s.list(ctx, []string{"get", "pods", "-n", "kube-system", "-l", "tier=control-plane", "--no-headers", "-o", "custom-columns=NAME:.metadata.name,NODE:.spec.nodeName"})
-	for _, item := range parseNameNodeLines(lines) {
+	refs, _ := s.listControlPlanePods(ctx)
+	for _, item := range refs {
 		if item.Name == "" {
 			continue
 		}
@@ -649,15 +593,16 @@ func (s *Service) writePodRCATable(captureDir string) error {
 }
 
 func (s *Service) writePodNodePlacement(ctx context.Context, captureDir string) error {
-	raw, err := s.list(ctx, []string{"get", "pods", "-A", "--no-headers", "-o", "custom-columns=NS:.metadata.namespace,NAME:.metadata.name,NODE:.spec.nodeName"})
+	list, err := s.listAllPods(ctx)
 	if err != nil {
 		return fmt.Errorf("list pods for placement: %w", err)
 	}
+	refs := podRefsFromList(list)
 	logPaths := s.buildPodLogPathIndex(ctx)
 
 	var b strings.Builder
 	b.WriteString("namespace\tpod\tnode\tpod_log_file\n")
-	for _, ref := range parsePodLines(raw) {
+	for _, ref := range refs {
 		logRel := ""
 		if p, ok := logPaths[ref.Namespace+"/"+ref.Name]; ok {
 			logRel = p
@@ -734,43 +679,27 @@ type podRef struct {
 	Node      string
 }
 
-type podsList struct {
-	Items []struct {
-		Metadata struct {
-			Name      string            `json:"name"`
-			Namespace string            `json:"namespace"`
-			Labels    map[string]string `json:"labels"`
-		} `json:"metadata"`
-		Spec struct {
-			NodeName string `json:"nodeName"`
-		} `json:"spec"`
-	} `json:"items"`
-}
-
 func (s *Service) resolvePodsForLogs(ctx context.Context) ([]podRef, error) {
-	raw, err := s.list(ctx, []string{"get", "pods", "-A", "--no-headers", "-o", "custom-columns=NS:.metadata.namespace,NAME:.metadata.name,NODE:.spec.nodeName"})
+	list, err := s.listAllPods(ctx)
 	if err != nil {
 		return nil, err
 	}
+	allRefs := podRefsFromList(list)
 
 	if len(s.cfg.Collection.Targets) == 0 {
-		return parsePodLines(raw), nil
+		return allRefs, nil
 	}
 
 	filtered := make([]podRef, 0)
-	allPods, err := s.listPodsJSON(ctx)
-	if err != nil {
-		return nil, err
-	}
 	seen := map[string]struct{}{}
 
-	for _, pod := range allPods.Items {
-		ns := strings.TrimSpace(pod.Metadata.Namespace)
+	for _, pod := range list.Items {
+		ns := strings.TrimSpace(pod.Namespace)
 		targets, ok := s.cfg.Collection.Targets[ns]
 		if !ok || !hasTargets(targets) {
 			continue
 		}
-		if !matchesTargetsByLabels(pod.Metadata.Labels, targets) {
+		if !matchesTargetsByLabels(pod.Labels, targets) {
 			continue
 		}
 
@@ -780,7 +709,7 @@ func (s *Service) resolvePodsForLogs(ctx context.Context) ([]podRef, error) {
 		}
 		ref := podRef{
 			Namespace: ns,
-			Name:      strings.TrimSpace(pod.Metadata.Name),
+			Name:      strings.TrimSpace(pod.Name),
 			Node:      node,
 		}
 		key := ref.Namespace + "/" + ref.Name
@@ -792,7 +721,7 @@ func (s *Service) resolvePodsForLogs(ctx context.Context) ([]podRef, error) {
 	}
 
 	// Fallback behavior: namespaces without explicit targets keep broad collection.
-	for _, ref := range parsePodLines(raw) {
+	for _, ref := range allRefs {
 		targets, ok := s.cfg.Collection.Targets[ref.Namespace]
 		if ok && hasTargets(targets) {
 			continue
@@ -808,27 +737,7 @@ func (s *Service) resolvePodsForLogs(ctx context.Context) ([]podRef, error) {
 	return filtered, nil
 }
 
-func parsePodLines(lines []string) []podRef {
-	out := make([]podRef, 0, len(lines))
-	for _, item := range lines {
-		parts := strings.Fields(item)
-		if len(parts) < 2 {
-			continue
-		}
-		node := "unknown-node"
-		if len(parts) >= 3 && strings.TrimSpace(parts[2]) != "" {
-			node = parts[2]
-		}
-		out = append(out, podRef{
-			Namespace: parts[0],
-			Name:      parts[1],
-			Node:      node,
-		})
-	}
-	return out
-}
-
-// parseNameNodeLines parses kubectl NAME,NODE custom-columns rows (first field pod name, rest node).
+// parseNameNodeLines parses NAME,NODE rows (first field pod name, rest node).
 func parseNameNodeLines(lines []string) []podRef {
 	out := make([]podRef, 0, len(lines))
 	for _, item := range lines {
@@ -852,17 +761,24 @@ func parseNameNodeLines(lines []string) []podRef {
 	return out
 }
 
-func (s *Service) listPodsJSON(ctx context.Context) (podsList, error) {
-	cmd := exec.CommandContext(ctx, "kubectl", s.kubectlArgs([]string{"get", "pods", "-A", "-o", "json"})...)
-	data, err := cmd.Output()
-	if err != nil {
-		return podsList{}, err
+func parsePodLines(lines []string) []podRef {
+	out := make([]podRef, 0, len(lines))
+	for _, item := range lines {
+		parts := strings.Fields(item)
+		if len(parts) < 2 {
+			continue
+		}
+		node := "unknown-node"
+		if len(parts) >= 3 && strings.TrimSpace(parts[2]) != "" {
+			node = parts[2]
+		}
+		out = append(out, podRef{
+			Namespace: parts[0],
+			Name:      parts[1],
+			Node:      node,
+		})
 	}
-	var parsed podsList
-	if err := json.Unmarshal(data, &parsed); err != nil {
-		return podsList{}, err
-	}
-	return parsed, nil
+	return out
 }
 
 func hasTargets(t config.NamespaceTargets) bool {

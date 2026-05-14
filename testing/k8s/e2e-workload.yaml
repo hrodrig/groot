@@ -1,0 +1,38 @@
+# Workloads for groot kind E2E (testing/scripts/test-e2e-kind.sh).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e2e-groot
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-generator
+  namespace: e2e-groot
+  labels:
+    app.kubernetes.io/name: log-generator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log-generator
+  template:
+    metadata:
+      labels:
+        app: log-generator
+        app.kubernetes.io/name: log-generator
+    spec:
+      containers:
+        - name: log
+          image: busybox:1.36
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              i=0
+              while true; do
+                echo "e2e-groot-marker line=$i ts=$(date -Iseconds)"
+                i=$((i + 1))
+                sleep 2
+              done

@@ -26,6 +26,12 @@
 !configs/
 !configs/**
 
+!testing/
+!testing/**
+
+!scripts/
+!scripts/**
+
 # Source and documentation
 !cmd/
 !cmd/**

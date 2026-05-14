@@ -39,13 +39,13 @@ DOCKER_BUILD_ARGS := \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build test cover fmt fmt-check lint-fix lint vet run clean install docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan
+.PHONY: help all build test cover fmt fmt-check lint-fix lint vet run clean install docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan test-e2e-kind e2e-kind
 
 help:
 	@echo "Available targets:"
 	@echo "  make all            fmt, vet, test, gocyclo, cover, build"
 	@echo "  make build          Build local binary"
-	@echo "  make ci             gofmt -s check, go vet, gocyclo, tests (matches GitHub CI lint + test jobs)"
+	@echo "  make test-e2e-kind  E2E harness: Docker + kind + kubectl on host (groot uses client-go, not kubectl)"
 	@echo "  make clean          Remove everything under bin/ except bin/.keep"
 	@echo "  make cover          Merged coverage (coverage.out); gate with COVER_MIN (default 80; needs bc)"
 	@echo "  make docker-build   Build container image with Docker"
@@ -165,6 +165,16 @@ vulncheck: govulncheck
 
 ci: fmt-check lint gocyclo test
 	@echo "OK: ci (fmt-check, vet, gocyclo, test)"
+
+# Disposable kind cluster + log workload + groot collect (same layout as pgwd: testing/scripts + testing/k8s).
+test-e2e-kind: build
+	@command -v kind >/dev/null 2>&1 || { echo "kind is required: https://kind.sigs.k8s.io/"; exit 1; }
+	@command -v kubectl >/dev/null 2>&1 || { echo "kubectl is required for test-e2e-kind (apply/wait); groot itself does not need kubectl"; exit 1; }
+	@command -v docker >/dev/null 2>&1 || { echo "docker is required"; exit 1; }
+	@chmod +x testing/scripts/test-e2e-kind.sh
+	@./testing/scripts/test-e2e-kind.sh
+
+e2e-kind: test-e2e-kind
 
 # Fail if any function has cyclomatic complexity >= 15 (gocyclo: complexity > 14).
 gocyclo:

@@ -9,12 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1] - 2026-05-14
 
+**Release note:** **`v0.3.0` was never published** (no git tag and no GitHub Release). **`v0.3.1`** is the first tagged release on that line of work: it includes **everything** listed under **[0.3.0]** below, plus the **0.3.1** items in this section. When upgrading or auditing, treat the **[0.3.0]** section as shipped starting with **`v0.3.1`**.
+
+**`develop` commits (audit):** after **`9c3a6c2`** (*feat(collector): pod RCA table…*), **`65b6df5`** (*fix(config): do not auto-load /etc/groot/groot.yml.sample*), then **`c9788e2`** (*Release v0.3.0 — client-go diagnostics, security, changelog* — sets `VERSION` / docs for **0.3.0**, still **without** a `v0.3.0` tag). Further commits on **`develop`** finish **0.3.1** (kind E2E, README, VHS demo, `docs/badges.md`, `VERSION` bump). Only **`v0.3.1`** was tagged from **`main`** at the merge tip.
+
 ### Added
 
 - `testing/`: kind-based E2E (`make test-e2e-kind`, alias `e2e-kind`), `testing/scripts/test-e2e-kind.sh`, `testing/k8s/e2e-workload.yaml`, and `testing/README.md` (Docker probe with optional `GROOT_DOCKER_WAIT_SECS`, optional archive copy via `GROOT_E2E_ARCHIVE`, empty `nodes/` note for the slim config).
 - `docs/e2e-kind.md`; `scripts/e2e-kind.sh` forwards to `testing/scripts/test-e2e-kind.sh` (maps `KIND_CLUSTER_NAME` to `GROOT_E2E_CLUSTER` when set).
 
 ## [0.3.0] - 2026-05-14
+
+**Not released:** this version appears in the changelog for traceability, but there was **no `v0.3.0` tag**—see the note at **[0.3.1]**.
 
 ### Added
 

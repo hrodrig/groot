@@ -9,7 +9,7 @@ User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sam
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-05 (**0.4.x** band closing in **v0.4.0**; focus shifts to **0.5.x**)
+**Last reviewed:** 2026-06-06 (**0.4.x** closed in **v0.4.0**; **v0.4.1** patch; focus **0.5.x**)
 
 ### Versioning note
 
@@ -52,6 +52,7 @@ GROOT is a **read-only diagnostics CLI**: one **`groot collect`** produces a **t
 | **0.3.1** | **Client-go** collector (no `kubectl` binary); **`k8srunner`** allowlist; **`kubetest`** fake API; per-namespace **JSON `resources.txt`**; **RCA TSV** extras; **`extra_kubectl`** validation; kind **E2E** harness (`make test-e2e-kind`); README/VHS demo; config sample load fix. Ships unpublished **0.3.0** work—see [CHANGELOG](../CHANGELOG.md). |
 | **0.3.2** | **GO-2026-5026** / **CVE-2026-39821** (`golang.org/x/net` → v0.55.0); Go **1.26.4**. |
 | **0.4.0** | **Archive manifest** `extras/manifest.json` with version, cluster, jobs, paths. **`file_prefix`** now drives capture dir and archive basename. **`groot collect --list-jobs`** prints planned jobs without writing output. **`extra_kubectl` `get`/`describe`** supports `configmap`/`cm`, `pvc`, `service`/`svc`, `ingress`/`ing`, `deployment`/`rs`/`sts`/`ds` and aliases. **`collection.targets`** accepts `jobs` / `cronjobs` lists matched by `job-name` and standard labels. **Kind E2E in CI** (`make test-e2e-kind`) running with `continue-on-error: true`. Docs hygiene: `pkg/config/sample.go` and `configs/groot.yml.sample` in sync, references to `kubectl` removed. |
+| **0.4.1** | **`Dockerfile`** builder **Go 1.26.4** (Security Grype image build); README download examples for **v0.4.1**. |
 
 ---
 

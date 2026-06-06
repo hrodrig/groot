@@ -82,7 +82,7 @@ That workflow is aimed at **incident response** and **troubleshooting**, and at 
 
 Pre-built **`.deb`**, **`.rpm`**, **`.tar.gz`** (and **`.zip`** on Windows) are on **[GitHub Releases](https://github.com/hrodrig/groot/releases)** and **[latest release](https://github.com/hrodrig/groot/releases/latest)**. The **release** badge at the top of this README shows the current tag at a glance.
 
-**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser puts the **semver without `v`** in filenames (for example **`groot_0.4.0_amd64.deb`**), while the download URL path uses the **git tag with `v`** (`…/download/v0.4.0/…`). Do not use `groot_${TAG}_…` with `TAG=v0.4.0` in the filename—that causes **404**. Options: **pick names from the release page**, use the **snippet below**, or use the **badge**.
+**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser puts the **semver without `v`** in filenames (for example **`groot_0.4.1_amd64.deb`**), while the download URL path uses the **git tag with `v`** (`…/download/v0.4.1/…`). Do not use `groot_${TAG}_…` with `TAG=v0.4.1` in the filename—that causes **404**. Options: **pick names from the release page**, use the **snippet below**, or use the **badge**.
 
 ### Install latest `.deb` (Debian / Ubuntu, `amd64`)
 
@@ -93,7 +93,7 @@ TAG="$(curl -fsSL https://api.github.com/repos/hrodrig/groot/releases/latest | p
 
 [ -n "$TAG" ] || { echo "Could not resolve tag (empty). Install python3 or jq, or set TAG manually from the Releases page." >&2; exit 1; }
 
-VER="${TAG#v}"   # e.g. v0.4.0 -> 0.4.0 (matches GoReleaser .deb filename)
+VER="${TAG#v}"   # e.g. v0.4.1 -> 0.4.1 (matches GoReleaser .deb filename)
 DEB="groot_${VER}_amd64.deb"
 URL="https://github.com/hrodrig/groot/releases/download/${TAG}/${DEB}"
 TMP="/tmp/${DEB}"
@@ -120,11 +120,11 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
-| Format | Example (tag **`v0.4.0`** in the URL path; artifact basename uses **`0.4.0`** without `v`) |
+| Format | Example (tag **`v0.4.1`** in the URL path; artifact basename uses **`0.4.1`** without `v`) |
 |--------|------------------------------------------------------------------|
-| **`.deb`** | `curl -fsSL -o /tmp/groot_0.4.0_amd64.deb https://github.com/hrodrig/groot/releases/download/v0.4.0/groot_0.4.0_amd64.deb` then `sudo apt install /tmp/groot_0.4.0_amd64.deb` (use `/tmp` so `_apt` can read the file if `$HOME` is `700`) |
-| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.4.0/groot_0.4.0_amd64.rpm` then `sudo rpm -Uvh groot_0.4.0_amd64.rpm` or `sudo dnf install ./groot_0.4.0_amd64.rpm` |
-| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.4.0/groot_0.4.0_linux_amd64.tar.gz` then `tar xzf groot_0.4.0_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
+| **`.deb`** | `curl -fsSL -o /tmp/groot_0.4.1_amd64.deb https://github.com/hrodrig/groot/releases/download/v0.4.1/groot_0.4.1_amd64.deb` then `sudo apt install /tmp/groot_0.4.1_amd64.deb` (use `/tmp` so `_apt` can read the file if `$HOME` is `700`) |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.4.1/groot_0.4.1_amd64.rpm` then `sudo rpm -Uvh groot_0.4.1_amd64.rpm` or `sudo dnf install ./groot_0.4.1_amd64.rpm` |
+| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.4.1/groot_0.4.1_linux_amd64.tar.gz` then `tar xzf groot_0.4.1_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
@@ -156,7 +156,7 @@ From any machine with Go **1.26+** (installs to `$(go env GOPATH)/bin`; ensure t
 go install github.com/hrodrig/groot/cmd/groot@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.4.0`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.4.1`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
 
 Useful runtime flags (global or with `collect`):
 

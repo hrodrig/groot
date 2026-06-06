@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-06
+
+### Fixed
+
+- **`Dockerfile` builder image**: bump `golang` base from **1.26.3** to **1.26.4** to match `go.mod`; restores Security workflow Grype image build (`go mod download` was failing with `requires go >= 1.26.4`).
+
+### Changed
+
+- **README**: fixed-tag download examples and `go install` pin updated to **v0.4.1**.
+
 ## [0.4.0] - 2026-06-05
 
 ### Added

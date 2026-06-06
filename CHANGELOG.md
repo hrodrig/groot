@@ -9,8 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Positioning copy**: README, SPEC, ROADMAP, and CLI `Short`/`Long` describe GROOT as a **read-only log and context collector** (not a diagnostics/diagnosis tool).
-- **ROADMAP**: refresh honest gaps for post-**0.4.x** reality; **#25** documents **Homebrew cask** + pgwd/kzero release basename convention.
+- **Docs hygiene** post-**v0.5.0**: empty stale `[Unreleased]` bullets; `plan-0.5.0.md` marked shipped; ROADMAP strategic direction reflects **0.5.x** notify/deploy and **0.6.x** focus.
 
 ## [0.5.0] - 2026-06-06
 
@@ -26,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Positioning copy**: README, SPEC, ROADMAP, and CLI `Short`/`Long` describe GROOT as a **read-only log and context collector** (not a diagnostics/diagnosis tool); ROADMAP honest gaps refreshed pre-**0.5.x**; **#25** documents **Homebrew cask** + pgwd/kzero release basename convention.
 - **`configs/groot.yml.sample`** and **`SampleYAML()`** document new notify, retry, on_failure, and redaction keys.
 - **`docs/SPECIFICATIONS.md`**: §4 notify schema, §7 failure alerts and retry, §9 configuration examples, §8 in-cluster deploy; redaction in §5.
 - **`README.md`**: notifications (email, HMAC, on_failure), in-cluster deploy, secret redaction, corrected `file_prefix` / output naming; usage examples for `--list-jobs`, redaction, failure notify.

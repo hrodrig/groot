@@ -1,7 +1,7 @@
 # Plan 0.5.0 — notifications and Kubernetes-native operations
 
-**Status:** complete on `develop` — pending **`v0.5.0`** tag on `main`  
-**Target release:** `v0.5.0` on `main` after `make release-check`  
+**Status:** **shipped** — **`v0.5.0`** tagged on `main` (2026-06-06)  
+**Target release:** `v0.5.0` ✓  
 **Roadmap band:** [ROADMAP.md](ROADMAP.md) **0.5.x** items **#19–#24**  
 **Agreed implementation order:** **#24 → #20 → #21 → #19 → #23 → #22**
 

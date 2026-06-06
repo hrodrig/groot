@@ -17,9 +17,9 @@ Public releases start at **v0.1.3** (early CLI and packaging). Section headings 
 
 ### Strategic direction
 
-GROOT is a **read-only log and context collector**: one **`groot collect`** produces a **timestamped `.tar.gz`** for incident response and RCA. The runtime path is **client-go** end-to-end (no `kubectl` binary). Configuration is **YAML + env**; optional **notify** fan-out fires after a **successful** collect.
+GROOT is a **read-only log and context collector**: one **`groot collect`** produces a **timestamped `.tar.gz`** for incident response and RCA. The runtime path is **client-go** end-to-end (no `kubectl` binary). Configuration is **YAML + env**; optional **notify** fan-out fires after a **successful** collect and, when configured, on **abort** or **partial job failure** (**0.5.x #19**).
 
-**Target architecture:** deepen **collector fidelity** (more resources, clearer archive layout, optional in-cluster scheduling) while keeping the **single-command** UX. **Notifications** stay operator-friendly (webhooks first); richer templates and failure alerts are later bands. **Distribution** should match how SREs install tools: Linux packages, container, and **Homebrew**—without turning GROOT into a long-running controller.
+**Target architecture:** deepen **collector fidelity** (more resources, clearer archive layout) while keeping the **single-command** UX. **In-cluster scheduling** is available via Helm/CronJob (**0.5.x #22**). **Notifications** cover webhooks (with templates and HMAC), email, retry, and failure alerts (**0.5.x #19–#24**). **Next band (0.6.x):** supply chain and wider distribution—**Homebrew** cask, SBOM, Cosign, optional object-store upload—without turning GROOT into a long-running controller.
 
 **Honest gaps today:**
 

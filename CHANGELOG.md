@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`docs/SPECIFICATIONS.md`**: behavior contract for CLI, config, collection, `extra_kubectl`, notify, and testing baseline.
+- **`docs/ROADMAP.md`**: in-repo source of truth for planned semver bands (**0.4.x** onward) and shipped history; complements SPEC and this changelog.
+- **`docs/README.md`**: documentation index (SPEC, ROADMAP, E2E, badges).
+
 ## [0.3.2] - 2026-06-05
 
 ### Security

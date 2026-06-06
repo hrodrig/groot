@@ -14,6 +14,18 @@ Thanks for helping improve GROOT.
 
 Use focused branches, for example `fix/short-topic` or `feat/short-topic`.
 
+## Planning docs (SPEC, ROADMAP, CHANGELOG)
+
+Behavior contract: **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. Planned work: **[docs/ROADMAP.md](docs/ROADMAP.md)**.
+
+**Triad sync (kzero-style):** when you ship user-facing behavior—
+
+1. Update **SPEC** if the observable contract changed.
+2. Mark the roadmap item **Done** in **ROADMAP** (reference global `#` IDs).
+3. Add a **CHANGELOG** bullet under `[Unreleased]` with **`(band #N)`** when applicable (e.g. `(0.4.x #12)`).
+
+On release: move `[Unreleased]` to a version section, add a **Shipped** row in ROADMAP, sync **VERSION** and README badges, run **`make release-check`** before tag.
+
 ## Before you open a PR
 
 1. **Format:** `make lint-fix` (applies `gofmt -s` across the tree).

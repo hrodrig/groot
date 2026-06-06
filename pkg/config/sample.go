@@ -2,30 +2,29 @@ package config
 
 // SampleYAML returns a ready-to-use configuration template.
 func SampleYAML() string {
-	return `# GROOT sample configuration (see README → Config and Configuration reference).
+	return `# GROOT sample configuration (see README → Config and SPECIFICATIONS.md).
 # Boolean env overrides use GROOT_* (e.g. GROOT_COLLECTION_INCLUDE_POD_LOGS).
 
-# Path to kubeconfig for kubectl. Empty = use process KUBECONFIG or kubectl default rules
+# Path to kubeconfig. Empty = use process KUBECONFIG or client-go default rules
 # (CLI flag --kubeconfig still overrides when passed).
 kubeconfig: ""
 
-# Base directory for each run: a timestamped folder is created here, then archived to a .tar.gz
+# Base directory for each run: a capture folder is created here, then archived to a .tar.gz
 # beside it. Supports ~ and ${VAR} expansion.
 output_dir: "./out"
 
-# Logical prefix kept for forward-compatible naming (default groot-capture). Capture directory
-# and archive names today use <timestamp>-<cluster> plus optional --message suffix.
+# Prefix for capture directory and archive basename: <file_prefix>-<timestamp>[-since-<slug>]-<cluster>
 file_prefix: "groot-capture"
 
 collection:
   # Maximum duration for the whole collect run (context deadline); entire job aborts after this.
   timeout: 20m
 
-  # Parallel kubectl executions (worker pool size).
+  # Parallel API collection jobs (worker pool size).
   worker_concurrency: 6
 
-  # Namespaces where Groot runs kubectl get all -o wide into <ns>/resources.txt and
-  # creates per-namespace directories under the capture tree.
+  # Namespaces where Groot writes per-namespace workload JSON into <ns>/resources.txt
+  # and creates namespace directories under the capture tree.
   namespaces:
     - kube-system
     - default
@@ -33,7 +32,7 @@ collection:
   # Per-namespace workload filters for POD LOGS ONLY. If a namespace is listed here with at
   # least one target list, only pods matching those workloads get log jobs. Namespaces with
   # no entry, or an entry with all lists empty, keep broad pod log collection for that NS.
-  # Matching uses labels: app.kubernetes.io/name, app.kubernetes.io/instance, and app.
+  # Matching uses labels: app.kubernetes.io/name, app.kubernetes.io/instance, job-name, and app.
   targets:
     default:
       deployments:
@@ -42,40 +41,43 @@ collection:
         - redis
       daemonsets:
         - node-agent
+      jobs:
+        - batch-job
+      cronjobs:
+        - nightly-sync
       helm_releases:
         - my-release
 
-  # When true, run kubectl logs for workload and control-plane pods (subject to targets/tail/since).
+  # When true, collect pod and control-plane logs (subject to targets/tail/since).
   include_pod_logs: true
 
-  # When true, also kubectl logs --previous (crashed/exited container) into *.previous.log (optional jobs).
+  # When true, also fetch previous container logs into *.previous.log (optional jobs).
   include_previous_logs: true
 
   # Max lines per log stream when >0; 0 means no --tail (full logs, can be large).
   pod_log_tail_lines: 1500
 
-  # Optional: kubectl logs --since for pod logs only. Digits-only string = hours (24 -> 24h);
+  # Optional: time window for pod logs only. Digits-only string = hours (24 -> 24h);
   # or a Go duration (24h, 45m). collect --since overrides this when set.
-  # When set, capture dir and .tar.gz name include "-since-<slug>" after the timestamp (e.g. …-since-12h-…).
+  # When set, capture dir and .tar.gz name include "-since-<slug>" after the timestamp.
   # pod_logs_since: "24"
 
-  # When true, describe and top per node under nodes/ (extra kubectl per node).
+  # When true, per-node describe and top under nodes/.
   include_node_details: true
 
-  # When true, per-node: …/proxy/logs/?query=kubelet → nodes/<name>-kubelet.log and …/proxy/logs/messages → nodes/<name>-messages.log (optional).
-  # Needs nodes/proxy; kubelet/node log APIs vary by cluster (see README).
+  # When true, per-node kubelet query + …/proxy/logs/messages (optional; see README).
   include_node_logs: true
 
-  # Max log lines per node kubelet capture when >0; 0 omits tailLines (API default).
+  # When >0, adds tailLines to kubelet log query; 0 uses API default length.
   node_log_tail_lines: 5000
 
-  # When true, kubectl top pods -A into extras/all-pods-top.txt (needs metrics-server; same instant as other jobs in the run).
+  # When true, cluster-wide pod metrics into extras/all-pods-top.txt (requires metrics-server).
   include_pod_metrics: true
 
-  # Optional extra read-only kubectl lines (split on spaces, no shell). Allowlisted verbs only; see README.
+  # Optional extra read-only commands (split on spaces, no shell). Allowlisted verbs only; see SPEC.
   extra_kubectl:
-    - "get componentstatuses"
-    - "get csr"
+    - "get ingress -A"
+    - "get pvc -A"
 
 notify:
   slack:

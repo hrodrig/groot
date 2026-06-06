@@ -4,6 +4,7 @@
 |----------|---------|
 | [SPECIFICATIONS.md](SPECIFICATIONS.md) | Behavior contract and test expectations (what the CLI does **today**) |
 | [ROADMAP.md](ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
+| [plan-0.4.0.md](plan-0.4.0.md) | Implementation plan for **v0.4.0** (manifest, naming, list-jobs, CI E2E) |
 | [e2e-kind.md](e2e-kind.md) | Kind-based end-to-end test for **`groot collect`** |
 | [badges.md](badges.md) | README badge reference and version sync |
 | [demo.tape](demo.tape) | VHS tape to record [demo.gif](demo.gif) |

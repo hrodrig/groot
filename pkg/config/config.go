@@ -40,6 +40,8 @@ type NamespaceTargets struct {
 	Deployments  []string `mapstructure:"deployments"`
 	StatefulSets []string `mapstructure:"statefulsets"`
 	DaemonSets   []string `mapstructure:"daemonsets"`
+	Jobs         []string `mapstructure:"jobs"`
+	CronJobs     []string `mapstructure:"cronjobs"`
 	HelmReleases []string `mapstructure:"helm_releases"`
 }
 

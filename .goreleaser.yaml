@@ -41,12 +41,17 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
-    name_template: "groot_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    # {{ .Tag }} keeps the family convention with pgwd/kzero: artifact
+    # basenames embed the v-prefixed tag, matching the URL path
+    # (.../releases/download/v0.6.0/groot_v0.6.0_*.tar.gz). This is a
+    # breaking rename for anyone scripting off the old `groot_0.5.0_*`
+    # form; paired with Homebrew cask landing in the same release.
+    name_template: "groot_{{ .Tag }}_{{ .Os }}_{{ .Arch }}"
 
 nfpms:
   - id: groot-packages
     package_name: groot
-    file_name_template: "groot_{{ .Version }}_{{ .Arch }}"
+    file_name_template: "groot_{{ .Tag }}_{{ .Arch }}"
     ids:
       - groot
     vendor: hrodrig
@@ -108,3 +113,51 @@ dockers_v2:
       org.opencontainers.image.version: "{{ .Version }}"
       org.opencontainers.image.revision: "{{ .FullCommit }}"
       org.opencontainers.image.created: "{{ .Date }}"
+
+# Homebrew cask tap: on every release tag, GoReleaser generates the
+# cask from this stanza and pushes a branch (or PR) to the
+# hrodrig/homebrew-groot tap repo.
+#
+# The on-disk template at contrib/homebrew/Casks/groot.rb.template
+# is the human-readable source of truth; GoReleaser does NOT read it
+# (cask files are generated, not templated), but it lets a reviewer
+# know what the rendered file will look like and supports the manual
+# fallback path (scripts/update-homebrew-cask.sh).
+#
+# Required CI secret: HOMEBREW_TAP_TOKEN (PAT with `repo` scope on
+# hrodrig/homebrew-groot). Skip with `--skip=homebrew_casks` if the
+# token is missing.
+homebrew_casks:
+  - name: groot
+    ids:
+      - groot
+    binaries:
+      - groot
+    repository:
+      owner: hrodrig
+      name: homebrew-groot
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Casks
+    homepage: https://github.com/hrodrig/groot
+    description: "Read-only log and context collector for Kubernetes"
+    license: MIT
+    # Generate the URL from the released .tar.gz artifact matching
+    # the v-prefixed tag pattern (post 0.6.x).
+    url:
+      template: "https://github.com/hrodrig/groot/releases/download/{{ .Tag }}/groot_{{ .Tag }}_{{ .Os }}_{{ .Arch }}.tar.gz"
+      verified: "github.com/hrodrig/groot/"
+    # skip_upload keeps goreleaser from creating a GitHub release for
+    # the tap repo (the tap only ever gets a commit on its main branch).
+    skip_upload: true
+    custom_block: |
+      livecheck do
+        url :stable
+        strategy :github_latest_release
+      end
+      zap trash: "~/.config/groot"
+      caveats <<~EOS
+        Sample configuration is not bundled with the Homebrew cask.
+        Copy from the upstream repo or generate with
+        `groot --print-sample-config > ~/.config/groot/groot.yml`.
+      EOS

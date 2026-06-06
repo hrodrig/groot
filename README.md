@@ -41,6 +41,8 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - [Features](#features)
 - [Requirements](#requirements)
 - [Install or update](#install-or-update)
+  - [Install with Homebrew (macOS / Linux, recommended for desktop)](#install-with-homebrew-macos--linux-recommended-for-desktop)
+  - [Install with Go](#install-with-go)
 - [Quick start](#quick-start)
 - [First run](#first-run)
 - [Usage examples](#usage-examples)
@@ -136,6 +138,8 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
+**Basename change in 0.6.x:** release artifacts switch from `groot_0.5.0_*` to `groot_v0.6.0_*` (v-prefixed tag in the basename, matching the URL path and the pgwd/kzero family convention). Any script that pinned the old `groot_${VER}_*` form needs the `v` added. The Homebrew cask (above) handles the rename automatically.
+
 **Windows:** use the **`.zip`** asset for your arch, unpack, and run `groot.exe` on a host that can reach the Kubernetes API with a valid **kubeconfig** (or in-cluster credentials).
 
 Then [configure](#first-run) and run `groot collect` (or `groot --print-sample-config > groot.yml` first).
@@ -155,6 +159,23 @@ make build
 ```
 
 If you installed from a **release package**, use `groot` on your `PATH` instead of `./bin/groot`.
+
+### Install with Homebrew (macOS / Linux, recommended for desktop)
+
+```bash
+brew tap hrodrig/groot
+brew install --cask hrodrig/groot/groot
+```
+
+**Upgrading** keeps the same tap; new releases are picked up automatically:
+
+```bash
+brew upgrade --cask hrodrig/groot/groot
+```
+
+The cask installs the **`groot`** binary to `$(brew --prefix)/bin/groot` and adds it to your `PATH` (already on it in default Homebrew setups). A **sample config** is not bundled with the cask; generate it with `groot --print-sample-config > ~/.config/groot/groot.yml` and edit.
+
+> The tap repo lives at **[github.com/hrodrig/homebrew-groot](https://github.com/hrodrig/homebrew-groot)**. The cask file is **auto-generated** by GoReleaser on every tag from the `homebrew_casks:` stanza in `.goreleaser.yaml`, with the human-readable source of truth at `contrib/homebrew/Casks/groot.rb.template` in the upstream repo (see [`contrib/homebrew/README.md`](contrib/homebrew/README.md)). On the first release where the tap repo does not yet exist, create it empty on GitHub and add a CI secret **`HOMEBREW_TAP_TOKEN`** (PAT with `repo` scope on the tap) — or set `--skip=homebrew_casks` in the release job and update the cask by hand with `scripts/update-homebrew-cask.sh`.
 
 ### Install with Go
 

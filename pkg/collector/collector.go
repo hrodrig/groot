@@ -135,6 +135,10 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	summary.OutputDir = captureDir
 	summary.Duration = time.Since(start)
 
+	if s.cfg.Collection.RedactSecrets {
+		s.runRedactPass(captureDir)
+	}
+
 	if err := s.writePodRCATable(captureDir); err != nil {
 		s.invokeOnFailed("pod-rca-table", err)
 	}
@@ -155,7 +159,8 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 
 	archivePath := filepath.Join(s.cfg.OutputDir, archiveName+".tar.gz")
 	if err := archive.DirToTarGz(captureDir, archivePath); err != nil {
-		return Summary{}, fmt.Errorf("archive logs: %w", err)
+		summary.ArchivePath = archivePath
+		return summary, fmt.Errorf("archive logs: %w", err)
 	}
 	if err := os.RemoveAll(captureDir); err != nil {
 		return Summary{}, fmt.Errorf("cleanup capture dir %s: %w", captureDir, err)
@@ -853,4 +858,10 @@ func contains(items []string, target string) bool {
 		}
 	}
 	return false
+}
+
+func (s *Service) runRedactPass(captureDir string) {
+	if err := RedactCaptureLogs(captureDir, s.cfg.Collection.RedactPatterns); err != nil {
+		s.invokeOnFailed("redact-secrets", err)
+	}
 }

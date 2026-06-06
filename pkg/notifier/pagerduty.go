@@ -1,12 +1,9 @@
 package notifier
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"time"
 
 	"github.com/hrodrig/groot/pkg/collector"
@@ -47,21 +44,8 @@ func sendPagerDutyV2(ctx context.Context, route pagerDutyRoute, summaryLine stri
 		return fmt.Errorf("marshal pagerduty event: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, pagerDutyEventsURL, bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("create pagerduty request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := notifyHTTPClient.Do(req)
-	if err != nil {
+	if err := postJSONWithRetry(ctx, pagerDutyEventsURL, body, nil); err != nil {
 		return fmt.Errorf("send pagerduty event: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusAccepted {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return fmt.Errorf("pagerduty events API status %d: %s", resp.StatusCode, string(bytes.TrimSpace(b)))
 	}
 	return nil
 }

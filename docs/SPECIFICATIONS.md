@@ -14,16 +14,15 @@ This document is the source of truth for **observable behavior** and test expect
 - YAML configuration (`groot.yml` or `--config`) with **`GROOT_*`** environment overrides (Viper).
 - Parallel collection jobs against the Kubernetes API via **client-go** and **metrics** clients—**no `kubectl` binary** at runtime.
 - Timestamped capture directory, then **`.tar.gz`** archive beside `output_dir`; ephemeral capture folder removed after archiving.
-- Optional outbound **notify** channels after a **completed** collect (HTTP webhooks, Telegram, PagerDuty Events v2).
+- Optional outbound **notify** channels after a **completed** collect (HTTP webhooks, Telegram, PagerDuty Events v2, email/SMTP).
 - Rootless container image (distroless nonroot) for manual or cron-style runs.
+- Optional **Helm chart** and flat **CronJob** manifests for scheduled in-cluster collection (see `deploy/`).
 
 ### Out of scope (v1)
 
 - Mutating cluster resources (scale, delete, patch, apply).
-- Continuous monitoring or in-cluster controller (no Helm chart / Operator in this contract—see ROADMAP **0.5.x #22**).
-- Built-in email/SMTP notify (see ROADMAP **0.5.x #21**).
-- Arbitrary generic webhook body templates, HMAC signing, or non-JSON webhook bodies.
-- Secret redaction inside collected log files (archives may contain sensitive data—operator responsibility).
+- Continuous monitoring or in-cluster controller beyond a **CronJob** schedule (no Operator).
+- Arbitrary non-JSON webhook bodies.
 - Multi-cluster capture in one archive (see ROADMAP **1.0.0 #32**).
 
 ### Design principles
@@ -110,6 +109,8 @@ This document is the source of truth for **observable behavior** and test expect
 | `include_node_logs` | `true` | Kubelet log query + optional `/var/log/messages` proxy. |
 | `node_log_tail_lines` | `5000` | `0` = API default for kubelet query. |
 | `include_pod_metrics` | `true` | Cluster-wide `top pods` when metrics-server available. |
+| `redact_secrets` | `false` | When `true`, scan collected `*.log` files and replace likely secret values before archiving. |
+| `redact_patterns` | `[]` | Optional extra regex patterns (RE2 syntax); invalid patterns fail at collect time. |
 
 ### `notify`
 
@@ -121,10 +122,25 @@ Each channel: `enabled` + credentials. Multiple destinations: **`;`-separated** 
 | Discord | `notify.discord.webhook_url` | `GROOT_NOTIFY_DISCORD_WEBHOOK_URL` |
 | Teams | `notify.teams.webhook_url` | `GROOT_NOTIFY_TEAMS_WEBHOOK_URL` |
 | Telegram | `token`, `chat_id` | `GROOT_NOTIFY_TELEGRAM_TOKEN`, `GROOT_NOTIFY_TELEGRAM_CHAT_ID` |
-| Generic JSON | `webhook_url`, `json_key` (default `text`), `headers` | `GROOT_NOTIFY_GENERIC_WEBHOOK_URL` |
-| PagerDuty v2 | `routing_key`, `severity` (default `warning`), `source` (default `groot`) | `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY` |
+| Generic JSON | `webhook_url`, `json_key` (default `text`), `headers`, `extra_fields`, `body_template`, `hmac_secret`, `hmac_header` (default `X-Groot-Signature`) | `GROOT_NOTIFY_GENERIC_WEBHOOK_URL`, `GROOT_NOTIFY_GENERIC_HMAC_SECRET` |
+| Email | `host`, `port` (default `587`), `username`, `password`, `from`, `to`, `use_tls`, `skip_verify` | `GROOT_NOTIFY_EMAIL_HOST`, `_USERNAME`, `_PASSWORD`, `_FROM`, `_TO` |
+| PagerDuty v2 | `routing_key`, `severity` (default `warning`), `source` (default `groot`) | `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY |
 
-**Generic webhook contract:** single JSON object `{"<json_key>":"<summary line>"}` only.
+**On failure (`notify.on_failure`):**
+
+| Key | Default | Behavior |
+|-----|---------|----------|
+| `enabled` | `false` | Master switch for failure alerts. |
+| `on_abort` | `true` | When `enabled`, notify if collect aborts before completion (archive error, client init, timeout, …). |
+| `min_failed_jobs` | `1` | When `enabled` and collect completes, also notify if `summary.Failed >= min_failed_jobs` (in addition to success notify). |
+
+**HTTP retry (`notify.retry`):** `max_attempts` (default `3`), `initial_backoff` (default `1s`), `max_backoff` (default `10s`). Retries transient **5xx** and network errors only; **4xx** fails immediately.
+
+**Generic webhook contract:**
+
+- **Default:** single JSON object `{"<json_key>":"<summary line>"}` plus optional `extra_fields` (values support `{{summary}}`, `{{total}}`, `{{failed}}`, `{{event}}`, … placeholders).
+- **`body_template`:** when set, POST the rendered JSON template instead of the default shape. Must be valid JSON after substitution.
+- **HMAC:** when `hmac_secret` is set, header `hmac_header` (default `X-Groot-Signature`) is `sha256=<hex>` over the raw POST body (HMAC-SHA256).
 
 **PagerDuty:** HTTP **202** expected; `custom_details` includes `total`, `success`, `failed`, `duration`, `output_dir`, `archive_path`.
 
@@ -151,7 +167,7 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
 
 ```json
 {
-  "groot_version": "0.4.0",
+  "groot_version": "0.5.0",
   "groot_commit": "…",
   "collected_at": "2026-06-05T12:00:00Z",
   "duration_seconds": 42.5,
@@ -169,6 +185,7 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
 ### Job execution
 
 - Jobs built from: base diagnostics, `extra_kubectl`, node details/logs, namespace resources, pod logs (filtered by `targets`), metrics, RCA writers.
+- When `redact_secrets` is `true`, collected `*.log` files are scanned and likely secret values replaced with `[REDACTED]` after jobs complete and before `extras/manifest.json` and archiving.
 - Workers run jobs concurrently up to `worker_concurrency`.
 - Optional jobs may fail without aborting the whole run (`Optional: true` on internal jobs).
 - `Summary` reports `Total`, `Success`, `Failed`, `Failures[]`, `Duration`, `OutputDir`, `ArchivePath`.
@@ -216,21 +233,95 @@ Argv is split on whitespace in config—**no shell quoting** for pipelines or re
 
 ## 7. Notifications
 
-- Fire **once** after collect returns a `Summary` (success path through archive creation).
-- Message format (all channels):  
+- Fire **once** after collect returns a `Summary` on the success path (archive created).
+- Optional **failure alerts** when `notify.on_failure.enabled` (see §4): on collect abort and/or when partial job failures exceed `min_failed_jobs`. Respects **`--no-notify`** / `GROOT_NO_NOTIFY`.
+- **Success** message format (all channels):  
   `GROOT finished. total=… success=… failed=… duration=… output=… archive=…`
+- **Failure** message format:  
+  `GROOT FAILED. reason=…` (abort) or `GROOT finished with failures. …` (partial threshold).
 - **Discord** content truncated to 2000 runes.
-- Notify errors **fail the command** (`send notifications: …`).
-- **`--no-notify`** / `GROOT_NO_NOTIFY` skips all channels.
-- **No notify on collect abort** before summary (ROADMAP **0.5.x #19**).
+- Notify errors **fail the command** (`send notifications: …` / `send failure notifications: …`).
+- HTTP notify clients **retry** transient 5xx and network errors per `notify.retry` (§4).
 
 ## 8. Kubernetes access
 
 - **`pkg/kubeloader`**: kubeconfig path or in-cluster config → `rest.Config`.
 - **RBAC**: read/list/get/watch logs as required by selected jobs; metrics API when `include_pod_metrics` or RCA metrics columns used.
+- **In-cluster scheduling**: Helm chart `deploy/helm/groot/` and flat manifests `deploy/k8s/cronjob.yaml` (CronJob + ClusterRole + ConfigMap + optional PVC for `/out`). Image: `ghcr.io/hrodrig/groot`.
 - **Tested client modules:** `k8s.io/*` v0.32.5 (see `go.mod`).
 
-## 9. Testing baseline
+## 9. Configuration examples
+
+Full annotated sample: **`configs/groot.yml.sample`** (same as `groot --print-sample-config`).
+
+### Notify on failure + Slack
+
+```yaml
+notify:
+  on_failure:
+    enabled: true
+    on_abort: true
+    min_failed_jobs: 1
+  slack:
+    enabled: true
+    webhook_url: "https://hooks.slack.com/services/…"
+```
+
+### Generic webhook with template and HMAC
+
+```yaml
+notify:
+  generic:
+    enabled: true
+    webhook_url: "https://hooks.example/groot"
+    body_template: '{"text":"{{summary}}","failed":{{failed}},"event":"{{event}}"}'
+    hmac_secret: "signing-key"
+    hmac_header: "X-Groot-Signature"
+```
+
+Rendered POST (success): `{"text":"GROOT finished. total=…","failed":0,"event":"success"}`. Header: `X-Groot-Signature: sha256=<hex>`.
+
+### Email
+
+```yaml
+notify:
+  email:
+    enabled: true
+    host: smtp.example.com
+    port: 587
+    from: groot@example.com
+    to: "ops@example.com"
+```
+
+### Secret redaction
+
+```yaml
+collection:
+  redact_secrets: true
+  redact_patterns:
+    - '(?i)internal-api-key\s*=\s*\S+'
+```
+
+### In-cluster CronJob (Helm values excerpt)
+
+```yaml
+schedule: "0 */6 * * *"
+image:
+  repository: ghcr.io/hrodrig/groot
+  tag: "0.5.0"
+config:
+  grootYml: |
+    output_dir: /out
+    collection:
+      namespaces: [kube-system, default]
+    notify:
+      on_failure:
+        enabled: true
+```
+
+Install: `helm upgrade --install groot ./deploy/helm/groot -n groot --create-namespace`.
+
+## 10. Testing baseline
 
 | Layer | Expectation |
 |-------|-------------|

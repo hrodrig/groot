@@ -156,6 +156,13 @@ var collectCmd = &cobra.Command{
 		summary, err := collectorSvc.Run(ctx)
 		if err != nil {
 			logger.Error("collection failed: %v", err)
+			if !skipNotifications() && notifier.ShouldNotifyAbort(cfg) {
+				notifierSvc := notifier.NewFanOut(cfg)
+				if notifyErr := notifierSvc.NotifyFailure(ctx, summary, err.Error()); notifyErr != nil {
+					logger.Error("failure notification failed: %v", notifyErr)
+					return fmt.Errorf("send failure notifications: %w", notifyErr)
+				}
+			}
 			return fmt.Errorf("collect logs: %w", err)
 		}
 
@@ -164,6 +171,12 @@ var collectCmd = &cobra.Command{
 			if notifyErr := notifierSvc.Notify(ctx, summary); notifyErr != nil {
 				logger.Error("notification failed: %v", notifyErr)
 				return fmt.Errorf("send notifications: %w", notifyErr)
+			}
+			if notifier.ShouldNotifyPartialFailure(cfg, summary) {
+				if notifyErr := notifierSvc.NotifyFailure(ctx, summary, ""); notifyErr != nil {
+					logger.Error("failure notification failed: %v", notifyErr)
+					return fmt.Errorf("send failure notifications: %w", notifyErr)
+				}
 			}
 		}
 

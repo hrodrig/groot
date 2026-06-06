@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "groot.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "groot.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  groot.yml: |
+{{ .Values.config.grootYml | indent 4 }}

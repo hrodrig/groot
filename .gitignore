@@ -32,6 +32,9 @@
 !scripts/
 !scripts/**
 
+!deploy/
+!deploy/**
+
 # Source and documentation
 !cmd/
 !cmd/**

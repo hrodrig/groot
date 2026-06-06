@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.4.1-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -16,7 +16,7 @@
 [![Article on DEV](https://img.shields.io/badge/dev.to-article-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/groot/)
 
-**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Spec:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
+**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Spec:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) · **Deploy:** [deploy/](deploy/) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 
 <p align="center">
   <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes log collector CLI" width="100%" />
@@ -37,6 +37,7 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - [README badge reference](docs/badges.md)
 - [Specifications (behavior contract)](docs/SPECIFICATIONS.md)
 - [Roadmap (planned work)](docs/ROADMAP.md)
+- [Deploy (Helm / CronJob)](deploy/)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Install or update](#install-or-update)
@@ -50,6 +51,8 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - [Console output modes](#console-output-modes)
 - [Typical collected data](#typical-collected-data)
 - [Notifications](#notifications)
+- [In-cluster deploy (Helm / CronJob)](#in-cluster-deploy-helm--cronjob)
+- [Secret redaction](#secret-redaction)
 - [Rootless container](#rootless-container)
 - [Security note](#security-note)
 - [Get involved](#get-involved)
@@ -64,7 +67,11 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - Concurrent Kubernetes API calls for faster collection
 - Worker/node and control plane oriented log gathering
 - Output folder + `.tar.gz` archive generation
-- Optional notifications (Slack, Discord, Teams, PagerDuty, Telegram, generic webhooks)
+- Optional notifications (Slack, Discord, Teams, PagerDuty, Telegram, **email/SMTP**, generic webhooks with **templates and HMAC**)
+- **Notify on failure** (collect abort or partial job failures above a threshold)
+- **HTTP retry/backoff** for transient webhook errors
+- Optional **secret redaction** in collected log files
+- **Helm chart** and flat **CronJob** manifests for scheduled in-cluster collection (`deploy/`)
 - Rootless container image support
 
 **Libraries** (see [`go.mod`](go.mod)): [Cobra](https://github.com/spf13/cobra) **v1.10.2**, [Viper](https://github.com/spf13/viper) **v1.21.0**, [client-go](https://github.com/kubernetes/client-go) for cluster access (no `kubectl` binary required).
@@ -83,7 +90,7 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 
 Pre-built **`.deb`**, **`.rpm`**, **`.tar.gz`** (and **`.zip`** on Windows) are on **[GitHub Releases](https://github.com/hrodrig/groot/releases)** and **[latest release](https://github.com/hrodrig/groot/releases/latest)**. The **release** badge at the top of this README shows the current tag at a glance.
 
-**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser puts the **semver without `v`** in filenames (for example **`groot_0.4.1_amd64.deb`**), while the download URL path uses the **git tag with `v`** (`…/download/v0.4.1/…`). Do not use `groot_${TAG}_…` with `TAG=v0.4.1` in the filename—that causes **404**. Options: **pick names from the release page**, use the **snippet below**, or use the **badge**.
+**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser puts the **semver without `v`** in filenames (for example **`groot_0.5.0_amd64.deb`**), while the download URL path uses the **git tag with `v`** (`…/download/v0.5.0/…`). Do not use `groot_${TAG}_…` with `TAG=v0.5.0` in the filename—that causes **404**. Options: **pick names from the release page**, use the **snippet below**, or use the **badge**.
 
 ### Install latest `.deb` (Debian / Ubuntu, `amd64`)
 
@@ -94,7 +101,7 @@ TAG="$(curl -fsSL https://api.github.com/repos/hrodrig/groot/releases/latest | p
 
 [ -n "$TAG" ] || { echo "Could not resolve tag (empty). Install python3 or jq, or set TAG manually from the Releases page." >&2; exit 1; }
 
-VER="${TAG#v}"   # e.g. v0.4.1 -> 0.4.1 (matches GoReleaser .deb filename)
+VER="${TAG#v}"   # e.g. v0.5.0 -> 0.5.0 (matches GoReleaser .deb filename)
 DEB="groot_${VER}_amd64.deb"
 URL="https://github.com/hrodrig/groot/releases/download/${TAG}/${DEB}"
 TMP="/tmp/${DEB}"
@@ -121,11 +128,11 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
-| Format | Example (tag **`v0.4.1`** in the URL path; artifact basename uses **`0.4.1`** without `v`) |
+| Format | Example (tag **`v0.5.0`** in the URL path; artifact basename uses **`0.5.0`** without `v`) |
 |--------|------------------------------------------------------------------|
-| **`.deb`** | `curl -fsSL -o /tmp/groot_0.4.1_amd64.deb https://github.com/hrodrig/groot/releases/download/v0.4.1/groot_0.4.1_amd64.deb` then `sudo apt install /tmp/groot_0.4.1_amd64.deb` (use `/tmp` so `_apt` can read the file if `$HOME` is `700`) |
-| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.4.1/groot_0.4.1_amd64.rpm` then `sudo rpm -Uvh groot_0.4.1_amd64.rpm` or `sudo dnf install ./groot_0.4.1_amd64.rpm` |
-| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.4.1/groot_0.4.1_linux_amd64.tar.gz` then `tar xzf groot_0.4.1_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
+| **`.deb`** | `curl -fsSL -o /tmp/groot_0.5.0_amd64.deb https://github.com/hrodrig/groot/releases/download/v0.5.0/groot_0.5.0_amd64.deb` then `sudo apt install /tmp/groot_0.5.0_amd64.deb` (use `/tmp` so `_apt` can read the file if `$HOME` is `700`) |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.5.0/groot_0.5.0_amd64.rpm` then `sudo rpm -Uvh groot_0.5.0_amd64.rpm` or `sudo dnf install ./groot_0.5.0_amd64.rpm` |
+| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.5.0/groot_0.5.0_linux_amd64.tar.gz` then `tar xzf groot_0.5.0_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
@@ -157,7 +164,7 @@ From any machine with Go **1.26+** (installs to `$(go env GOPATH)/bin`; ensure t
 go install github.com/hrodrig/groot/cmd/groot@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.4.1`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.5.0`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
 
 Useful runtime flags (global or with `collect`):
 
@@ -183,7 +190,7 @@ If you do not have a config file yet, print a sample and save it:
 
 The sample YAML is written to **standard output**, so shell redirection (`>`) works as shown. If you use an **older** `groot` binary where `>` produced an empty file, redirect **stderr** instead: `groot --print-sample-config 2> groot.yml`.
 
-The generated file is a **template only**. Open `groot.yml` and set **your own** values for your environment—for example `kubeconfig` (if not using the default), `collection.namespaces`, workloads under `collection.targets` (deployments, StatefulSets, DaemonSets, Helm releases), `output_dir` / `file_prefix`, and any `notify.*` URLs or secrets. Until you do, the sample names and disabled notification blocks will not match a real cluster.
+The generated file is a **template only**. Open `groot.yml` and set **your own** values for your environment—for example `kubeconfig` (if not using the default), `collection.namespaces`, workloads under `collection.targets` (deployments, StatefulSets, DaemonSets, Jobs, CronJobs, Helm releases), `output_dir` / `file_prefix`, `collection.redact_secrets`, and any `notify.*` URLs or secrets. Until you do, the sample names and disabled notification blocks will not match a real cluster.
 
 Then run:
 
@@ -245,6 +252,41 @@ Skip **all** notify channels for this run (archive still created); same as env `
 0 * * * * GROOT_NO_NOTIFY=1 /usr/local/bin/groot collect --config /home/you/.groot/prod.yml --quiet
 ```
 
+### Preview planned jobs (`--list-jobs`)
+
+Print API jobs and output paths without writing disk or sending notify:
+
+```bash
+./bin/groot collect --config groot.yml --list-jobs
+# pod-logs-default-api -> default/my-pod__node-1.log args=[logs -n default my-pod --all-containers]
+```
+
+### Notify on failure
+
+When `notify.on_failure.enabled: true`, Groot can alert on **abort** (archive error, timeout, …) or when **`failed >= min_failed_jobs`** on a completed run (in addition to the normal success notify). Respects `--no-notify`.
+
+```yaml
+notify:
+  slack:
+    enabled: true
+    webhook_url: "https://hooks.slack.com/services/..."
+  on_failure:
+    enabled: true
+    on_abort: true
+    min_failed_jobs: 2
+```
+
+### Secret redaction (optional)
+
+Scan collected `*.log` files and replace likely secrets before archiving:
+
+```yaml
+collection:
+  redact_secrets: true
+  redact_patterns:
+    - '(?i)my-internal-token\s*=\s*\S+'
+```
+
 ### Custom capture label (`--message`)
 
 ```bash
@@ -275,7 +317,7 @@ Edit `groot.yml` (or any file passed with `--config`) and align every section wi
 
 The **annotated** template (every key explained in comments) is **[`configs/groot.yml.sample`](configs/groot.yml.sample)** — identical to `groot --print-sample-config` output. Use that file when you want line-by-line guidance next to the YAML.
 
-Sample config (abbreviated; full comments in the repo file above):
+Sample config (abbreviated; full annotated template in **[`configs/groot.yml.sample`](configs/groot.yml.sample)** — same as `groot --print-sample-config`):
 
 ```yaml
 kubeconfig: ""
@@ -292,59 +334,45 @@ collection:
     default:
       deployments:
         - api
-      statefulsets:
-        - redis
-      daemonsets:
-        - node-agent
-      helm_releases:
-        - my-release
+      jobs:
+        - batch-import
+      cronjobs:
+        - nightly-sync
   include_pod_logs: true
-  include_previous_logs: true
   pod_log_tail_lines: 1500
-  # pod_logs_since: "24"   # optional: pod logs only; bare hours or duration (24h, 45m)
+  # pod_logs_since: "24"
   include_node_details: true
   include_node_logs: true
-  node_log_tail_lines: 5000
   include_pod_metrics: true
+  redact_secrets: false
   extra_kubectl:
-    - "get componentstatuses"
-    - "get csr"
+    - "get ingress -A"
+    - "get pvc -A"
 
 notify:
+  on_failure:
+    enabled: false
+    on_abort: true
+    min_failed_jobs: 1
+  retry:
+    max_attempts: 3
+    initial_backoff: 1s
+    max_backoff: 10s
   slack:
     enabled: false
-    # One URL, or several separated by ';' (e.g. team A; team B webhooks)
     webhook_url: ""
-
-  discord:
-    enabled: false
-    # Discord server Settings → Integrations → Webhooks (same ';' for multiple URLs)
-    webhook_url: ""
-
-  teams:
-    enabled: false
-    # Same ';' convention as Slack for multiple Teams incoming webhooks
-    webhook_url: ""
-
-  pagerduty:
-    enabled: false
-    # Events API v2 integration key(s); multiple keys separated by ';'
-    routing_key: ""
-    severity: "warning"
-    source: "groot"
-
-  telegram:
-    enabled: false
-    token: ""
-    # One chat id, or several (group/user) ids separated by ';' with the same bot
-    chat_id: ""
-
   generic:
     enabled: false
-    # POST JSON with one root string field only: {"<json_key>":"<summary>"} (see README → Notifications).
     webhook_url: ""
     json_key: "text"
-    headers: {}
+    # body_template: '{"text":"{{summary}}","failed":{{failed}},"event":"{{event}}"}'
+    # hmac_secret: ""   # or env GROOT_NOTIFY_GENERIC_HMAC_SECRET
+  email:
+    enabled: false
+    host: ""
+    port: 587
+    from: ""
+    to: ""
 ```
 
 ### Configuration reference (all keys)
@@ -354,10 +382,10 @@ notify:
 | Key | What it does |
 |-----|----------------|
 | **`kubeconfig`** | Path to the kubeconfig file used to build the **client-go** REST config (same discovery rules as **client-go** / **`clientcmd`**). Empty: use **`KUBECONFIG`** if set, then the default kubeconfig locations (for example **`~/.kube/config`**), or in-cluster credentials when Groot runs as a pod. **`groot --kubeconfig`** overrides this for a single run (see [Resolution and precedence](#resolution-and-precedence)). |
-| **`output_dir`** | Base directory: each run creates a **timestamped** folder here, then writes **`<timestamp>-<cluster>.tar.gz`** next to it. Supports **`~`** and **`${VAR}`** expansion. |
-| **`file_prefix`** | Logical prefix in configs (default `groot-capture`). **Reserved** for future capture naming; today archives use **`<timestamp>-<cluster>`** plus optional **`--message`**. |
-| **`collection`** | Tuning for timeouts, parallelism, namespaces, pod logs, optional **`extra_kubectl`** argv lines, etc. (see below). |
-| **`notify`** | Optional webhooks and APIs after a **successful** collect (see [Notifications](#notifications)). |
+| **`output_dir`** | Base directory: each run creates **`<file_prefix>-<timestamp>[-since-<slug>]/`**, then **`<sessionBase>-<cluster>[-<message>].tar.gz`** beside it. Supports **`~`** and **`${VAR}`** expansion. |
+| **`file_prefix`** | Prefix for capture directory and archive basename (default **`groot-capture`**). Example session: **`groot-capture-20260606-120000-my-cluster.tar.gz`**. |
+| **`collection`** | Tuning for timeouts, parallelism, namespaces, pod logs, optional **`extra_kubectl`** argv lines, redaction, etc. (see below). |
+| **`notify`** | Optional webhooks, email, and failure alerts after collect (see [Notifications](#notifications)). |
 
 #### `collection`
 
@@ -368,7 +396,7 @@ Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.t
 | **`timeout`** | Maximum wall time for the whole **`groot collect`** run (Go `context` deadline). |
 | **`worker_concurrency`** | Number of **parallel** collection workers (concurrent API jobs). |
 | **`namespaces`** | For each entry, Groot lists namespace-scoped resources through the API (pods, services, Deployments, ReplicaSets, StatefulSets, DaemonSets), writes **JSON sections** to **`<ns>/resources.txt`**, and ensures **`<ns>/`** exists under the capture tree. |
-| **`targets`** | Per-namespace **pod log** filters only. Keys are **namespace names**. Under each: **`deployments`**, **`statefulsets`**, **`daemonsets`**, **`helm_releases`** (string lists). If a namespace has **at least one** non-empty list, only pods whose labels match those workloads get **log** jobs. If there is **no** `targets` entry for a namespace, or the entry has **all lists empty**, pod logs for that namespace stay **broad** (all pods). Matching uses **`app.kubernetes.io/name`**, **`app.kubernetes.io/instance`**, **`app`**, and Helm instance vs **`helm_releases`** (see **Workload filter behavior** under [Resolution and precedence](#resolution-and-precedence)). |
+| **`targets`** | Per-namespace **pod log** filters only. Keys are **namespace names**. Under each: **`deployments`**, **`statefulsets`**, **`daemonsets`**, **`jobs`**, **`cronjobs`**, **`helm_releases`** (string lists). If a namespace has **at least one** non-empty list, only pods whose labels match those workloads get **log** jobs. Empty/missing entry → broad pod logs for that NS. |
 | **`include_pod_logs`** | When **`true`**, collects **pod logs** for workload and control-plane pods via the API (subject to **`targets`**, **`pod_log_tail_lines`**, **`pod_logs_since`**). When **`false`**, skips all pod log jobs. |
 | **`include_previous_logs`** | When **`true`**, also collects **previous-container** logs into **`*.previous.log`** (same semantics as **`--previous`** on pod logs; marked optional so a missing previous container does not fail the run). |
 | **`pod_log_tail_lines`** | When **`>0`**, passes **`--tail N`** to pod log commands. **`0`** means **no `--tail`** (full log stream — can be very large). |
@@ -377,16 +405,21 @@ Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.t
 | **`include_node_logs`** | When **`true`**, for each node: (1) **GET** **`/api/v1/nodes/<node>/proxy/logs/?query=kubelet`** (optional **`&tailLines=N`**) → **`nodes/<node>-kubelet.log`** (kubelet via **node log query**; Kubernetes **1.27+**, RBAC **`nodes/proxy`**, kubelet log-query settings — see [Node log query](https://kubernetes.io/blog/2023/04/21/node-log-query-alpha/)); (2) **GET** **`/api/v1/nodes/<node>/proxy/logs/messages`** → **`nodes/<node>-messages.log`** (host **`/var/log/messages`** when the kubelet serves it). The **messages** job is **optional** (failure does not fail the run) because many nodes use journald only or do not expose that path. |
 | **`node_log_tail_lines`** | When **`>0`**, appends **`tailLines`** to the kubelet log query (**default `5000`**). **`0`** omits **`tailLines`** (server default limit). |
 | **`include_pod_metrics`** | When **`true`**, writes cluster-wide pod CPU/memory to **`extras/all-pods-top.txt`** (via **metrics.k8s.io**; requires **metrics-server** or an equivalent metrics provider). |
+| **`redact_secrets`** | When **`true`**, scans collected **`*.log`** files and replaces likely secret values with **`[REDACTED]`** before the manifest and archive (see [Secret redaction](#secret-redaction)). Default **`false`**. |
+| **`redact_patterns`** | Optional list of extra regex patterns (RE2 syntax). Invalid patterns fail at collect time. |
 | **`extra_kubectl`** | List of extra **read-only** argv lines (allowlisted verbs; split on whitespace, **no shell**). Groot executes them in-process with **client-go**. See the note below on allowed verbs. |
 
 #### `notify` (each channel)
 
 | Block / field | What it does |
 |----------------|----------------|
-| **`slack`**, **`discord`**, **`teams`**: **`enabled`**, **`webhook_url`** | When **`enabled: true`**, POST a one-line summary to the incoming webhook URL(s). Multiple URLs: separate with **`;`**. URLs may also come from **`GROOT_NOTIFY_*_WEBHOOK_URL`** env vars when YAML is empty. |
-| **`pagerduty`**: **`enabled`**, **`routing_key`**, **`severity`**, **`source`** | Events API v2 trigger; **`severity`** is **`critical`**, **`error`**, **`warning`**, or **`info`**. Multiple routing keys: **`;`**. Env: **`GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`**. |
-| **`telegram`**: **`enabled`**, **`token`**, **`chat_id`** | Bot token and chat id(s); multiple chat ids: **`;`**. Env fallbacks: **`GROOT_NOTIFY_TELEGRAM_TOKEN`**, **`GROOT_NOTIFY_TELEGRAM_CHAT_ID`**. |
-| **`generic`**: **`enabled`**, **`webhook_url`**, **`json_key`**, **`headers`** | Custom POST: one JSON string field named **`json_key`** (default **`text`**) whose value is the summary. Optional **`headers`** for auth, etc. Env: **`GROOT_NOTIFY_GENERIC_WEBHOOK_URL`**. |
+| **`on_failure`**: **`enabled`**, **`on_abort`**, **`min_failed_jobs`** | Optional alerts when collect **aborts** or when **`failed >= min_failed_jobs`** on a completed run. Respects **`--no-notify`**. |
+| **`retry`**: **`max_attempts`**, **`initial_backoff`**, **`max_backoff`** | Retries transient **5xx** and network errors for HTTP notify clients (webhooks, PagerDuty). |
+| **`slack`**, **`discord`**, **`teams`**: **`enabled`**, **`webhook_url`** | POST a one-line summary to incoming webhook URL(s). Multiple URLs: **`;`**. Env: **`GROOT_NOTIFY_*_WEBHOOK_URL`**. |
+| **`pagerduty`**: **`enabled`**, **`routing_key`**, **`severity`**, **`source`** | Events API v2 trigger. Env: **`GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`**. |
+| **`telegram`**: **`enabled`**, **`token`**, **`chat_id`** | Bot API. Env: **`GROOT_NOTIFY_TELEGRAM_TOKEN`**, **`GROOT_NOTIFY_TELEGRAM_CHAT_ID`**. |
+| **`generic`**: **`webhook_url`**, **`json_key`**, **`headers`**, **`extra_fields`**, **`body_template`**, **`hmac_secret`**, **`hmac_header`** | Custom JSON POST; see [Notifications](#notifications). Env: **`GROOT_NOTIFY_GENERIC_WEBHOOK_URL`**, **`GROOT_NOTIFY_GENERIC_HMAC_SECRET`**. |
+| **`email`**: **`host`**, **`port`**, **`username`**, **`password`**, **`from`**, **`to`**, **`use_tls`** | Plain-text summary via SMTP (STARTTLS on 587 by default). Env: **`GROOT_NOTIFY_EMAIL_*`**. |
 
 Environment variables use the `GROOT_` prefix (Viper). Nested YAML keys map to env names by replacing `.` with `_` (for example `collection.timeout` → `GROOT_COLLECTION_TIMEOUT`). `kubeconfig` in YAML still loses to the process `KUBECONFIG` env when that is set (see [Resolution and precedence](#resolution-and-precedence)).
 
@@ -394,7 +427,7 @@ Common examples:
 
 - `GROOT_OUTPUT_DIR`, `GROOT_FILE_PREFIX`
 - `GROOT_COLLECTION_TIMEOUT`, `GROOT_COLLECTION_WORKER_CONCURRENCY`, `GROOT_COLLECTION_INCLUDE_POD_LOGS` (boolean), `GROOT_COLLECTION_POD_LOG_TAIL_LINES`, `GROOT_COLLECTION_POD_LOGS_SINCE`, …
-- Notify secrets (also read when `enabled: true` and the YAML field is empty): `GROOT_NOTIFY_SLACK_WEBHOOK_URL`, `GROOT_NOTIFY_DISCORD_WEBHOOK_URL`, `GROOT_NOTIFY_TEAMS_WEBHOOK_URL`, `GROOT_NOTIFY_TELEGRAM_TOKEN`, `GROOT_NOTIFY_TELEGRAM_CHAT_ID`, `GROOT_NOTIFY_GENERIC_WEBHOOK_URL`, `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`
+- Notify secrets (also read when `enabled: true` and the YAML field is empty): `GROOT_NOTIFY_SLACK_WEBHOOK_URL`, `GROOT_NOTIFY_DISCORD_WEBHOOK_URL`, `GROOT_NOTIFY_TEAMS_WEBHOOK_URL`, `GROOT_NOTIFY_TELEGRAM_TOKEN`, `GROOT_NOTIFY_TELEGRAM_CHAT_ID`, `GROOT_NOTIFY_GENERIC_WEBHOOK_URL`, `GROOT_NOTIFY_GENERIC_HMAC_SECRET`, `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`, `GROOT_NOTIFY_EMAIL_HOST`, `GROOT_NOTIFY_EMAIL_USERNAME`, `GROOT_NOTIFY_EMAIL_PASSWORD`, `GROOT_NOTIFY_EMAIL_FROM`, `GROOT_NOTIFY_EMAIL_TO`
 - `GROOT_NO_NOTIFY=1` (or `true` / `yes`): same as `--no-notify` for a run
 
 **`collection.extra_kubectl`:** Each string is split on whitespace into argv tokens (no shell). At load time, Groot only accepts **read-oriented** leading verbs: `get`, `describe`, `top`, `logs`, `api-resources`, `api-versions`, `version`, `cluster-info`, plus `config view …` and `auth can-i …`. Anything else fails `collect` immediately with a configuration error so a typo or copy-paste cannot turn extras into destructive verbs (`delete`, `exec`, `apply`, etc.).
@@ -422,9 +455,10 @@ Configuration file precedence:
 
 Workload filter behavior (`collection.targets`):
 
-- per namespace, you can define `deployments`, `statefulsets`, `daemonsets`, and `helm_releases`
-- if a namespace has targets, pod logs for that namespace are limited to those workloads
-- if a namespace has no targets, pod logs keep the default broad behavior
+- per namespace, you can define `deployments`, `statefulsets`, `daemonsets`, `jobs`, `cronjobs`, and `helm_releases`
+- if a namespace has targets with at least one non-empty list, pod logs for that namespace are limited to matching pods
+- if a namespace has no targets entry, or all lists are empty, pod logs stay broad for that namespace
+- `jobs` / `cronjobs` match label keys plus **`job-name`** on Job pods
 - `helm_releases` matches `app.kubernetes.io/instance`
 
 `pod_log_tail_lines` behavior:
@@ -453,10 +487,12 @@ Workload filter behavior (`collection.targets`):
 
 ## Output naming
 
-Capture output names are:
+Capture output names use **`file_prefix`** (default **`groot-capture`**):
 
-- directory: `<timestamp>` or, when **`collection.pod_logs_since`** is set (or **`collect --since`**), **`<timestamp>-since-<slug>`** where **`<slug>`** is a filesystem-safe form of the duration (for example **`12h`**, **`45m`**) so you can see the log window at a glance without opening the archive
-- archive: same leading token as the directory, then **`-<cluster>[-<message>].tar.gz`** (for example `20260503-081049-since-12h-my-cluster.tar.gz`)
+- **directory:** `<file_prefix>-<timestamp>` or `<file_prefix>-<timestamp>-since-<slug>` when **`pod_logs_since`** / **`--since`** is set
+- **archive:** `<sessionBase>-<cluster>[-<message>].tar.gz` (for example **`groot-capture-20260606-120000-my-cluster.tar.gz`**)
+
+When **`pod_logs_since`** is set, **`<slug>`** is a filesystem-safe form of the duration (for example **`12h`**, **`45m`**).
 
 `--message` is sanitized before use:
 
@@ -471,8 +507,8 @@ Example:
 
 - input: `--message "network routing issue"`
 - suffix: `network-routing-issue`
-- output: `20260428-123200-my-cluster-network-routing-issue.tar.gz`
-- with **`pod_logs_since`** (or **`--since`**) set to **`12h`** and no message: `20260428-123200-since-12h-my-cluster.tar.gz`
+- output: `groot-capture-20260428-123200-my-cluster-network-routing-issue.tar.gz`
+- with **`pod_logs_since`** (or **`--since`**) set to **`12h`** and no message: `groot-capture-20260428-123200-since-12h-my-cluster.tar.gz`
 
 Directory layout:
 
@@ -507,27 +543,200 @@ These artifacts mirror common read-only inspection commands (all via **client-go
 - Under **`nodes/`** — per-node **describe**-style output and **node metrics** when enabled (`describe node`, `top node`)
 - Pod logs — streams all containers like **`logs -n <ns> <pod> --all-containers`** → files named `<pod>__<node>.log` under each namespace directory (pending/unscheduled pods use `unknown-node`)
 - Control plane pod logs in `kube-system` (`tier=control-plane`, when available) use the same `<pod>__<node>.log` pattern
-- `extras/kubeconfig.txt` derived from kubeconfig (`context`, `cluster`, `user`, `server`)
+- **`extras/kubeconfig.txt`** derived from kubeconfig (`context`, `cluster`, `user`, `server`)
+- **`extras/manifest.json`** — archive manifest (version, cluster, job counts, file paths)
 
 [↑ Back to top](#readme-top)
 
 ## Notifications
 
-Enable each channel in config:
+Groot sends a **one-line summary** after collect. Channels are independent; enable only what you need.
 
-- Slack Incoming Webhook (`notify.slack.webhook_url` or `GROOT_NOTIFY_SLACK_WEBHOOK_URL`). For multiple channels, put several full webhook URLs on the same value separated by `;` (spaces optional); Groot notifies each URL in order and reports combined errors if any request fails.
-- **Discord** Incoming Webhook (`notify.discord.webhook_url` or `GROOT_NOTIFY_DISCORD_WEBHOOK_URL`): same `;`-separated URL list. Payload is `{"content":"<summary>"}` per [Discord webhook API](https://discord.com/developers/docs/resources/webhook#execute-webhook). Messages longer than 2000 characters are truncated with `...` so the request stays valid.
-- Teams Incoming Webhook — same `;`-separated list for `notify.teams.webhook_url` / `GROOT_NOTIFY_TEAMS_WEBHOOK_URL`.
-- **PagerDuty** [Events API v2](https://developer.pagerduty.com/docs/events-api-v2-overview) (`notify.pagerduty` or `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`): `routing_key` is the Events v2 integration key (several keys separated by `;` each gets its own `trigger` event). `severity` must be `critical`, `error`, `warning`, or `info` (default `warning`). `source` defaults to `groot`. The event `payload.summary` is the same line as other channels; `payload.custom_details` includes `total`, `success`, `failed`, `duration`, `output_dir`, and `archive_path`. Successful delivery expects HTTP **202** from PagerDuty.
-- Telegram Bot API (`notify.telegram.token` + `chat_id`, or `GROOT_NOTIFY_TELEGRAM_TOKEN` / `GROOT_NOTIFY_TELEGRAM_CHAT_ID`). One bot token; multiple destinations use several chat ids in one `chat_id` string separated by `;` (same message to each chat).
-- **Generic HTTP webhook** (`notify.generic` or `GROOT_NOTIFY_GENERIC_WEBHOOK_URL`): `POST` with `Content-Type: application/json` and body `{"<json_key>":"<summary text>"}`. Default `json_key` is `text`. For Discord, use **`notify.discord`** instead (correct `content` field and length limit). Optional `headers` (YAML map) are sent on every request. Multiple endpoints: separate full URLs with `;` in `webhook_url`.
+**Success message (all channels):**
 
-**Generic webhook — scope (read this before relying on it):**
+```text
+GROOT finished. total=42 success=40 failed=2 duration=3m12s output=/out/groot-capture-… archive=/out/groot-capture-….tar.gz
+```
 
-- **What it sends:** exactly one JSON object at the root, with **one string field** whose name you set via `json_key`. The value is always Groot’s single-line collection summary (same text as other channels). Example: `{"text":"GROOT finished. total=…"}`.
-- **What it does not do:** no arbitrary body templates (you cannot place the summary in several fields, wrap it in nested objects, or mix fixed keys beyond that single pair). No non-JSON bodies (no raw text, `application/x-www-form-urlencoded`, XML). If an integration needs extra fields, signing (HMAC), or a custom layout, use a small proxy service or extend Groot later.
+**Failure messages** (when `notify.on_failure.enabled: true`):
 
-**Implemented channels:** Slack, Discord, Teams, PagerDuty (Events v2), Telegram, and generic JSON webhooks as above. There is no built-in email, etc.
+```text
+GROOT FAILED. reason=archive logs: … total=42 success=40 failed=2 …
+GROOT finished with failures. total=42 success=40 failed=2 …
+```
+
+### Slack / Discord / Teams
+
+```yaml
+notify:
+  slack:
+    enabled: true
+    webhook_url: "https://hooks.slack.com/services/T…/B…/…;https://hooks.slack.com/services/…"
+  discord:
+    enabled: true
+    webhook_url: "https://discord.com/api/webhooks/…"
+```
+
+Env fallbacks: `GROOT_NOTIFY_SLACK_WEBHOOK_URL`, `GROOT_NOTIFY_DISCORD_WEBHOOK_URL`, `GROOT_NOTIFY_TEAMS_WEBHOOK_URL`. Discord truncates content to 2000 runes.
+
+### PagerDuty Events v2
+
+```yaml
+notify:
+  pagerduty:
+    enabled: true
+    routing_key: "your-integration-key"
+    severity: warning   # critical | error | warning | info
+    source: groot
+```
+
+Env: `GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY`. Expects HTTP **202**. `custom_details` includes job counts, duration, paths.
+
+### Telegram
+
+```yaml
+notify:
+  telegram:
+    enabled: true
+    token: "123456:ABC…"
+    chat_id: "-1001234567890;123456789"
+```
+
+Env: `GROOT_NOTIFY_TELEGRAM_TOKEN`, `GROOT_NOTIFY_TELEGRAM_CHAT_ID`.
+
+### Generic webhook (JSON template, extra fields, HMAC)
+
+**Simple (default shape):**
+
+```yaml
+notify:
+  generic:
+    enabled: true
+    webhook_url: "https://internal.example/hooks/groot"
+    json_key: "text"
+    extra_fields:
+      source: "groot"
+      environment: "production"
+```
+
+POST body: `{"text":"<summary>","source":"groot","environment":"production"}`.
+
+**Custom JSON template** (placeholders: `{{summary}}`, `{{text}}`, `{{event}}`, `{{total}}`, `{{success}}`, `{{failed}}`, `{{duration}}`, `{{output_dir}}`, `{{archive_path}}`, `{{reason}}`):
+
+```yaml
+notify:
+  generic:
+    enabled: true
+    webhook_url: "https://internal.example/hooks/groot"
+    body_template: '{"event":"{{event}}","message":"{{summary}}","stats":{"total":{{total}},"failed":{{failed}}}}'
+    headers:
+      Authorization: "Bearer ${INTERNAL_TOKEN}"
+    hmac_secret: "shared-signing-key"
+    hmac_header: "X-Groot-Signature"
+```
+
+When `hmac_secret` is set, Groot sends **`X-Groot-Signature: sha256=<hex>`** (HMAC-SHA256 over the raw POST body). Env: `GROOT_NOTIFY_GENERIC_HMAC_SECRET`.
+
+### Email (SMTP)
+
+```yaml
+notify:
+  email:
+    enabled: true
+    host: smtp.example.com
+    port: 587
+    username: groot-bot
+    password: "${SMTP_PASSWORD}"
+    from: groot@example.com
+    to: "ops@example.com;oncall@example.com"
+    use_tls: false   # true for implicit TLS (e.g. port 465)
+```
+
+Env: `GROOT_NOTIFY_EMAIL_HOST`, `GROOT_NOTIFY_EMAIL_USERNAME`, `GROOT_NOTIFY_EMAIL_PASSWORD`, `GROOT_NOTIFY_EMAIL_FROM`, `GROOT_NOTIFY_EMAIL_TO`.
+
+### Notify on failure and retry
+
+```yaml
+notify:
+  on_failure:
+    enabled: true
+    on_abort: true          # alert when collect aborts (timeout, archive error, …)
+    min_failed_jobs: 1      # also alert when failed jobs >= this (success path)
+  retry:
+    max_attempts: 3
+    initial_backoff: 1s
+    max_backoff: 10s
+  slack:
+    enabled: true
+    webhook_url: "https://hooks.slack.com/services/…"
+```
+
+Partial-failure alerts are **in addition to** the normal success notify. **`--no-notify`** / **`GROOT_NO_NOTIFY=1`** skips **all** channels including failure alerts.
+
+HTTP clients retry transient **5xx** and network errors only; **4xx** fails immediately.
+
+[↑ Back to top](#readme-top)
+
+## In-cluster deploy (Helm / CronJob)
+
+Run **`groot collect`** on a schedule inside the cluster. Image: **`ghcr.io/hrodrig/groot`** (see [Releases](https://github.com/hrodrig/groot/releases)).
+
+### Helm (recommended)
+
+```bash
+helm upgrade --install groot ./deploy/helm/groot \
+  --namespace groot --create-namespace \
+  --set image.tag=0.5.0 \
+  --set schedule="0 */6 * * *"
+```
+
+Embed your config (notify, namespaces, redaction):
+
+```bash
+helm upgrade --install groot ./deploy/helm/groot \
+  --namespace groot --create-namespace \
+  --set-file config.grootYml=./groot.yml \
+  --set image.tag=0.5.0
+```
+
+Archives land on the **`/out`** volume (PVC by default). See **`deploy/helm/groot/README.md`** for values reference.
+
+### Flat manifests (no Helm)
+
+```bash
+kubectl apply -f deploy/k8s/cronjob.yaml
+```
+
+Edit the ConfigMap **`groot-config`** and image tag before production use. Includes Namespace, ServiceAccount, ClusterRole, PVC, and CronJob.
+
+More detail: **`deploy/README.md`**.
+
+[↑ Back to top](#readme-top)
+
+## Secret redaction
+
+Collected logs may contain passwords, tokens, or API keys. Enable an optional scrub pass **before** the archive is written:
+
+```yaml
+collection:
+  redact_secrets: true
+  redact_patterns:
+    - '(?i)corp-internal-key\s*=\s*\S+'
+```
+
+**Behavior:**
+
+- Scans only **`*.log`** files under the capture tree
+- Built-in patterns match common key names (`password`, `token`, `Bearer …`, `api_key`, …)
+- Matches are replaced with **`[REDACTED]`**
+- Off by default; does not guarantee all secrets are removed — treat archives as sensitive
+
+Example line before/after:
+
+```text
+authorization: Bearer eyJhbGciOiJIUzI1NiIs…
+authorization: [REDACTED]
+```
 
 [↑ Back to top](#readme-top)
 
@@ -558,7 +767,9 @@ podman run --rm \
 
 ## Security note
 
-Collected logs may contain sensitive data. Handle archives according to your security policy.
+Collected logs may contain sensitive data (secrets, PII, credentials). Handle archives according to your security policy.
+
+Optional **`collection.redact_secrets`** reduces accidental exposure in **`*.log`** files but is **not** a guarantee — review before sharing archives externally. Restrict access to **`output_dir`** and in-cluster PVCs; keep notify credentials in env/Secrets, not committed ConfigMaps.
 
 [↑ Back to top](#readme-top)
 

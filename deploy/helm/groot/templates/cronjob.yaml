@@ -1,0 +1,63 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "groot.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "groot.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  concurrencyPolicy: {{ .Values.concurrencyPolicy }}
+  startingDeadlineSeconds: {{ .Values.startingDeadlineSeconds }}
+  successfulJobsHistoryLimit: {{ .Values.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.backoffLimit }}
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: {{ include "groot.name" . }}
+            app.kubernetes.io/instance: {{ .Release.Name }}
+        spec:
+          serviceAccountName: {{ include "groot.serviceAccountName" . }}
+          restartPolicy: OnFailure
+          containers:
+            - name: groot
+              image: {{ include "groot.image" . | quote }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              args:
+                - collect
+                - --config
+                - /config/groot.yml
+              volumeMounts:
+                - name: config
+                  mountPath: /config
+                  readOnly: true
+                - name: out
+                  mountPath: /out
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+          volumes:
+            - name: config
+              configMap:
+                name: {{ include "groot.fullname" . }}
+            - name: out
+              {{- if .Values.persistence.enabled }}
+              persistentVolumeClaim:
+                claimName: {{ include "groot.fullname" . }}
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

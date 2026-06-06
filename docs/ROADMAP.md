@@ -9,7 +9,7 @@ User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sam
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-06 (**0.4.x** closed in **v0.4.0**; **v0.4.1** patch; focus **0.5.x**)
+**Last reviewed:** 2026-06-06 (**0.5.x** closed in **v0.5.0**; focus **0.6.x**)
 
 ### Versioning note
 
@@ -24,13 +24,11 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 **Honest gaps today:**
 
 - **`k8srunner`** `extra_kubectl` is intentionally narrow (`get`/`describe`/`top` subsets; no `explain`/`wait`).
-- **No Helm chart / CronJob** manifest for scheduled in-cluster collection (**0.5.x #22**).
-- **Generic webhooks** send one JSON string field only—no templates, HMAC, or non-JSON bodies (**0.5.x #20**).
-- **Notify** runs only after a **successful** collect—no alert on abort or high partial-failure rate (**0.5.x #19**).
-- **Collected archives may contain secrets**; there is no built-in redaction scrub pass (**0.5.x #23**).
 - **Release artifact basenames** use `groot_0.4.1_*` (GoReleaser `{{ .Version }}`); **pgwd** / **kzero** use `*_v0.x.y_*` (`{{ .Tag }}`). Align before **0.6.x #25** so Homebrew cask URLs match the family convention.
+- **No post-collect object-store upload** (S3/GCS) — credentials via env only in **0.6.x #28**.
+- **No Homebrew cask tap** yet (**0.6.x #25**).
 
-**Completed bands:** **0.1.x–0.2.x** (initial CLI, packaging, notifications, container). **0.3.x** (client-go collector, RCA tables, kind E2E harness, security hardening through **v0.3.2**). **0.4.x** (archive manifest, `file_prefix` naming, `--list-jobs`, broader `extra_kubectl`, Job/CronJob targets, kind E2E in CI) — see [plan-0.4.0.md](plan-0.4.0.md).
+**Completed bands:** **0.1.x–0.2.x** (initial CLI, packaging, notifications, container). **0.3.x** (client-go collector, RCA tables, kind E2E harness, security hardening through **v0.3.2**). **0.4.x** (archive manifest, `file_prefix` naming, `--list-jobs`, broader `extra_kubectl`, Job/CronJob targets, kind E2E in CI) — see [plan-0.4.0.md](plan-0.4.0.md). **0.5.x** (notify on failure, rich webhooks, email, retry, secret redaction, in-cluster Helm/CronJob) — see [plan-0.5.0.md](plan-0.5.0.md).
 
 **Current focus (planned work):**
 
@@ -38,7 +36,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 |------|------------|
 | **0.3.x** | **Closed** (last item **#11** security patch in **v0.3.2**) |
 | **0.4.x** | **Closed** in **v0.4.0** (items **#12–#18**); see [plan-0.4.0.md](plan-0.4.0.md) |
-| **0.5.x** | Notifications on failure, richer webhooks, **in-cluster deploy** (Helm/CronJob) |
+| **0.5.x** | **Closed** in **v0.5.0** (items **#19–#24**); see [plan-0.5.0.md](plan-0.5.0.md) |
 | **0.6.x** | **Homebrew**, SBOM/Cosign, optional object-store upload |
 | **1.0.0** | Config schema stability, multi-cluster / inspect commands, K8s version matrix in CI |
 
@@ -53,6 +51,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.3.2** | **GO-2026-5026** / **CVE-2026-39821** (`golang.org/x/net` → v0.55.0); Go **1.26.4**. |
 | **0.4.0** | **Archive manifest** `extras/manifest.json` with version, cluster, jobs, paths. **`file_prefix`** now drives capture dir and archive basename. **`groot collect --list-jobs`** prints planned jobs without writing output. **`extra_kubectl` `get`/`describe`** supports `configmap`/`cm`, `pvc`, `service`/`svc`, `ingress`/`ing`, `deployment`/`rs`/`sts`/`ds` and aliases. **`collection.targets`** accepts `jobs` / `cronjobs` lists matched by `job-name` and standard labels. **Kind E2E in CI** (`make test-e2e-kind`) running with `continue-on-error: true`. Docs hygiene: `pkg/config/sample.go` and `configs/groot.yml.sample` in sync, references to `kubectl` removed. |
 | **0.4.1** | **`Dockerfile`** builder **Go 1.26.4** (Security Grype image build); README download examples for **v0.4.1**. |
+| **0.5.0** | **Notify on failure** (`notify.on_failure`: abort + partial-failure threshold). **Rich generic webhooks** (`extra_fields`, `body_template`, HMAC). **Email/SMTP** channel. **HTTP notify retry/backoff**. **Optional log redaction** (`collection.redact_secrets`). **In-cluster deploy**: Helm chart (`deploy/helm/groot/`) and flat CronJob manifests (`deploy/k8s/`). |
 
 ---
 
@@ -104,12 +103,12 @@ Make GROOT easier to run on a schedule inside the cluster and more honest when c
 
 | # | Item | Status |
 |---|------|--------|
-| 19 | **Notify on failure**: optional alert when collect aborts or partial failures exceed a threshold (config + `--no-notify` respect). | Pending |
-| 20 | **Rich generic webhooks**: optional JSON body template, extra fixed fields, HMAC signing header. | Pending |
-| 21 | **Email / SMTP** channel (or document recommended proxy pattern if descoped). | Pending |
-| 22 | **In-cluster deploy**: Helm chart or documented **CronJob** + RBAC Role/ServiceAccount + ConfigMap sample (GHCR image, volume for `out/`). | Pending |
-| 23 | **Optional secret redaction** pass on collected log files (regex / known key names; off by default). | Pending |
-| 24 | **Retry/backoff** for notify HTTP clients on transient 5xx / network errors. | Pending |
+| 19 | **Notify on failure**: optional alert when collect aborts or partial failures exceed a threshold (config + `--no-notify` respect). | **Done (v0.5.0)** |
+| 20 | **Rich generic webhooks**: optional JSON body template, extra fixed fields, HMAC signing header. | **Done (v0.5.0)** |
+| 21 | **Email / SMTP** channel (or document recommended proxy pattern if descoped). | **Done (v0.5.0)** |
+| 22 | **In-cluster deploy**: Helm chart or documented **CronJob** + RBAC Role/ServiceAccount + ConfigMap sample (GHCR image, volume for `out/`). | **Done (v0.5.0)** |
+| 23 | **Optional secret redaction** pass on collected log files (regex / known key names; off by default). | **Done (v0.5.0)** |
+| 24 | **Retry/backoff** for notify HTTP clients on transient 5xx / network errors. | **Done (v0.5.0)** |
 
 **Out of scope for 0.5.x:** write access to cluster resources, continuous monitoring agent.
 

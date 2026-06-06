@@ -12,6 +12,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Positioning copy**: README, SPEC, ROADMAP, and CLI `Short`/`Long` describe GROOT as a **read-only log and context collector** (not a diagnostics/diagnosis tool).
 - **ROADMAP**: refresh honest gaps for post-**0.4.x** reality; **#25** documents **Homebrew cask** + pgwd/kzero release basename convention.
 
+## [0.5.0] - 2026-06-06
+
+### Added
+
+- **Notify on failure (`0.5.x #19`)**: `notify.on_failure` sends optional alerts when collect **aborts** (`on_abort`, default `true`) or when completed collects have **`failed >= min_failed_jobs`** (default `1`). Respects `--no-notify` / `GROOT_NO_NOTIFY`. Partial-failure alerts are **in addition to** the normal success notify.
+- **Rich generic webhooks (`0.5.x #20`)**: `notify.generic.extra_fields`, `body_template` (JSON with `{{summary}}`, `{{total}}`, `{{failed}}`, `{{event}}`, … placeholders), and optional **HMAC-SHA256** signing (`hmac_secret`, `hmac_header`, env `GROOT_NOTIFY_GENERIC_HMAC_SECRET`).
+- **Email / SMTP (`0.5.x #21`)**: `notify.email` channel (STARTTLS on port 587 by default; implicit TLS via `use_tls`). Env: `GROOT_NOTIFY_EMAIL_HOST`, `_USERNAME`, `_PASSWORD`, `_FROM`, `_TO`.
+- **Notify HTTP retry (`0.5.x #24`)**: `notify.retry` (`max_attempts`, `initial_backoff`, `max_backoff`) retries transient **5xx** and network errors for webhook and PagerDuty HTTP clients.
+- **Optional secret redaction (`0.5.x #23`)**: `collection.redact_secrets` (default `false`) scans collected `*.log` files with built-in patterns plus optional `redact_patterns` regex list; replaces matches with `[REDACTED]`.
+- **In-cluster deploy (`0.5.x #22`)**: Helm chart at `deploy/helm/groot/` (CronJob, ClusterRole, ServiceAccount, ConfigMap, optional PVC for `/out`) and flat manifests at `deploy/k8s/cronjob.yaml`. Image: `ghcr.io/hrodrig/groot`.
+- **`docs/plan-0.5.0.md`**: implementation plan for **v0.5.0** (roadmap **0.5.x** items #19–#24).
+
+### Changed
+
+- **`configs/groot.yml.sample`** and **`SampleYAML()`** document new notify, retry, on_failure, and redaction keys.
+- **`docs/SPECIFICATIONS.md`**: §4 notify schema, §7 failure alerts and retry, §9 configuration examples, §8 in-cluster deploy; redaction in §5.
+- **`README.md`**: notifications (email, HMAC, on_failure), in-cluster deploy, secret redaction, corrected `file_prefix` / output naming; usage examples for `--list-jobs`, redaction, failure notify.
+- **`deploy/`**: expanded READMEs with Helm and flat-manifest examples.
+- **`docs/README.md`**: index for plan-0.5.0 and quick links to 0.5.x topics.
+- **`docs/ROADMAP.md`**: **0.5.x** band closed; **Current focus** → **0.6.x**.
+
 ## [0.4.1] - 2026-06-06
 
 ### Fixed

@@ -34,6 +34,8 @@ type CollectionCfg struct {
 	IncludeNodeLogs     bool                        `mapstructure:"include_node_logs"`
 	NodeLogTailLines    int                         `mapstructure:"node_log_tail_lines"`
 	IncludePodMetrics   bool                        `mapstructure:"include_pod_metrics"`
+	RedactSecrets       bool                        `mapstructure:"redact_secrets"`
+	RedactPatterns      []string                    `mapstructure:"redact_patterns"`
 }
 
 type NamespaceTargets struct {
@@ -52,6 +54,9 @@ type NotifyCfg struct {
 	Teams     WebhookCfg        `mapstructure:"teams"`
 	Generic   GenericWebhookCfg `mapstructure:"generic"`
 	PagerDuty PagerDutyCfg      `mapstructure:"pagerduty"`
+	Email     EmailCfg          `mapstructure:"email"`
+	OnFailure OnFailureCfg      `mapstructure:"on_failure"`
+	Retry     NotifyRetryCfg    `mapstructure:"retry"`
 }
 
 type WebhookCfg struct {
@@ -67,10 +72,41 @@ type TelegramCfg struct {
 
 // GenericWebhookCfg is an optional HTTP POST JSON notifier (custom services, Discord-style webhooks, etc.).
 type GenericWebhookCfg struct {
-	Enabled    bool              `mapstructure:"enabled"`
-	WebhookURL string            `mapstructure:"webhook_url"`
-	JSONKey    string            `mapstructure:"json_key"`
-	Headers    map[string]string `mapstructure:"headers"`
+	Enabled      bool              `mapstructure:"enabled"`
+	WebhookURL   string            `mapstructure:"webhook_url"`
+	JSONKey      string            `mapstructure:"json_key"`
+	Headers      map[string]string `mapstructure:"headers"`
+	ExtraFields  map[string]string `mapstructure:"extra_fields"`
+	BodyTemplate string            `mapstructure:"body_template"`
+	HMACSecret   string            `mapstructure:"hmac_secret"`
+	HMACHeader   string            `mapstructure:"hmac_header"`
+}
+
+// EmailCfg sends a plain-text summary via SMTP (STARTTLS on 587 by default).
+type EmailCfg struct {
+	Enabled    bool   `mapstructure:"enabled"`
+	Host       string `mapstructure:"host"`
+	Port       int    `mapstructure:"port"`
+	Username   string `mapstructure:"username"`
+	Password   string `mapstructure:"password"`
+	From       string `mapstructure:"from"`
+	To         string `mapstructure:"to"`
+	UseTLS     bool   `mapstructure:"use_tls"`
+	SkipVerify bool   `mapstructure:"skip_verify"`
+}
+
+// OnFailureCfg controls optional alerts when collect aborts or job failures exceed a threshold.
+type OnFailureCfg struct {
+	Enabled       bool `mapstructure:"enabled"`
+	OnAbort       bool `mapstructure:"on_abort"`
+	MinFailedJobs int  `mapstructure:"min_failed_jobs"`
+}
+
+// NotifyRetryCfg configures transient HTTP notify retries (5xx and network errors).
+type NotifyRetryCfg struct {
+	MaxAttempts    int           `mapstructure:"max_attempts"`
+	InitialBackoff time.Duration `mapstructure:"initial_backoff"`
+	MaxBackoff     time.Duration `mapstructure:"max_backoff"`
 }
 
 // PagerDutyCfg sends Events API v2 triggers (https://developer.pagerduty.com/docs/events-api-v2-overview).
@@ -140,8 +176,33 @@ func Load(configFile string) (Config, error) {
 	if err := validateNotificationConfig(cfg); err != nil {
 		return Config{}, err
 	}
+	normalizeNotifyRetry(&cfg)
+	normalizeOnFailure(&cfg)
 
 	return cfg, nil
+}
+
+func normalizeNotifyRetry(cfg *Config) {
+	r := &cfg.Notify.Retry
+	if r.MaxAttempts < 1 {
+		r.MaxAttempts = 3
+	}
+	if r.InitialBackoff <= 0 {
+		r.InitialBackoff = time.Second
+	}
+	if r.MaxBackoff <= 0 {
+		r.MaxBackoff = 10 * time.Second
+	}
+}
+
+func normalizeOnFailure(cfg *Config) {
+	of := &cfg.Notify.OnFailure
+	if !of.Enabled {
+		return
+	}
+	if of.MinFailedJobs < 1 {
+		of.MinFailedJobs = 1
+	}
 }
 
 func setDefaults(v *viper.Viper) {
@@ -168,6 +229,15 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("notify.pagerduty.enabled", false)
 	v.SetDefault("notify.pagerduty.severity", "warning")
 	v.SetDefault("notify.pagerduty.source", "groot")
+	v.SetDefault("notify.email.enabled", false)
+	v.SetDefault("notify.email.port", 587)
+	v.SetDefault("notify.on_failure.enabled", false)
+	v.SetDefault("notify.on_failure.on_abort", true)
+	v.SetDefault("notify.on_failure.min_failed_jobs", 1)
+	v.SetDefault("notify.retry.max_attempts", 3)
+	v.SetDefault("notify.retry.initial_backoff", "1s")
+	v.SetDefault("notify.retry.max_backoff", "10s")
+	v.SetDefault("collection.redact_secrets", false)
 }
 
 // defaultEtcConfigPaths are tried after ./groot.yml and ~/.groot/groot.yml (first existing file wins).
@@ -262,9 +332,34 @@ func resolveNotificationSecrets(cfg *Config) {
 		cfg.Notify.PagerDuty.RoutingKey,
 		os.Getenv("GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY"),
 	)
+	cfg.Notify.Email.Host = firstNonEmpty(cfg.Notify.Email.Host, os.Getenv("GROOT_NOTIFY_EMAIL_HOST"))
+	cfg.Notify.Email.Username = firstNonEmpty(cfg.Notify.Email.Username, os.Getenv("GROOT_NOTIFY_EMAIL_USERNAME"))
+	cfg.Notify.Email.Password = firstNonEmpty(cfg.Notify.Email.Password, os.Getenv("GROOT_NOTIFY_EMAIL_PASSWORD"))
+	cfg.Notify.Email.From = firstNonEmpty(cfg.Notify.Email.From, os.Getenv("GROOT_NOTIFY_EMAIL_FROM"))
+	cfg.Notify.Email.To = firstNonEmpty(cfg.Notify.Email.To, os.Getenv("GROOT_NOTIFY_EMAIL_TO"))
+	cfg.Notify.Generic.HMACSecret = firstNonEmpty(
+		cfg.Notify.Generic.HMACSecret,
+		os.Getenv("GROOT_NOTIFY_GENERIC_HMAC_SECRET"),
+	)
 }
 
 func validateNotificationConfig(cfg Config) error {
+	if err := validateWebhookChannels(cfg); err != nil {
+		return err
+	}
+	if err := validateTelegram(cfg); err != nil {
+		return err
+	}
+	if err := validateGeneric(cfg); err != nil {
+		return err
+	}
+	if err := validatePagerDuty(cfg); err != nil {
+		return err
+	}
+	return validateEmail(cfg)
+}
+
+func validateWebhookChannels(cfg Config) error {
 	if cfg.Notify.Slack.Enabled && len(SplitSemicolonList(cfg.Notify.Slack.WebhookURL)) == 0 {
 		return fmt.Errorf("notify.slack.enabled=true requires webhook_url or env GROOT_NOTIFY_SLACK_WEBHOOK_URL (semicolon-separated for multiple webhooks)")
 	}
@@ -274,19 +369,53 @@ func validateNotificationConfig(cfg Config) error {
 	if cfg.Notify.Teams.Enabled && len(SplitSemicolonList(cfg.Notify.Teams.WebhookURL)) == 0 {
 		return fmt.Errorf("notify.teams.enabled=true requires webhook_url or env GROOT_NOTIFY_TEAMS_WEBHOOK_URL (semicolon-separated for multiple webhooks)")
 	}
-	if cfg.Notify.Telegram.Enabled {
-		if strings.TrimSpace(cfg.Notify.Telegram.Token) == "" {
-			return fmt.Errorf("notify.telegram.enabled=true requires token or env GROOT_NOTIFY_TELEGRAM_TOKEN")
-		}
-		if len(SplitSemicolonList(cfg.Notify.Telegram.ChatID)) == 0 {
-			return fmt.Errorf("notify.telegram.enabled=true requires chat_id or env GROOT_NOTIFY_TELEGRAM_CHAT_ID (semicolon-separated for multiple chat ids)")
-		}
+	return nil
+}
+
+func validateTelegram(cfg Config) error {
+	if !cfg.Notify.Telegram.Enabled {
+		return nil
 	}
+	if strings.TrimSpace(cfg.Notify.Telegram.Token) == "" {
+		return fmt.Errorf("notify.telegram.enabled=true requires token or env GROOT_NOTIFY_TELEGRAM_TOKEN")
+	}
+	if len(SplitSemicolonList(cfg.Notify.Telegram.ChatID)) == 0 {
+		return fmt.Errorf("notify.telegram.enabled=true requires chat_id or env GROOT_NOTIFY_TELEGRAM_CHAT_ID (semicolon-separated for multiple chat ids)")
+	}
+	return nil
+}
+
+func validateGeneric(cfg Config) error {
 	if cfg.Notify.Generic.Enabled && len(SplitSemicolonList(cfg.Notify.Generic.WebhookURL)) == 0 {
 		return fmt.Errorf("notify.generic.enabled=true requires webhook_url or env GROOT_NOTIFY_GENERIC_WEBHOOK_URL (semicolon-separated for multiple URLs)")
 	}
+	if cfg.Notify.Generic.Enabled && strings.TrimSpace(cfg.Notify.Generic.BodyTemplate) != "" {
+		if !strings.Contains(cfg.Notify.Generic.BodyTemplate, "{") {
+			return fmt.Errorf("notify.generic.body_template must be JSON with placeholders (see SPEC)")
+		}
+	}
+	return nil
+}
+
+func validatePagerDuty(cfg Config) error {
 	if cfg.Notify.PagerDuty.Enabled && len(SplitSemicolonList(cfg.Notify.PagerDuty.RoutingKey)) == 0 {
 		return fmt.Errorf("notify.pagerduty.enabled=true requires routing_key or env GROOT_NOTIFY_PAGERDUTY_ROUTING_KEY (semicolon-separated for multiple integration keys)")
+	}
+	return nil
+}
+
+func validateEmail(cfg Config) error {
+	if !cfg.Notify.Email.Enabled {
+		return nil
+	}
+	if strings.TrimSpace(cfg.Notify.Email.Host) == "" {
+		return fmt.Errorf("notify.email.enabled=true requires host or env GROOT_NOTIFY_EMAIL_HOST")
+	}
+	if strings.TrimSpace(cfg.Notify.Email.From) == "" {
+		return fmt.Errorf("notify.email.enabled=true requires from or env GROOT_NOTIFY_EMAIL_FROM")
+	}
+	if len(SplitSemicolonList(cfg.Notify.Email.To)) == 0 {
+		return fmt.Errorf("notify.email.enabled=true requires to or env GROOT_NOTIFY_EMAIL_TO (semicolon-separated for multiple recipients)")
 	}
 	return nil
 }

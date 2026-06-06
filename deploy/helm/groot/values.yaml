@@ -1,0 +1,63 @@
+# Default values for the GROOT Helm chart.
+# See deploy/helm/groot/README.md and docs/SPECIFICATIONS.md.
+
+image:
+  repository: ghcr.io/hrodrig/groot
+  tag: "" # defaults to Chart appVersion
+  pullPolicy: IfNotPresent
+
+schedule: "0 */6 * * *"
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+rbac:
+  create: true
+
+config:
+  # Embedded groot.yml (see configs/groot.yml.sample). Override for your cluster.
+  grootYml: |
+    output_dir: /out
+    file_prefix: groot-capture
+    collection:
+      timeout: 20m
+      worker_concurrency: 4
+      namespaces:
+        - kube-system
+        - default
+      include_pod_logs: true
+      include_node_details: true
+      include_node_logs: false
+      include_pod_metrics: true
+    notify:
+      on_failure:
+        enabled: false
+      retry:
+        max_attempts: 3
+
+persistence:
+  enabled: true
+  storageClass: ""
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+successfulJobsHistoryLimit: 3
+failedJobsHistoryLimit: 1
+concurrencyPolicy: Forbid
+startingDeadlineSeconds: 600
+backoffLimit: 1
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,43 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "groot.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "groot.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "events", "nodes", "namespaces", "services", "configmaps", "persistentvolumeclaims", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list"]
+  - nonResourceURLs: ["/version", "/healthz", "/readyz", "/livez"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "groot.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "groot.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "groot.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "groot.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

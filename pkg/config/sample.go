@@ -79,6 +79,11 @@ collection:
     - "get ingress -A"
     - "get pvc -A"
 
+  # Optional: scan collected *.log files and replace likely secret values (off by default).
+  redact_secrets: false
+  # redact_patterns:
+  #   - '(?i)my-custom-secret\s*=\s*\S+'
+
 notify:
   slack:
     enabled: false
@@ -112,10 +117,42 @@ notify:
 
   generic:
     enabled: false
-    # POST JSON with one root string field only: {"<json_key>":"<summary>"} (see README → Notifications).
+    # POST JSON. Default: {"<json_key>":"<summary>"}. Or set body_template for richer JSON (see SPEC).
     webhook_url: ""
     json_key: "text"
+    # Optional fixed fields merged into the default JSON payload (values support {{summary}} placeholders).
+    # extra_fields:
+    #   event: "{{event}}"
+    # Optional JSON body template (placeholders: {{summary}}, {{total}}, {{failed}}, {{event}}, …).
+    # body_template: '{"text":"{{summary}}","failed":{{failed}}}'
+    # Optional HMAC-SHA256 signature header (sha256=<hex>) over the raw POST body.
+    # hmac_secret: ""
+    # hmac_header: "X-Groot-Signature"
     # Optional HTTP headers on the POST (e.g. Authorization)
     headers: {}
+
+  email:
+    enabled: false
+    host: ""
+    port: 587
+    username: ""
+    password: ""
+    from: ""
+    # Semicolon-separated recipients
+    to: ""
+    # Implicit TLS (port 465). Default path uses STARTTLS on 587 when use_tls is false.
+    use_tls: false
+
+  on_failure:
+    # Alert when collect aborts or job failures exceed min_failed_jobs (respects --no-notify).
+    enabled: false
+    on_abort: true
+    min_failed_jobs: 1
+
+  retry:
+    # Transient HTTP notify retries (5xx and network errors).
+    max_attempts: 3
+    initial_backoff: 1s
+    max_backoff: 10s
 `
 }

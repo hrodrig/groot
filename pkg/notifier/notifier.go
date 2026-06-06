@@ -1,31 +1,34 @@
 package notifier
 
 import (
-	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/hrodrig/groot/pkg/collector"
 	"github.com/hrodrig/groot/pkg/config"
 )
 
+const (
+	eventSuccess = "success"
+	eventFailure = "failure"
+)
+
 // telegramAPIBase is the Bot API origin (overridable in tests).
 var telegramAPIBase = "https://api.telegram.org"
-
-// notifyHTTPClient is used for all outbound HTTP notification requests (webhooks, Telegram, PagerDuty).
-// A bounded timeout avoids hanging collect when a remote endpoint stalls.
-var notifyHTTPClient = &http.Client{Timeout: 30 * time.Second}
 
 // FanOut dispatches notifications to enabled channels.
 type FanOut struct {
 	senders   []Sender
 	pagerDuty []pagerDutyRoute
+	onFailure config.OnFailureCfg
 }
 
 // Sender is a notification target.
@@ -35,6 +38,12 @@ type Sender interface {
 
 // NewFanOut creates the enabled notifiers.
 func NewFanOut(cfg config.Config) *FanOut {
+	applyRetryConfig(retryConfig{
+		maxAttempts:    cfg.Notify.Retry.MaxAttempts,
+		initialBackoff: cfg.Notify.Retry.InitialBackoff,
+		maxBackoff:     cfg.Notify.Retry.MaxBackoff,
+	})
+
 	n := cfg.Notify
 	senders := make([]Sender, 0, 8)
 	senders = appendWebhookSenders(senders, n.Slack.Enabled, n.Slack.WebhookURL, "slack")
@@ -42,7 +51,30 @@ func NewFanOut(cfg config.Config) *FanOut {
 	senders = appendWebhookSenders(senders, n.Teams.Enabled, n.Teams.WebhookURL, "teams")
 	senders = appendTelegramSenders(senders, n.Telegram)
 	senders = appendGenericSenders(senders, n.Generic)
-	return &FanOut{senders: senders, pagerDuty: pagerDutyRoutesFrom(n.PagerDuty)}
+	senders = appendEmailSenders(senders, emailCfgView{
+		enabled:    n.Email.Enabled,
+		host:       n.Email.Host,
+		port:       n.Email.Port,
+		username:   n.Email.Username,
+		password:   n.Email.Password,
+		from:       n.Email.From,
+		to:         n.Email.To,
+		useTLS:     n.Email.UseTLS,
+		skipVerify: n.Email.SkipVerify,
+	})
+	return &FanOut{senders: senders, pagerDuty: pagerDutyRoutesFrom(n.PagerDuty), onFailure: n.OnFailure}
+}
+
+// ShouldNotifyPartialFailure reports whether a completed collect should emit a failure alert.
+func ShouldNotifyPartialFailure(cfg config.Config, summary collector.Summary) bool {
+	of := cfg.Notify.OnFailure
+	return of.Enabled && summary.Failed >= of.MinFailedJobs
+}
+
+// ShouldNotifyAbort reports whether an aborted collect should emit a failure alert.
+func ShouldNotifyAbort(cfg config.Config) bool {
+	of := cfg.Notify.OnFailure
+	return of.Enabled && of.OnAbort
 }
 
 func appendWebhookSenders(out []Sender, enabled bool, rawURLs, kind string) []Sender {
@@ -74,8 +106,21 @@ func appendGenericSenders(out []Sender, g config.GenericWebhookCfg) []Sender {
 		key = "text"
 	}
 	hdr := cloneStringMap(g.Headers)
+	extra := cloneStringMap(g.ExtraFields)
+	hmacHeader := strings.TrimSpace(g.HMACHeader)
+	if hmacHeader == "" {
+		hmacHeader = "X-Groot-Signature"
+	}
 	for _, u := range config.SplitSemicolonList(g.WebhookURL) {
-		out = append(out, &genericWebhookSender{url: u, jsonKey: key, headers: hdr})
+		out = append(out, &genericWebhookSender{
+			url:          u,
+			jsonKey:      key,
+			headers:      hdr,
+			extraFields:  extra,
+			bodyTemplate: strings.TrimSpace(g.BodyTemplate),
+			hmacSecret:   g.HMACSecret,
+			hmacHeader:   hmacHeader,
+		})
 	}
 	return out
 }
@@ -118,30 +163,43 @@ func discordWebhookContent(text string) string {
 	return string(r[:cut]) + suffix
 }
 
-// Notify sends the collection summary to all enabled destinations.
+// Notify sends the collection summary to all enabled destinations (success event).
 func (f *FanOut) Notify(ctx context.Context, summary collector.Summary) error {
+	return f.notifyEvent(ctx, eventSuccess, summary, "")
+}
+
+// NotifyFailure sends a failure alert to all enabled destinations.
+func (f *FanOut) NotifyFailure(ctx context.Context, summary collector.Summary, reason string) error {
+	return f.notifyEvent(ctx, eventFailure, summary, reason)
+}
+
+func (f *FanOut) notifyEvent(ctx context.Context, event string, summary collector.Summary, reason string) error {
 	if len(f.senders) == 0 && len(f.pagerDuty) == 0 {
 		return nil
 	}
 
-	text := fmt.Sprintf(
-		"GROOT finished. total=%d success=%d failed=%d duration=%s output=%s archive=%s",
-		summary.Total,
-		summary.Success,
-		summary.Failed,
-		summary.Duration.Round(time.Second),
-		summary.OutputDir,
-		summary.ArchivePath,
-	)
+	msgCtx := messageContext{
+		Event:       event,
+		Summary:     summary,
+		Reason:      reason,
+		SummaryLine: buildSummaryLine(event, summary, reason),
+	}
 
 	var errs []error
 	for _, sender := range f.senders {
+		text := msgCtx.SummaryLine
+		if gw, ok := sender.(*genericWebhookSender); ok {
+			if err := gw.SendContext(ctx, msgCtx); err != nil {
+				errs = append(errs, err)
+			}
+			continue
+		}
 		if err := sender.Send(ctx, text); err != nil {
 			errs = append(errs, err)
 		}
 	}
 	for _, route := range f.pagerDuty {
-		if err := sendPagerDutyV2(ctx, route, text, summary); err != nil {
+		if err := sendPagerDutyV2(ctx, route, msgCtx.SummaryLine, summary); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -170,59 +228,64 @@ func (w *webhookSender) Send(ctx context.Context, text string) error {
 	if err != nil {
 		return fmt.Errorf("marshal webhook payload: %w", err)
 	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.url, bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := notifyHTTPClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("send webhook: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("webhook status %d", resp.StatusCode)
-	}
-	return nil
+	return postJSONWithRetry(ctx, w.url, body, nil)
 }
 
 type genericWebhookSender struct {
-	url     string
-	jsonKey string
-	headers map[string]string
+	url          string
+	jsonKey      string
+	headers      map[string]string
+	extraFields  map[string]string
+	bodyTemplate string
+	hmacSecret   string
+	hmacHeader   string
 }
 
 func (w *genericWebhookSender) Send(ctx context.Context, text string) error {
-	payload := map[string]string{w.jsonKey: text}
+	return w.SendContext(ctx, messageContext{Event: eventSuccess, SummaryLine: text})
+}
+
+func (w *genericWebhookSender) SendContext(ctx context.Context, msgCtx messageContext) error {
+	body, err := w.buildBody(msgCtx)
+	if err != nil {
+		return err
+	}
+	return postJSONWithRetry(ctx, w.url, body, func(req *http.Request) {
+		for k, v := range w.headers {
+			if strings.TrimSpace(k) != "" {
+				req.Header.Set(k, v)
+			}
+		}
+		if strings.TrimSpace(w.hmacSecret) != "" {
+			mac := hmac.New(sha256.New, []byte(w.hmacSecret))
+			_, _ = mac.Write(body)
+			sig := "sha256=" + hex.EncodeToString(mac.Sum(nil))
+			req.Header.Set(w.hmacHeader, sig)
+		}
+	})
+}
+
+func (w *genericWebhookSender) buildBody(msgCtx messageContext) ([]byte, error) {
+	if w.bodyTemplate != "" {
+		rendered := applyTemplate(w.bodyTemplate, msgCtx)
+		if !json.Valid([]byte(rendered)) {
+			return nil, fmt.Errorf("generic webhook body_template is not valid JSON after substitution")
+		}
+		return []byte(rendered), nil
+	}
+
+	payload := map[string]string{w.jsonKey: msgCtx.SummaryLine}
+	for k, v := range w.extraFields {
+		if strings.TrimSpace(k) == "" {
+			continue
+		}
+		payload[k] = applyTemplate(v, msgCtx)
+	}
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("marshal generic webhook payload: %w", err)
+		return nil, fmt.Errorf("marshal generic webhook payload: %w", err)
 	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.url, bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("create generic webhook request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	for k, v := range w.headers {
-		if strings.TrimSpace(k) != "" {
-			req.Header.Set(k, v)
-		}
-	}
-
-	resp, err := notifyHTTPClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("send generic webhook: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("generic webhook status %d", resp.StatusCode)
-	}
-	return nil
+	return body, nil
 }
 
 type telegramSender struct {

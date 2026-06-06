@@ -357,18 +357,73 @@ func (r *Runner) runGet(ctx context.Context, argv []string) ([]byte, error) {
 	if f.allNamespaces {
 		ns = metav1.NamespaceAll
 	}
-	switch strings.ToLower(res) {
-	case "ns", "namespace", "namespaces":
-		return r.getNamespaces(ctx, name, f.output, f.noHeaders)
-	case "nodes", "node":
-		return r.getNodes(ctx, name, f.output, f.labelSelector, f.noHeaders)
-	case "pods", "pod":
-		return r.getPods(ctx, ns, name, f.output, f.labelSelector, f.noHeaders, f.allNamespaces)
-	case "events", "event":
-		return r.getEvents(ctx, ns, f.allNamespaces, f.output, f.labelSelector, f.noHeaders)
-	default:
-		return nil, fmt.Errorf("get %s: resource not supported in extra_kubectl (supported: pods, nodes, namespaces, events, --raw)", res)
+	res = strings.ToLower(res)
+	if handler, ok := getDispatch()[res]; ok {
+		return handler(r, ctx, getArgs{ns: ns, name: name, flags: f})
 	}
+	return nil, fmt.Errorf("get %s: resource not supported in extra_kubectl (supported: pods, nodes, namespaces, events, configmap, pvc, service, ingress, apps workloads, --raw)", res)
+}
+
+type getArgs struct {
+	ns    string
+	name  string
+	flags flagSet
+}
+
+type getHandler func(*Runner, context.Context, getArgs) ([]byte, error)
+
+func getDispatch() map[string]getHandler {
+	return map[string]getHandler{
+		"ns": namespaceHandler, "namespace": namespaceHandler, "namespaces": namespaceHandler,
+		"nodes": nodesHandler, "node": nodesHandler,
+		"pods": podsHandler, "pod": podsHandler,
+		"events": eventsHandler, "event": eventsHandler,
+		"configmap": configMapHandler, "configmaps": configMapHandler, "cm": configMapHandler,
+		"pvc": pvcHandler, "persistentvolumeclaim": pvcHandler, "persistentvolumeclaims": pvcHandler,
+		"svc": serviceHandler, "service": serviceHandler, "services": serviceHandler,
+		"ingress": ingressHandler, "ingresses": ingressHandler, "ing": ingressHandler,
+		"deployment": appsDeploymentHandler, "deployments": appsDeploymentHandler, "deploy": appsDeploymentHandler,
+		"replicaset": appsReplicaSetHandler, "replicasets": appsReplicaSetHandler, "rs": appsReplicaSetHandler,
+		"statefulset": appsStatefulSetHandler, "statefulsets": appsStatefulSetHandler, "sts": appsStatefulSetHandler,
+		"daemonset": appsDaemonSetHandler, "daemonsets": appsDaemonSetHandler, "ds": appsDaemonSetHandler,
+	}
+}
+
+func namespaceHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getNamespaces(ctx, a.name, a.flags.output, a.flags.noHeaders)
+}
+func nodesHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getNodes(ctx, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders)
+}
+func podsHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getPods(ctx, a.ns, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders, a.flags.allNamespaces)
+}
+func eventsHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getEvents(ctx, a.ns, a.flags.allNamespaces, a.flags.output, a.flags.labelSelector, a.flags.noHeaders)
+}
+func configMapHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getConfigMaps(ctx, a.ns, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders, a.flags.allNamespaces)
+}
+func pvcHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getPVCs(ctx, a.ns, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders, a.flags.allNamespaces)
+}
+func serviceHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getServices(ctx, a.ns, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders, a.flags.allNamespaces)
+}
+func ingressHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getIngresses(ctx, a.ns, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders, a.flags.allNamespaces)
+}
+func appsDeploymentHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getDeployments(ctx, a.ns, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders, a.flags.allNamespaces)
+}
+func appsReplicaSetHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getReplicaSets(ctx, a.ns, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders, a.flags.allNamespaces)
+}
+func appsStatefulSetHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getStatefulSets(ctx, a.ns, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders, a.flags.allNamespaces)
+}
+func appsDaemonSetHandler(r *Runner, ctx context.Context, a getArgs) ([]byte, error) {
+	return r.getDaemonSets(ctx, a.ns, a.name, a.flags.output, a.flags.labelSelector, a.flags.noHeaders, a.flags.allNamespaces)
 }
 
 func (r *Runner) getNamespaces(ctx context.Context, name, output string, noHeaders bool) ([]byte, error) {
@@ -644,6 +699,24 @@ func splitKindName(s string) (kind, name string) {
 	return "", ""
 }
 
+type describeArgs struct {
+	ns   string
+	name string
+}
+
+type describeHandler func(*Runner, context.Context, describeArgs) ([]byte, error)
+
+func describeDispatch() map[string]describeHandler {
+	return map[string]describeHandler{
+		"pod": describePodHandler, "pods": describePodHandler,
+		"node": describeNodeHandler, "nodes": describeNodeHandler,
+		"configmap": describeConfigMapHandler, "configmaps": describeConfigMapHandler, "cm": describeConfigMapHandler,
+		"pvc": describePVCHandler, "persistentvolumeclaim": describePVCHandler, "persistentvolumeclaims": describePVCHandler,
+		"svc": describeServiceHandler, "service": describeServiceHandler, "services": describeServiceHandler,
+		"ingress": describeIngressHandler, "ingresses": describeIngressHandler, "ing": describeIngressHandler,
+	}
+}
+
 func (r *Runner) runDescribe(ctx context.Context, argv []string) ([]byte, error) {
 	f := parseFlags(argv)
 	if len(f.args) < 1 {
@@ -656,30 +729,47 @@ func (r *Runner) runDescribe(ctx context.Context, argv []string) ([]byte, error)
 	if kind == "" || name == "" {
 		return nil, fmt.Errorf("describe: could not parse resource/name from %v", f.args)
 	}
-	ns := f.namespace
-	switch strings.ToLower(kind) {
-	case "pod", "pods":
-		if ns == "" {
-			ns = metav1.NamespaceDefault
-		}
-		obj, err := r.Core.CoreV1().Pods(ns).Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-		return []byte(fmt.Sprintf("Name: %s\nNamespace: %s\nNode: %s\nPhase: %s\n", obj.Name, obj.Namespace, obj.Spec.NodeName, obj.Status.Phase)), nil
-	case "node", "nodes":
-		obj, err := r.Core.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-		var b strings.Builder
-		fmt.Fprintf(&b, "Name: %s\n", obj.Name)
-		fmt.Fprintf(&b, "Labels: %v\n", obj.Labels)
-		fmt.Fprintf(&b, "Addresses: %v\n", obj.Status.Addresses)
-		return []byte(b.String()), nil
-	default:
-		return nil, fmt.Errorf("describe %s: not supported in extra_kubectl", kind)
+	if handler, ok := describeDispatch()[strings.ToLower(kind)]; ok {
+		return handler(r, ctx, describeArgs{ns: f.namespace, name: name})
 	}
+	return nil, fmt.Errorf("describe %s: not supported in extra_kubectl (supported: pod, node, configmap, pvc, service, ingress)", kind)
+}
+
+func describePodHandler(r *Runner, ctx context.Context, a describeArgs) ([]byte, error) {
+	ns := a.ns
+	if ns == "" {
+		ns = metav1.NamespaceDefault
+	}
+	obj, err := r.Core.CoreV1().Pods(ns).Get(ctx, a.name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return []byte(fmt.Sprintf("Name: %s\nNamespace: %s\nNode: %s\nPhase: %s\n", obj.Name, obj.Namespace, obj.Spec.NodeName, obj.Status.Phase)), nil
+}
+
+func describeNodeHandler(r *Runner, ctx context.Context, a describeArgs) ([]byte, error) {
+	obj, err := r.Core.CoreV1().Nodes().Get(ctx, a.name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "Name: %s\n", obj.Name)
+	fmt.Fprintf(&b, "Labels: %v\n", obj.Labels)
+	fmt.Fprintf(&b, "Addresses: %v\n", obj.Status.Addresses)
+	return []byte(b.String()), nil
+}
+
+func describeConfigMapHandler(r *Runner, ctx context.Context, a describeArgs) ([]byte, error) {
+	return r.describeConfigMap(ctx, a.ns, a.name)
+}
+func describePVCHandler(r *Runner, ctx context.Context, a describeArgs) ([]byte, error) {
+	return r.describePVC(ctx, a.ns, a.name)
+}
+func describeServiceHandler(r *Runner, ctx context.Context, a describeArgs) ([]byte, error) {
+	return r.describeService(ctx, a.ns, a.name)
+}
+func describeIngressHandler(r *Runner, ctx context.Context, a describeArgs) ([]byte, error) {
+	return r.describeIngress(ctx, a.ns, a.name)
 }
 
 func (r *Runner) runTop(ctx context.Context, argv []string) ([]byte, error) {

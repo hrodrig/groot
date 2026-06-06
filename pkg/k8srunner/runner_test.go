@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -410,5 +412,386 @@ func TestWantsYAML(t *testing.T) {
 	}
 	if wantsYAML([]string{"-o", "json"}) {
 		t.Fatal()
+	}
+}
+
+// ---- Helpers for extended-resource tests ----
+
+func seedConfigMap() runtime.Object {
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "cm1", Namespace: "default"},
+		Data:       map[string]string{"k": "v"},
+	}
+}
+
+func seedPVC() runtime.Object {
+	sc := "standard"
+	return &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{Name: "pvc1", Namespace: "default"},
+		Spec:       corev1.PersistentVolumeClaimSpec{StorageClassName: &sc},
+		Status:     corev1.PersistentVolumeClaimStatus{Phase: corev1.ClaimBound, AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}},
+	}
+}
+
+func seedService() runtime.Object {
+	return &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{Name: "svc1", Namespace: "default"},
+		Spec: corev1.ServiceSpec{
+			Type:      corev1.ServiceTypeClusterIP,
+			ClusterIP: "10.0.0.1",
+			Ports:     []corev1.ServicePort{{Port: 80, Protocol: corev1.ProtocolTCP}},
+		},
+	}
+}
+
+func seedIngress() runtime.Object {
+	pathType := networkingv1.PathTypePrefix
+	return &networkingv1.Ingress{
+		ObjectMeta: metav1.ObjectMeta{Name: "ing1", Namespace: "default"},
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
+				{Host: "a.example.com", IngressRuleValue: networkingv1.IngressRuleValue{
+					HTTP: &networkingv1.HTTPIngressRuleValue{
+						Paths: []networkingv1.HTTPIngressPath{{Path: "/", PathType: &pathType}},
+					},
+				}},
+				{Host: "b.example.com", IngressRuleValue: networkingv1.IngressRuleValue{
+					HTTP: &networkingv1.HTTPIngressRuleValue{
+						Paths: []networkingv1.HTTPIngressPath{{Path: "/", PathType: &pathType}},
+					},
+				}},
+			},
+		},
+	}
+}
+
+func seedDeployment() runtime.Object {
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Name: "dep1", Namespace: "default"},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "dep1"}},
+			Replicas: int32Ptr(3),
+		},
+		Status: appsv1.DeploymentStatus{Replicas: 3, ReadyReplicas: 2},
+	}
+}
+
+func seedReplicaSet() runtime.Object {
+	return &appsv1.ReplicaSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "rs1", Namespace: "default"},
+		Status:     appsv1.ReplicaSetStatus{Replicas: 3, ReadyReplicas: 3},
+	}
+}
+
+func seedStatefulSet() runtime.Object {
+	return &appsv1.StatefulSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "sts1", Namespace: "default"},
+		Status:     appsv1.StatefulSetStatus{Replicas: 2, ReadyReplicas: 1},
+	}
+}
+
+func seedDaemonSet() runtime.Object {
+	return &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "ds1", Namespace: "default"},
+		Status:     appsv1.DaemonSetStatus{NumberReady: 4, DesiredNumberScheduled: 5},
+	}
+}
+
+func int32Ptr(i int32) *int32 { return &i }
+
+// TestRunner_Run_get_extended covers the "get" dispatch and get-handlers for
+// the new resource families: configmap, pvc, service, ingress, deployment,
+// replicaset, statefulset, daemonset. For each, it exercises both the list
+// path and the get-by-name path, plus at least one alias.
+func TestRunner_Run_get_extended(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	type seedFn func() runtime.Object
+	type expectFn func(*testing.T, string)
+
+	cases := []struct {
+		name    string
+		argv    []string
+		seed    seedFn
+		wantSub []string
+	}{
+		// configmap
+		{"configmap_list", []string{"get", "configmap", "-n", "default"}, seedConfigMap, []string{"cm1"}},
+		{"configmap_name", []string{"get", "configmap", "cm1", "-n", "default", "-o", "yaml"}, seedConfigMap, []string{"cm1"}},
+		{"configmap_alias_cm", []string{"get", "cm", "-n", "default"}, seedConfigMap, []string{"cm1"}},
+		// pvc
+		{"pvc_list", []string{"get", "pvc", "-n", "default"}, seedPVC, []string{"pvc1"}},
+		{"pvc_name", []string{"get", "pvc", "pvc1", "-n", "default", "-o", "json"}, seedPVC, []string{"pvc1"}},
+		{"pvc_alias_persistentvolumeclaim", []string{"get", "persistentvolumeclaim", "-n", "default"}, seedPVC, []string{"pvc1"}},
+		// service
+		{"service_list", []string{"get", "service", "-n", "default"}, seedService, []string{"svc1", "ClusterIP"}},
+		{"service_name", []string{"get", "service", "svc1", "-n", "default", "-o", "yaml"}, seedService, []string{"svc1"}},
+		{"service_alias_svc", []string{"get", "svc", "-n", "default"}, seedService, []string{"svc1"}},
+		// ingress
+		{"ingress_list", []string{"get", "ingress", "-n", "default"}, seedIngress, []string{"ing1"}},
+		{"ingress_name", []string{"get", "ingress", "ing1", "-n", "default", "-o", "yaml"}, seedIngress, []string{"ing1", "a.example.com"}},
+		{"ingress_alias_ing", []string{"get", "ing", "-n", "default"}, seedIngress, []string{"ing1"}},
+		// deployment
+		{"deployment_list", []string{"get", "deployment", "-n", "default"}, seedDeployment, []string{"dep1", "2/3"}},
+		{"deployment_name", []string{"get", "deployment", "dep1", "-n", "default", "-o", "yaml"}, seedDeployment, []string{"dep1"}},
+		{"deployment_alias_deploy", []string{"get", "deploy", "-n", "default"}, seedDeployment, []string{"dep1"}},
+		// replicaset
+		{"replicaset_list", []string{"get", "replicaset", "-n", "default"}, seedReplicaSet, []string{"rs1", "3/3"}},
+		{"replicaset_name", []string{"get", "replicaset", "rs1", "-n", "default", "-o", "yaml"}, seedReplicaSet, []string{"rs1"}},
+		{"replicaset_alias_rs", []string{"get", "rs", "-n", "default"}, seedReplicaSet, []string{"rs1"}},
+		// statefulset
+		{"statefulset_list", []string{"get", "statefulset", "-n", "default"}, seedStatefulSet, []string{"sts1", "1/2"}},
+		{"statefulset_name", []string{"get", "statefulset", "sts1", "-n", "default", "-o", "yaml"}, seedStatefulSet, []string{"sts1"}},
+		{"statefulset_alias_sts", []string{"get", "sts", "-n", "default"}, seedStatefulSet, []string{"sts1"}},
+		// daemonset
+		{"daemonset_list", []string{"get", "daemonset", "-n", "default"}, seedDaemonSet, []string{"ds1", "4/5"}},
+		{"daemonset_name", []string{"get", "daemonset", "ds1", "-n", "default", "-o", "yaml"}, seedDaemonSet, []string{"ds1"}},
+		{"daemonset_alias_ds", []string{"get", "ds", "-n", "default"}, seedDaemonSet, []string{"ds1"}},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cs := fake.NewSimpleClientset(tc.seed())
+			r := New(cs, nil, cs.Discovery(), "https://api.test", "")
+			out, err := r.Run(ctx, tc.argv)
+			if err != nil {
+				t.Fatalf("err=%v out=%s", err, out)
+			}
+			s := string(out)
+			for _, w := range tc.wantSub {
+				if !strings.Contains(s, w) {
+					t.Fatalf("argv=%v: missing %q in output:\n%s", tc.argv, w, s)
+				}
+			}
+		})
+	}
+}
+
+// TestRunner_Run_describe_extended covers describe dispatch + describe-handlers
+// for the new resource families.
+func TestRunner_Run_describe_extended(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	type seedFn func() runtime.Object
+	cases := []struct {
+		name    string
+		argv    []string
+		seed    seedFn
+		wantSub []string
+	}{
+		{
+			"configmap",
+			[]string{"describe", "configmap", "cm1", "-n", "default"},
+			seedConfigMap,
+			[]string{"Name: cm1", "Namespace: default", "Data keys: 1"},
+		},
+		{
+			"configmap_alias_cm",
+			[]string{"describe", "cm", "cm1", "-n", "default"},
+			seedConfigMap,
+			[]string{"Name: cm1"},
+		},
+		{
+			"pvc",
+			[]string{"describe", "pvc", "pvc1", "-n", "default"},
+			seedPVC,
+			[]string{"Name: pvc1", "Namespace: default", "Phase: Bound", "StorageClass: standard"},
+		},
+		{
+			"pvc_alias",
+			[]string{"describe", "persistentvolumeclaim", "pvc1", "-n", "default"},
+			seedPVC,
+			[]string{"Name: pvc1"},
+		},
+		{
+			"service",
+			[]string{"describe", "svc", "svc1", "-n", "default"},
+			seedService,
+			[]string{"Name: svc1", "Namespace: default", "Type: ClusterIP", "ClusterIP: 10.0.0.1"},
+		},
+		{
+			"service_alias",
+			[]string{"describe", "service", "svc1", "-n", "default"},
+			seedService,
+			[]string{"Name: svc1"},
+		},
+		{
+			"ingress",
+			[]string{"describe", "ingress", "ing1", "-n", "default"},
+			seedIngress,
+			[]string{"Name: ing1", "Namespace: default", "Hosts: a.example.com,b.example.com"},
+		},
+		{
+			"ingress_alias",
+			[]string{"describe", "ing", "ing1", "-n", "default"},
+			seedIngress,
+			[]string{"Name: ing1"},
+		},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cs := fake.NewSimpleClientset(tc.seed())
+			r := New(cs, nil, cs.Discovery(), "https://api.test", "")
+			out, err := r.Run(ctx, tc.argv)
+			if err != nil {
+				t.Fatalf("err=%v out=%s", err, out)
+			}
+			s := string(out)
+			for _, w := range tc.wantSub {
+				if !strings.Contains(s, w) {
+					t.Fatalf("argv=%v: missing %q in output:\n%s", tc.argv, w, s)
+				}
+			}
+		})
+	}
+}
+
+// TestFormatNamedRows covers the output modes of formatNamedRows.
+func TestFormatNamedRows(t *testing.T) {
+	t.Parallel()
+	row := func(i int) (string, string) {
+		names := []string{"a", "b"}
+		status := []string{"Ready", "Pending"}
+		return names[i], status[i]
+	}
+	list := &corev1.PodList{Items: nil} // unused, but needed for yaml/json path
+	_ = list
+
+	cases := []struct {
+		mode    string
+		assert  func(*testing.T, string)
+		wantErr bool
+	}{
+		{"name", func(t *testing.T, s string) {
+			if !strings.Contains(s, "thing/a") || !strings.Contains(s, "thing/b") {
+				t.Fatalf("name output: %q", s)
+			}
+		}, false},
+		{"yaml", func(t *testing.T, s string) {
+			if !strings.Contains(s, "metadata:") {
+				t.Fatalf("yaml output missing metadata: %q", s)
+			}
+		}, false},
+		{"json", func(t *testing.T, s string) {
+			if !strings.Contains(s, "{") || !strings.Contains(s, "}") {
+				t.Fatalf("json output: %q", s)
+			}
+		}, false},
+		{"", func(t *testing.T, s string) {
+			if !strings.Contains(s, "NAME	STATUS") {
+				t.Fatalf("default text missing header: %q", s)
+			}
+			if !strings.Contains(s, "a	Ready") {
+				t.Fatalf("default text missing row: %q", s)
+			}
+		}, false},
+		{"wide", func(t *testing.T, s string) {
+			// unknown output mode falls through to default text path.
+			if !strings.Contains(s, "NAME	STATUS") {
+				t.Fatalf("wide fallback: %q", s)
+			}
+		}, false},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run("mode="+tc.mode, func(t *testing.T) {
+			t.Parallel()
+			out, err := formatNamedRows(list, tc.mode, false, "thing", 2, row)
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("err=%v", err)
+			}
+			tc.assert(t, string(out))
+		})
+	}
+
+	// Also exercise the no-headers branch on default text.
+	out, err := formatNamedRows(list, "", true, "thing", 2, row)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(out), "NAME	STATUS") {
+		t.Fatalf("noHeaders=true should suppress header; got %q", out)
+	}
+}
+
+// TestNamespacedOrAll covers the namespace-resolution helper.
+func TestNamespacedOrAll(t *testing.T) {
+	t.Parallel()
+	if got := namespacedOrAll("", true); got != "" /* NamespaceAll */ {
+		if got == "default" {
+			t.Fatalf("allNS=true must not return default: %q", got)
+		}
+	}
+	if got := namespacedOrAll("", false); got != "default" {
+		t.Fatalf("ns='' allNS=false: %q", got)
+	}
+	if got := namespacedOrAll("foo", false); got != "foo" {
+		t.Fatalf("ns='foo' allNS=false: %q", got)
+	}
+}
+
+// TestPtrStr covers the *string->string helper.
+func TestPtrStr(t *testing.T) {
+	t.Parallel()
+	if got := ptrStr(nil); got != "<none>" {
+		t.Fatalf("nil: %q", got)
+	}
+	s := "hello"
+	if got := ptrStr(&s); got != "hello" {
+		t.Fatalf("&s: %q", got)
+	}
+}
+
+// TestIngressHosts covers ingressHosts across empty, missing, and populated cases.
+func TestIngressHosts(t *testing.T) {
+	t.Parallel()
+	if got := ingressHosts(&networkingv1.Ingress{}); len(got) != 0 {
+		t.Fatalf("empty ingress: %v", got)
+	}
+	in := &networkingv1.Ingress{Spec: networkingv1.IngressSpec{Rules: []networkingv1.IngressRule{
+		{Host: ""},
+		{Host: "x.example.com"},
+		{Host: "y.example.com"},
+	}}}
+	got := ingressHosts(in)
+	if diff := cmp.Diff([]string{"x.example.com", "y.example.com"}, got); diff != "" {
+		t.Fatalf("hosts diff (-want +got):\n%s", diff)
+	}
+}
+
+// TestRunner_Run_get_nodes covers nodesHandler and the underlying getNodes for
+// both the list and get-by-name paths.
+func TestRunner_Run_get_nodes(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{Name: "node1"},
+		Status: corev1.NodeStatus{
+			Conditions: []corev1.NodeCondition{{Type: corev1.NodeReady, Status: corev1.ConditionTrue}},
+			NodeInfo:   corev1.NodeSystemInfo{KubeletVersion: "v1.30.0"},
+		},
+	}
+	cs := fake.NewSimpleClientset(node)
+	r := New(cs, nil, cs.Discovery(), "https://api.test", "")
+
+	out, err := r.Run(ctx, []string{"get", "nodes"})
+	if err != nil || !strings.Contains(string(out), "node1") {
+		t.Fatalf("list err=%v out=%s", err, out)
+	}
+	out, err = r.Run(ctx, []string{"get", "node", "node1", "-o", "yaml"})
+	if err != nil || !strings.Contains(string(out), "node1") {
+		t.Fatalf("name err=%v", err)
+	}
+	out, err = r.Run(ctx, []string{"get", "nodes", "-o", "json"})
+	if err != nil || !strings.Contains(string(out), "node1") {
+		t.Fatalf("json err=%v out=%s", err, out)
 	}
 }

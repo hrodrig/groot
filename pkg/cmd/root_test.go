@@ -87,6 +87,39 @@ func TestRoot_testConnection(t *testing.T) {
 	}
 }
 
+func TestCollect_listJobs(t *testing.T) {
+	resetPersistentFlags(t)
+	kc, cleanup := kubetest.StartAPIServer(t)
+	defer cleanup()
+
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "c.yaml")
+	yaml := "kubeconfig: " + fmt.Sprintf("%q", filepath.ToSlash(kc)) + `
+collection:
+  timeout: 30s
+  worker_concurrency: 1
+  namespaces: []
+  include_pod_logs: false
+  include_node_details: false
+  include_node_logs: false
+  include_pod_metrics: false
+`
+	if err := os.WriteFile(cfgPath, []byte(yaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var buf bytes.Buffer
+	rootCmd.SetOut(&buf)
+	rootCmd.SetErr(&buf)
+	rootCmd.SetArgs([]string{"collect", "--list-jobs", "--config", cfgPath})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "cluster-info") {
+		t.Fatalf("out=%s", buf.String())
+	}
+}
+
 func TestCollect_quietRun(t *testing.T) {
 	resetPersistentFlags(t)
 	kc, cleanup := kubetest.StartAPIServer(t)

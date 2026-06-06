@@ -34,6 +34,7 @@ var buildBranch = "unknown"
 var buildDate = "unknown"
 var testConnection bool
 var collectLogsSince string
+var listJobs bool
 
 var rootCmd = &cobra.Command{
 	Use:   "groot",
@@ -115,11 +116,32 @@ var collectCmd = &cobra.Command{
 			return nil
 		}
 
+		collectorSvc := collector.New(cfg)
+		collectorSvc.SetBuildInfo(buildVersion, buildCommit, buildBranch, buildDate)
+		collectorSvc.SetMessage(message)
+
+		if listJobs {
+			ctx, cancel := context.WithTimeout(cmd.Context(), cfg.Collection.Timeout)
+			defer cancel()
+			plans, err := collectorSvc.ListJobs(ctx)
+			if err != nil {
+				return fmt.Errorf("list jobs: %w", err)
+			}
+			for _, p := range plans {
+				opt := ""
+				if p.Optional {
+					opt = " optional"
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "%s -> %s%s args=%v\n", p.Name, p.FileName, opt, p.Args)
+			}
+			if !quiet {
+				logger.Info("planned jobs: %d", len(plans))
+			}
+			return nil
+		}
+
 		ctx, cancel := context.WithTimeout(cmd.Context(), cfg.Collection.Timeout)
 		defer cancel()
-
-		collectorSvc := collector.New(cfg)
-		collectorSvc.SetMessage(message)
 		collectorSvc.SetHooks(
 			func(name string, args []string) {
 				logger.Cmd("%s -> %s", name, strings.Join(args, " "))
@@ -166,12 +188,20 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
-// ResetPersistentCLI restores root persistent flags to defaults (for tests calling Execute from main package).
+// ResetPersistentCLI restores root and collect-command flags to defaults (for tests calling Execute from main package).
 func ResetPersistentCLI() {
-	rootCmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
-		_ = f.Value.Set(f.DefValue)
-		f.Changed = false
-	})
+	resetFlags := func(cmd *cobra.Command) {
+		cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+			_ = f.Value.Set(f.DefValue)
+			f.Changed = false
+		})
+		cmd.Flags().VisitAll(func(f *pflag.Flag) {
+			_ = f.Value.Set(f.DefValue)
+			f.Changed = false
+		})
+	}
+	resetFlags(rootCmd)
+	resetFlags(collectCmd)
 }
 
 // SetBuildInfo injects build metadata used by --version.
@@ -195,6 +225,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&message, "message", "", "Custom suffix appended to capture output names")
 	rootCmd.PersistentFlags().StringVar(&kubeconfigOverride, "kubeconfig", "", "Override kubeconfig path for the Kubernetes API client")
 	collectCmd.Flags().StringVar(&collectLogsSince, "since", "", "Pod logs only: --since duration (e.g. 24h, 45m; bare number means hours). Overrides collection.pod_logs_since in config when set")
+	collectCmd.Flags().BoolVar(&listJobs, "list-jobs", false, "Print planned collection jobs and exit without writing output")
 	rootCmd.AddCommand(collectCmd)
 }
 

@@ -1,16 +1,17 @@
-# GROOT — Kubernetes diagnostics CLI
+# GROOT — Kubernetes log collector CLI
 
 <a id="readme-top"></a>
 
-**☸** _Collect cluster diagnostics into one archive_
+**☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.4.0-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.4.1-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
 [![CI](https://github.com/hrodrig/groot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hrodrig/groot/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/gh/hrodrig/groot/branch/main/graph/badge.svg)](https://codecov.io/gh/hrodrig/groot)
+[![gghstats clones](https://gghstats.hermesrodriguez.com/api/v1/badge/hrodrig/groot?metric=clones)](https://gghstats.hermesrodriguez.com/hrodrig/groot)
 [![Go Report Card](https://goreportcard.com/badge/github.com/hrodrig/groot)](https://goreportcard.com/report/github.com/hrodrig/groot)
 [![Article on DEV](https://img.shields.io/badge/dev.to-article-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/groot/)
@@ -18,7 +19,7 @@
 **Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Spec:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 
 <p align="center">
-  <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes diagnostics CLI" width="100%" />
+  <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes log collector CLI" width="100%" />
 </p>
 
 <p align="center">
@@ -27,9 +28,9 @@
 
 <p align="center"><sub>Terminal demo recorded with <a href="https://github.com/charmbracelet/vhs">VHS</a>. Regenerate: <code>make install && bash -c "vhs docs/demo.tape"</code> · <a href="docs/demo.tape"><code>docs/demo.tape</code></a></sub></p>
 
-GROOT is a **Kubernetes cluster diagnostics** Go CLI: a single **`groot collect`** gathers nodes, **events**, **pod logs**, workload and control-plane context, **describe**-style material, and more—**in parallel**, with **YAML-driven** configuration. It produces one **clean `.tar.gz`** you can hand to teammates, attach to tickets, or retain for compliance.
+GROOT is a **read-only Kubernetes log and context collector**: a single **`groot collect`** pulls **pod logs**, control-plane logs, **events**, and selected API snapshots—in parallel, from YAML—and packs them into one **`.tar.gz`**. It does **not** analyze the cluster or render a diagnosis; it **archives evidence** you can attach to tickets, hand to teammates, or retain for compliance.
 
-That workflow is aimed at **incident response** and **troubleshooting**, and at **root cause analysis (RCA)**: one reproducible bundle replaces scattered `kubectl` copy-paste, so you can reconstruct *what the cluster looked like* when things failed and shorten postmortems.
+That workflow supports **incident response**, **troubleshooting**, and **root cause analysis (RCA)**: one reproducible bundle replaces scattered `kubectl` copy-paste, so you can reconstruct *what the cluster looked like* when you ran collect and shorten postmortems.
 
 ## Table of contents
 
@@ -434,7 +435,7 @@ Workload filter behavior (`collection.targets`):
 
 `pod_logs_since` and **`collect --since`** (pod logs only):
 
-- applies **`--since`** / time-window filtering to workload and control-plane **pod log** jobs; other diagnostics are unchanged
+- applies **`--since`** / time-window filtering to workload and control-plane **pod log** jobs; other capture jobs are unchanged
 - in YAML or env, a **string of digits only** is interpreted as **whole hours** (`"24"` → `24h`); otherwise the value must parse as a Go duration (`24h`, `45m`, …)
 - **`groot collect --since=…`** overrides `collection.pod_logs_since` for that run when the flag is set
 

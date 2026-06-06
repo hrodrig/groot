@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-`groot` is a Go CLI that collects **read-only** Kubernetes diagnostics into a single **`.tar.gz`** archive for incident response, troubleshooting, and root cause analysis (RCA).
+`groot` is a Go CLI that **collects read-only Kubernetes logs and cluster context** into a single **`.tar.gz`** archive for incident response, troubleshooting, and root cause analysis (RCA). It does not analyze the cluster or produce a diagnosis.
 
 This document is the source of truth for **observable behavior** and test expectations. Planned work and gaps live in **[ROADMAP.md](ROADMAP.md)**; shipped releases in **[CHANGELOG.md](../CHANGELOG.md)**.
 
@@ -28,10 +28,10 @@ This document is the source of truth for **observable behavior** and test expect
 
 ### Design principles
 
-- **Read-only diagnostics only**—`collection.extra_kubectl` is allowlisted at config load and implemented via **`pkg/k8srunner`** (argv slices, no shell).
+- **Read-only collection only**—`collection.extra_kubectl` is allowlisted at config load and implemented via **`pkg/k8srunner`** (argv slices, no shell).
 - **Fail the CLI** on config errors, Kubernetes client init failure, archive failure, or **notify delivery failure** after collect.
 - **Partial job failures** inside collect are counted in `Summary` but do **not** fail the command; failures are logged (and included in notify summary text).
-- **Honest config**: fields reserved for future use (e.g. **`file_prefix`**) are documented; behavior matches code today.
+- **Honest config**: reserved or partial fields are documented; behavior matches code and this spec.
 
 ## 3. CLI contract
 

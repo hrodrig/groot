@@ -38,8 +38,8 @@ var listJobs bool
 
 var rootCmd = &cobra.Command{
 	Use:   "groot",
-	Short: "Collect Kubernetes logs and diagnostics",
-	Long:  "Groot collects Kubernetes diagnostics using the official Go client libraries (no kubectl binary required).",
+	Short: "Collect Kubernetes logs and cluster context",
+	Long:  "Groot collects read-only Kubernetes logs, events, and selected API snapshots into one archive (client-go; no kubectl binary required).",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if printSampleConfig {
 			// Write to stdout so shell redirects (`> file`) work. Cobra's cmd.Print uses stderr.

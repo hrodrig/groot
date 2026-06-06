@@ -17,18 +17,18 @@ Public releases start at **v0.1.3** (early CLI and packaging). Section headings 
 
 ### Strategic direction
 
-GROOT is a **read-only diagnostics CLI**: one **`groot collect`** produces a **timestamped `.tar.gz`** for incident response and RCA. The runtime path is **client-go** end-to-end (no `kubectl` binary). Configuration is **YAML + env**; optional **notify** fan-out fires after a **successful** collect.
+GROOT is a **read-only log and context collector**: one **`groot collect`** produces a **timestamped `.tar.gz`** for incident response and RCA. The runtime path is **client-go** end-to-end (no `kubectl` binary). Configuration is **YAML + env**; optional **notify** fan-out fires after a **successful** collect.
 
 **Target architecture:** deepen **collector fidelity** (more resources, clearer archive layout, optional in-cluster scheduling) while keeping the **single-command** UX. **Notifications** stay operator-friendly (webhooks first); richer templates and failure alerts are later bands. **Distribution** should match how SREs install tools: Linux packages, container, and **Homebrew**—without turning GROOT into a long-running controller.
 
 **Honest gaps today:**
 
 - **`k8srunner`** `extra_kubectl` is intentionally narrow (`get`/`describe`/`top` subsets; no `explain`/`wait`).
-- **`file_prefix`** is reserved in config but **not** used in capture directory or archive names yet.
-- **E2E kind** exists locally (`make test-e2e-kind`) but is **not** in default CI (Docker + time).
-- **No Helm chart / CronJob** manifest for scheduled in-cluster collection.
-- **Generic webhooks** send one JSON string field only—no templates, HMAC, or non-JSON bodies.
-- **Collected archives may contain secrets**; there is no built-in redaction scrub pass.
+- **No Helm chart / CronJob** manifest for scheduled in-cluster collection (**0.5.x #22**).
+- **Generic webhooks** send one JSON string field only—no templates, HMAC, or non-JSON bodies (**0.5.x #20**).
+- **Notify** runs only after a **successful** collect—no alert on abort or high partial-failure rate (**0.5.x #19**).
+- **Collected archives may contain secrets**; there is no built-in redaction scrub pass (**0.5.x #23**).
+- **Release artifact basenames** use `groot_0.4.1_*` (GoReleaser `{{ .Version }}`); **pgwd** / **kzero** use `*_v0.x.y_*` (`{{ .Tag }}`). Align before **0.6.x #25** so Homebrew cask URLs match the family convention.
 
 **Completed bands:** **0.1.x–0.2.x** (initial CLI, packaging, notifications, container). **0.3.x** (client-go collector, RCA tables, kind E2E harness, security hardening through **v0.3.2**). **0.4.x** (archive manifest, `file_prefix` naming, `--list-jobs`, broader `extra_kubectl`, Job/CronJob targets, kind E2E in CI) — see [plan-0.4.0.md](plan-0.4.0.md).
 
@@ -119,7 +119,7 @@ Make GROOT easier to run on a schedule inside the cluster and more honest when c
 
 | # | Item | Status |
 |---|------|--------|
-| 25 | **Homebrew tap** ([homebrew-groot](https://github.com/hrodrig/homebrew-groot)) formula synced with GoReleaser **`.tar.gz`** / version. | Pending |
+| 25 | **Homebrew cask tap** ([homebrew-groot](https://github.com/hrodrig/homebrew-groot)): `homebrew_casks` in GoReleaser (same pattern as [pgwd](https://github.com/hrodrig/homebrew-pgwd)), `HOMEBREW_TAP_TOKEN` in CI, release **`.tar.gz`** basenames aligned to `groot_vX.Y.Z_*` (`{{ .Tag }}` like pgwd/kzero). | Pending |
 | 26 | **SBOM** generation in GoReleaser (Syft or equivalent). | Pending |
 | 27 | **Cosign** image/binary signing in release pipeline. | Pending |
 | 28 | **Optional post-collect upload**: S3/GCS-compatible push of `.tar.gz` (credentials via env; no long-lived keys in config). | Pending |

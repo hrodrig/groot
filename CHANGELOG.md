@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Positioning copy**: README, SPEC, ROADMAP, and CLI `Short`/`Long` describe GROOT as a **read-only log and context collector** (not a diagnostics/diagnosis tool).
+- **ROADMAP**: refresh honest gaps for post-**0.4.x** reality; **#25** documents **Homebrew cask** + pgwd/kzero release basename convention.
+
 ## [0.4.1] - 2026-06-06
 
 ### Fixed

@@ -69,3 +69,30 @@ jobs:
           # Repository upload token from https://app.codecov.io/gh/hrodrig/groot/settings
           # GitHub: Settings → Secrets and variables → Actions → CODECOV_TOKEN
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  test-e2e-kind:
+    name: E2E (kind)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install kind
+        run: |
+          curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.24.0/kind-linux-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/kubectl
+
+      - name: Run kind E2E
+        run: make test-e2e-kind

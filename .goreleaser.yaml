@@ -92,6 +92,39 @@ changelog:
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
+# SBOM (Software Bill of Materials) generation. Produces a SPDX-JSON
+# and a CycloneDX-JSON document for every released archive. The
+# generated SBOMs land as `out: groot_<tag>_sbom.spdx.json` and
+# `out: groot_<tag>_sbom.cyclonedx.json` in the GitHub Release.
+#
+# Container image SBOM is intentionally NOT enabled here:
+# `dockers_v2.sbom: true` requires the `docker buildx` driver to be
+# `docker-container` (so GoReleaser can attach the OCI attestation
+# via buildx's --attestation=type=sbom flag). The current workflow
+# uses the default `docker` driver; switching drivers is a follow-up
+# for 0.7.x. The Go module dependency list is identical for the
+# image and the archive, so the archive SBOM fully describes what
+# runs in the container.
+#
+# `artifacts: archive` covers the `.tar.gz` releases that operators
+# download directly. `binary` would also work; archives are the
+# primary download path.
+sboms:
+  - id: archive-sbom
+    artifacts: archive
+    # `archive` artifacts accept a single format (goreleaser v2).
+    # SPDX-JSON is the de facto standard for downstream tooling
+    # (sigstore, in-toto, syft, grype, cdxgen all consume it).
+    documents:
+      - spdx-json
+  - id: binary-sbom
+    artifacts: binary
+    # Binary artifacts accept multiple formats. The CycloneDX
+    # document is paired with the SPDX one above for consumers
+    # that prefer CycloneDX (e.g. Anchore, dependency-track).
+    documents:
+      - cyclonedx-json
+
 # Multi-arch images via pre-built binaries (Dockerfile.release).
 # sbom: false — many buildx setups lack attestation support for the docker driver.
 dockers_v2:

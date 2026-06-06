@@ -1,0 +1,13 @@
+# distinfo for groot (OpenBSD port)
+#
+# Placeholder SHA256 hashes. The CI workflow `release-ports-openbsd` job
+# regenerates this file on every vX.Y.Z tag push by running
+# `mkdistfiles` against the actual source tarball.
+#
+# To regenerate locally on OpenBSD 7.5:
+#   cd /usr/ports/sysutils/groot (or contrib/openbsd/ if using local tree)
+#   make makesum
+#
+# Format: SHA256 size filename
+SHA256 (groot-v0.6.0.tar.gz) = 0000000000000000000000000000000000000000000000000000000000000000
+SIZE (groot-v0.6.0.tar.gz) = 0

@@ -1,0 +1,10 @@
+GROOT is a read-only log and context collector for Kubernetes. It
+produces a timestamped tarball containing pod logs, events, resource
+manifests, node details, and optional notify fan-out (Slack, Discord,
+Teams, PagerDuty, generic webhooks, email). One command, no kubectl
+binary at runtime - client-go end-to-end.
+
+Usage:
+  groot collect --config /usr/local/share/examples/groot/groot.yml
+
+WWW: https://github.com/hrodrig/groot

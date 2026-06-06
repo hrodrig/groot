@@ -1,0 +1,6 @@
+@comment $OpenBSD$
+bin/groot
+share/examples/groot/groot.yml.sample
+share/doc/groot/README.md
+share/doc/groot/CHANGELOG.md
+share/doc/groot/LICENSE

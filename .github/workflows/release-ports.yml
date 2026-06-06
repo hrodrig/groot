@@ -1,0 +1,217 @@
+# Release ports: build FreeBSD + OpenBSD port packages for the current
+# tag and upload them to the GitHub Release. Runs only on `v*` tags,
+# after the main `Release` workflow has produced the release entry.
+#
+# Pattern follows vmactions/freebsd-vm@v1 and vmactions/openbsd-vm@v1:
+# the action runs on `ubuntu-latest`, boots a BSD VM, mounts the repo
+# tree into it (cwd is the repo root), and runs the user-supplied shell
+# scripts (`prepare`, `run`) inside the VM. The repo and `GITHUB_TOKEN`
+# are visible to the VM via the `envs:` parameter.
+#
+# vmactions syncs the repo's working directory between host and VM:
+#   - host → VM: at action start, the repo is rsynced into the VM.
+#   - VM → host: at action end, the repo's working dir in the VM is
+#     rsynced back. Any file created under the repo's cwd in the VM
+#     lands on the host.
+#
+# So we just stage artifacts under a path inside the repo and pick
+# them up in subsequent host-side steps.
+
+name: Release ports
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build ports for (e.g. v0.6.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # Decide which tag we are releasing for, derived from the upstream
+  # workflow_run event (push to a v* tag) or the manual input. The BSD
+  # build jobs wait for this resolution before they start.
+  resolve-tag:
+    name: Resolve tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.t.outputs.tag }}
+      release_ok: ${{ steps.t.outputs.release_ok }}
+    steps:
+      - id: t
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            # Only run if the upstream Release job actually succeeded.
+            if [[ "${{ github.event.workflow_run.conclusion }}" != "success" ]]; then
+              echo "Upstream Release workflow did not succeed (conclusion=${{ github.event.workflow_run.conclusion }}). Skipping ports build."
+              echo "release_ok=false" >> "$GITHUB_OUTPUT"
+              echo "tag=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          # Confirm the release entry exists in the API.
+          if gh release view "${TAG}" --json name -q .name >/dev/null 2>&1; then
+            echo "release_ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Release for ${TAG} not yet visible; will be retried by next workflow_run."
+            echo "release_ok=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+  freebsd-amd64:
+    name: FreeBSD amd64 port
+    needs: resolve-tag
+    if: needs.resolve-tag.outputs.release_ok == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Run the FreeBSD build in a VM. vmactions syncs the working
+      # directory between host and VM, so any file placed in the repo
+      # cwd in the VM lands on the host. The build script stages the
+      # package and the refreshed distinfo under dist/ports/ inside the
+      # repo tree, then exits. The next steps pick them up on the host.
+      - name: Build FreeBSD package in VM
+        id: build
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "14.2"
+          usesh: true
+          envs: 'GITHUB_TOKEN'
+          prepare: |
+            set -euo pipefail
+            pkg install -y bash go git gmake
+          run: |
+            set -euo pipefail
+            # The vmactions action mounts the repo at $GITHUB_WORKSPACE
+            # and runs the script in the repo root. Drop the port tree
+            # into a sibling build dir (not /usr/ports, which may not
+            # exist on a fresh VM) and use it as a local port.
+            BUILD="${HOME}/ports-build"
+            mkdir -p "${BUILD}"
+            cp -r contrib/freebsd "${BUILD}/groot"
+            cd "${BUILD}/groot"
+            make fetch
+            make distinfo
+            make package
+            # Stage under the repo's working dir so vmactions syncs it
+            # back to the host.
+            STAGE="${GITHUB_WORKSPACE}/dist/ports"
+            mkdir -p "${STAGE}"
+            cp Work/pkg/*.pkg "${STAGE}/groot-freebsd-amd64.pkg"
+            cp distinfo "${STAGE}/distinfo-freebsd"
+            ls -la "${STAGE}"
+
+      - name: Verify FreeBSD package on host
+        if: steps.build.conclusion == 'success'
+        run: |
+          set -euo pipefail
+          if [[ ! -f dist/ports/groot-freebsd-amd64.pkg ]]; then
+            echo "::error::FreeBSD package not synced back from VM"
+            exit 1
+          fi
+          ls -la dist/ports/
+
+      - name: Commit refreshed FreeBSD distinfo (if changed)
+        if: steps.build.conclusion == 'success'
+        run: |
+          set -euo pipefail
+          if ! cmp -s contrib/freebsd/distinfo dist/ports/distinfo-freebsd; then
+            cp dist/ports/distinfo-freebsd contrib/freebsd/distinfo
+            git config user.name "groot-release-bot"
+            git config user.email "groot-release-bot@users.noreply.github.com"
+            git add contrib/freebsd/distinfo
+            git commit -m "chore(release): refresh contrib/freebsd/distinfo for ${{ needs.resolve-tag.outputs.tag }}"
+            git push origin HEAD:develop
+          else
+            echo "FreeBSD distinfo unchanged"
+          fi
+
+      - name: Upload FreeBSD package to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.resolve-tag.outputs.tag }}
+          files: dist/ports/groot-freebsd-amd64.pkg
+          fail_on_unmatched_files: true
+
+  openbsd-amd64:
+    name: OpenBSD amd64 port
+    needs: resolve-tag
+    if: needs.resolve-tag.outputs.release_ok == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build OpenBSD package in VM
+        id: build
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: "7.5"
+          usesh: true
+          envs: 'GITHUB_TOKEN'
+          prepare: |
+            set -euo pipefail
+            pkg_add bash go git
+          run: |
+            set -euo pipefail
+            BUILD="${HOME}/ports-build"
+            mkdir -p "${BUILD}"
+            cp -r contrib/openbsd "${BUILD}/groot"
+            cd "${BUILD}/groot"
+            make fetch
+            make makesum
+            make package
+            STAGE="${GITHUB_WORKSPACE}/dist/ports"
+            mkdir -p "${STAGE}"
+            cp groot-*.tgz "${STAGE}/groot-openbsd-amd64.tgz"
+            cp distinfo "${STAGE}/distinfo-openbsd"
+            ls -la "${STAGE}"
+
+      - name: Verify OpenBSD package on host
+        if: steps.build.conclusion == 'success'
+        run: |
+          set -euo pipefail
+          if [[ ! -f dist/ports/groot-openbsd-amd64.tgz ]]; then
+            echo "::error::OpenBSD package not synced back from VM"
+            exit 1
+          fi
+          ls -la dist/ports/
+
+      - name: Commit refreshed OpenBSD distinfo (if changed)
+        if: steps.build.conclusion == 'success'
+        run: |
+          set -euo pipefail
+          if ! cmp -s contrib/openbsd/distinfo dist/ports/distinfo-openbsd; then
+            cp dist/ports/distinfo-openbsd contrib/openbsd/distinfo
+            git config user.name "groot-release-bot"
+            git config user.email "groot-release-bot@users.noreply.github.com"
+            git add contrib/openbsd/distinfo
+            git commit -m "chore(release): refresh contrib/openbsd/distinfo for ${{ needs.resolve-tag.outputs.tag }}"
+            git push origin HEAD:develop
+          else
+            echo "OpenBSD distinfo unchanged"
+          fi
+
+      - name: Upload OpenBSD package to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.resolve-tag.outputs.tag }}
+          files: dist/ports/groot-openbsd-amd64.tgz
+          fail_on_unmatched_files: true

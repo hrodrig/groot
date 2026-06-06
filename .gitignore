@@ -35,6 +35,9 @@
 !deploy/
 !deploy/**
 
+!contrib/
+!contrib/**
+
 # Source and documentation
 !cmd/
 !cmd/**
@@ -46,6 +49,10 @@
 # Build output dir: keep directory in git with a placeholder only (see Makefile → bin/)
 !bin/
 !bin/.keep
+
+# GoReleaser + BSD port build output (gitignored at the deny-all level above
+# because we use the `*` glob; no whitelist needed).
+dist/
 
 # Local / OS noise (redundant with *; keeps intent visible)
 .DS_Store

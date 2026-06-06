@@ -1,0 +1,7 @@
+bin/groot
+etc/groot/groot.yml.sample
+@sample etc/groot/groot.yml.sample
+share/licenses/groot-0.6.0/LICENSE
+share/doc/groot/README.md
+share/doc/groot/CHANGELOG.md
+@rcsubr groot

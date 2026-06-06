@@ -44,6 +44,7 @@ type job struct {
 type Service struct {
 	cfg        config.Config
 	message    string
+	buildInfo  BuildInfo
 	clientset  kubernetes.Interface
 	metricsCS  *metricsversioned.Clientset
 	restConfig *rest.Config
@@ -107,7 +108,7 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	start := time.Now()
 
 	timestamp := time.Now().Format("20060102-150405")
-	sessionBase := captureSessionBase(timestamp, s.cfg.Collection.PodLogsSince)
+	sessionBase := captureSessionBase(s.cfg.FilePrefix, timestamp, s.cfg.Collection.PodLogsSince)
 	captureDir := filepath.Join(s.cfg.OutputDir, sessionBase)
 	if err := os.MkdirAll(captureDir, 0o755); err != nil {
 		return Summary{}, fmt.Errorf("create output dir: %w", err)
@@ -140,17 +141,18 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 
 	clusterName := "unknown-cluster"
 	if meta, err := s.ReadKubeMetadata(ctx); err == nil {
-		if strings.TrimSpace(meta.Cluster) != "" {
-			clusterName = sanitize(meta.Cluster)
+		if c := strings.TrimSpace(meta.Cluster); c != "" {
+			clusterName = sanitize(c)
 		}
 	} else {
 		s.invokeOnFailed("cluster-name", err)
 	}
+	archiveName := archiveBasename(sessionBase, clusterName, s.message)
 
-	archiveName := fmt.Sprintf("%s-%s", sessionBase, clusterName)
-	if suffix := sanitizeMessage(s.message); suffix != "" {
-		archiveName += "-" + suffix
+	if err := s.writeManifest(ctx, captureDir, sessionBase, archiveName, summary); err != nil {
+		s.invokeOnFailed("manifest", err)
 	}
+
 	archivePath := filepath.Join(s.cfg.OutputDir, archiveName+".tar.gz")
 	if err := archive.DirToTarGz(captureDir, archivePath); err != nil {
 		return Summary{}, fmt.Errorf("archive logs: %w", err)
@@ -429,18 +431,34 @@ func (s *Service) runJobs(ctx context.Context, captureDir string, jobs []job) Su
 }
 
 // captureSessionBase is the capture folder name and the leading part of the archive basename.
-// When pod_logs_since is set (kubectl --since value, e.g. 12h), it becomes "<timestamp>-since-<slug>"
-// so full runs and time-windowed log captures are easy to tell apart without opening the tarball.
-func captureSessionBase(timestamp, podLogsSince string) string {
+// Format: "<file_prefix>-<timestamp>" or "<file_prefix>-<timestamp>-since-<slug>" when pod_logs_since is set.
+func captureSessionBase(filePrefix, timestamp, podLogsSince string) string {
+	base := sanitizeFilePrefix(filePrefix) + "-" + timestamp
 	s := strings.TrimSpace(podLogsSince)
 	if s == "" {
-		return timestamp
+		return base
 	}
 	slug := sanitizeMessage(s)
 	if slug == "" {
-		return timestamp
+		return base
 	}
-	return timestamp + "-since-" + slug
+	return base + "-since-" + slug
+}
+
+func sanitizeFilePrefix(p string) string {
+	p = strings.TrimSpace(p)
+	if p == "" {
+		p = "groot-capture"
+	}
+	return sanitize(p)
+}
+
+func archiveBasename(sessionBase, clusterName, message string) string {
+	name := fmt.Sprintf("%s-%s", sessionBase, clusterName)
+	if suffix := sanitizeMessage(message); suffix != "" {
+		name += "-" + suffix
+	}
+	return name
 }
 
 func sanitize(value string) string {
@@ -782,37 +800,48 @@ func parsePodLines(lines []string) []podRef {
 }
 
 func hasTargets(t config.NamespaceTargets) bool {
-	return len(t.Deployments) > 0 || len(t.StatefulSets) > 0 || len(t.DaemonSets) > 0 || len(t.HelmReleases) > 0
+	return len(t.Deployments) > 0 || len(t.StatefulSets) > 0 || len(t.DaemonSets) > 0 ||
+		len(t.Jobs) > 0 || len(t.CronJobs) > 0 || len(t.HelmReleases) > 0
 }
 
 func matchesTargetsByLabels(labels map[string]string, targets config.NamespaceTargets) bool {
 	if len(labels) == 0 {
 		return false
 	}
-
 	nameLabel := strings.TrimSpace(labels["app.kubernetes.io/name"])
 	instanceLabel := strings.TrimSpace(labels["app.kubernetes.io/instance"])
+	jobName := strings.TrimSpace(labels["job-name"])
+	appLabel := strings.TrimSpace(labels["app"])
 
+	// Helm releases only ever match by instance.
 	if contains(targets.HelmReleases, instanceLabel) {
 		return true
 	}
 
-	if contains(targets.Deployments, nameLabel) || contains(targets.Deployments, instanceLabel) {
-		return true
+	// Standard and Jobs/CronJob label sets.
+	for _, lists := range [][]string{
+		targets.Deployments, targets.StatefulSets, targets.DaemonSets,
+		targets.Jobs, targets.CronJobs,
+	} {
+		if labelMatches(lists, nameLabel, instanceLabel, jobName, appLabel) {
+			return true
+		}
 	}
-	if contains(targets.StatefulSets, nameLabel) || contains(targets.StatefulSets, instanceLabel) {
-		return true
-	}
-	if contains(targets.DaemonSets, nameLabel) || contains(targets.DaemonSets, instanceLabel) {
-		return true
-	}
+	return false
+}
 
-	// Fallback for charts that still use "app" label.
-	appLabel := strings.TrimSpace(labels["app"])
-	if contains(targets.Deployments, appLabel) ||
-		contains(targets.StatefulSets, appLabel) ||
-		contains(targets.DaemonSets, appLabel) {
-		return true
+// labelMatches reports whether any label among the given keys hits one of the
+// candidate target names. Passing the same slice of candidates through every
+// label key is intentional: it keeps the matching policy identical for the
+// standard workload families and Job/CronJob.
+func labelMatches(candidates []string, keys ...string) bool {
+	for _, k := range keys {
+		if k == "" {
+			continue
+		}
+		if contains(candidates, k) {
+			return true
+		}
 	}
 	return false
 }

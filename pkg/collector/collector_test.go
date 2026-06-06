@@ -3,6 +3,7 @@ package collector
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/hrodrig/groot/pkg/config"
@@ -194,14 +195,21 @@ func TestControlPlanePodLogArgs(t *testing.T) {
 }
 
 func TestCaptureSessionBase(t *testing.T) {
-	if got := captureSessionBase("20260102-150405", ""); got != "20260102-150405" {
+	if got := captureSessionBase("groot-capture", "20260102-150405", ""); got != "groot-capture-20260102-150405" {
 		t.Fatalf("empty since: %q", got)
 	}
-	if got := captureSessionBase("20260102-150405", "12h"); got != "20260102-150405-since-12h" {
+	if got := captureSessionBase("groot-capture", "20260102-150405", "12h"); got != "groot-capture-20260102-150405-since-12h" {
 		t.Fatalf("12h: %q", got)
 	}
-	if got := captureSessionBase("20260102-150405", "45m"); got != "20260102-150405-since-45m" {
+	if got := captureSessionBase("", "20260102-150405", "45m"); got != "groot-capture-20260102-150405-since-45m" {
 		t.Fatalf("45m: %q", got)
+	}
+}
+
+func TestArchiveBasename(t *testing.T) {
+	got := archiveBasename("groot-capture-20260102-150405", "prod", "RCA run")
+	if !strings.Contains(got, "groot-capture-20260102-150405-prod") {
+		t.Fatalf("got %q", got)
 	}
 }
 

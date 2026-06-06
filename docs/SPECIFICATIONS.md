@@ -64,6 +64,7 @@ This document is the source of truth for **observable behavior** and test expect
 | Flag | Effect |
 |------|--------|
 | `--since <duration>` | Pod logs only: sets `collection.pod_logs_since` for this run (overrides config). Bare number = hours; or Go duration (`24h`, `45m`). |
+| `--list-jobs` | Print the planned collection jobs (name, output file, args, `optional`) and exit **without** writing the capture tree or `.tar.gz`, and without firing notify. Requires API reachability for dynamic jobs (nodes, pod logs). |
 
 ### Exit semantics
 
@@ -88,7 +89,7 @@ This document is the source of truth for **observable behavior** and test expect
 |-----|------|----------------------|-------|
 | `kubeconfig` | string | `""` | Empty → client-go default rules + in-cluster when applicable. |
 | `output_dir` | string | `./out` | Supports `~` and `${VAR}` expansion. |
-| `file_prefix` | string | `groot-capture` | **Reserved**—not used in capture or archive names today (ROADMAP **0.4.x #12**). |
+| `file_prefix` | string | `groot-capture` | **Used** in capture directory and archive basename (ROADMAP **0.4.x #12**). |
 | `collection` | object | see below | |
 | `notify` | object | channels disabled | |
 
@@ -99,7 +100,7 @@ This document is the source of truth for **observable behavior** and test expect
 | `timeout` | `20m` | Whole-run context deadline. |
 | `worker_concurrency` | `6` (min effective `4` if `<1`) | Parallel job workers. |
 | `namespaces` | `[kube-system]` | Creates per-NS dirs; writes `resources.txt` JSON sections. |
-| `targets` | `{}` | Per-NS pod log filters (Deployments, StatefulSets, DaemonSets, `helm_releases` by label). Empty/missing entry → broad pod logs for that NS. |
+| `targets` | `{}` | Per-NS pod log filters (`deployments`, `statefulsets`, `daemonsets`, `jobs`, `cronjobs`, `helm_releases`) matched by labels. Empty/missing entry → broad pod logs for that NS. |
 | `extra_kubectl` | `[]` | Allowlisted argv strings (§6); no shell. |
 | `include_pod_logs` | `true` | Pod + control-plane log streams. |
 | `include_previous_logs` | `true` | Optional `*.previous.log` jobs. |
@@ -134,14 +135,36 @@ Validation: enabled channels must have non-empty credentials after env merge.
 ### Session and archive naming
 
 1. **Capture folder** under `output_dir`: `<sessionBase>/` where `sessionBase` is:
-   - `YYYYMMDD-HHMMSS`, or
-   - `YYYYMMDD-HHMMSS-since-<slug>` when `pod_logs_since` / `--since` is set (`slug` = sanitized since value).
+   - `<sanitize(file_prefix)>-<timestamp>`, or
+   - `<sanitize(file_prefix)>-<timestamp>-since-<slug>` when `pod_logs_since` / `--since` is set (`slug` = sanitized since value).
+   - Default `file_prefix` is `groot-capture`; empty value falls back to the same default.
 2. **Archive file**: `<sessionBase>-<cluster>[-<message-suffix>].tar.gz` in `output_dir`.
    - `<cluster>` from kubeconfig context metadata (sanitized), else `unknown-cluster`.
    - `<message-suffix>` from `--message` when non-empty after sanitization.
 3. After successful tar, **capture folder is deleted**; only `.tar.gz` remains.
 
 Tar paths are prefixed with the capture folder name (`<session>/…` inside the archive).
+
+### Archive manifest
+
+After all jobs complete (and before the capture folder is removed), `extras/manifest.json` is written inside the archive with the structure below. This speeds ticket handoff and lets downstream tools verify what was collected.
+
+```json
+{
+  "groot_version": "0.4.0",
+  "groot_commit": "…",
+  "collected_at": "2026-06-05T12:00:00Z",
+  "duration_seconds": 42.5,
+  "session_base": "groot-capture-20260605-120000",
+  "archive_basename": "groot-capture-20260605-120000-my-cluster",
+  "file_prefix": "groot-capture",
+  "cluster": { "context": "…", "cluster": "…", "user": "…", "server": "…" },
+  "jobs": { "total": 10, "success": 9, "failed": 1 },
+  "paths": ["extras/kubeconfig.txt", "…"]
+}
+```
+
+`paths` is the sorted list of files under the capture tree (slash-separated, relative to the capture folder). Empty fields fall back to `"unknown"` or `"dev"`.
 
 ### Job execution
 
@@ -154,6 +177,7 @@ Tar paths are prefixed with the capture folder name (`<session>/…` inside the 
 
 | Path | Content |
 |------|---------|
+| `extras/manifest.json` | Archive manifest (groot version, cluster, jobs, paths) — see §5. |
 | `extras/cluster-info.txt` | API discovery summary |
 | `extras/nodes-wide.txt` | All nodes wide |
 | `extras/all-pods-wide.txt` | All pods cluster-wide |
@@ -182,9 +206,11 @@ Config validation (`ValidateExtraKubectl`) allows only:
 **Rejected at runtime (`k8srunner.Run`):**
 
 - `explain`, `wait`
-- `get` unsupported resources (supported: **pods, nodes, namespaces, events, `--raw`**)
-- `describe` unsupported kinds (supported: **pod, node** summaries)
+- `get` unsupported resources (supported: **pods, nodes, namespaces, events, configmap, pvc, service, ingress, deployment, replicaset, statefulset, daemonset, `--raw`**)
+- `describe` unsupported kinds (supported: **pod, node, configmap, pvc, service, ingress** summaries)
 - `top` unsupported targets
+
+`get` aliases: `cm` (configmap), `svc` (service), `ing` (ingress), `deploy`/`rs`/`sts`/`ds` (apps workloads). `describe` aliases: same set as `get`. `get --raw <path>` passes the path straight to the API server for CRD or generic reads.
 
 Argv is split on whitespace in config—**no shell quoting** for pipelines or redirects.
 

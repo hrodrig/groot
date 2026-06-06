@@ -9,7 +9,7 @@ User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sam
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-05 (**0.3.x** band closed in **v0.3.2**; focus shifts to **0.4.x**)
+**Last reviewed:** 2026-06-05 (**0.4.x** band closing in **v0.4.0**; focus shifts to **0.5.x**)
 
 ### Versioning note
 
@@ -30,14 +30,14 @@ GROOT is a **read-only diagnostics CLI**: one **`groot collect`** produces a **t
 - **Generic webhooks** send one JSON string field only—no templates, HMAC, or non-JSON bodies.
 - **Collected archives may contain secrets**; there is no built-in redaction scrub pass.
 
-**Completed bands:** **0.1.x–0.2.x** (initial CLI, packaging, notifications, container). **0.3.x** (client-go collector, RCA tables, kind E2E harness, security hardening through **v0.3.2**).
+**Completed bands:** **0.1.x–0.2.x** (initial CLI, packaging, notifications, container). **0.3.x** (client-go collector, RCA tables, kind E2E harness, security hardening through **v0.3.2**). **0.4.x** (archive manifest, `file_prefix` naming, `--list-jobs`, broader `extra_kubectl`, Job/CronJob targets, kind E2E in CI) — see [plan-0.4.0.md](plan-0.4.0.md).
 
 **Current focus (planned work):**
 
 | Band | Open items |
 |------|------------|
 | **0.3.x** | **Closed** (last item **#11** security patch in **v0.3.2**) |
-| **0.4.x** | Collector depth, docs hygiene, **kind E2E in CI**, `file_prefix` |
+| **0.4.x** | **Closed** in **v0.4.0** (items **#12–#18**); see [plan-0.4.0.md](plan-0.4.0.md) |
 | **0.5.x** | Notifications on failure, richer webhooks, **in-cluster deploy** (Helm/CronJob) |
 | **0.6.x** | **Homebrew**, SBOM/Cosign, optional object-store upload |
 | **1.0.0** | Config schema stability, multi-cluster / inspect commands, K8s version matrix in CI |
@@ -51,6 +51,7 @@ GROOT is a **read-only diagnostics CLI**: one **`groot collect`** produces a **t
 | **0.1.3 – 0.2.1** | Early **groot collect**, YAML config, parallel collection, archive output, Slack/Teams/webhook notify, rootless container, GoReleaser **.deb/.rpm/.tar.gz**, CI and security scans. |
 | **0.3.1** | **Client-go** collector (no `kubectl` binary); **`k8srunner`** allowlist; **`kubetest`** fake API; per-namespace **JSON `resources.txt`**; **RCA TSV** extras; **`extra_kubectl`** validation; kind **E2E** harness (`make test-e2e-kind`); README/VHS demo; config sample load fix. Ships unpublished **0.3.0** work—see [CHANGELOG](../CHANGELOG.md). |
 | **0.3.2** | **GO-2026-5026** / **CVE-2026-39821** (`golang.org/x/net` → v0.55.0); Go **1.26.4**. |
+| **0.4.0** | **Archive manifest** `extras/manifest.json` with version, cluster, jobs, paths. **`file_prefix`** now drives capture dir and archive basename. **`groot collect --list-jobs`** prints planned jobs without writing output. **`extra_kubectl` `get`/`describe`** supports `configmap`/`cm`, `pvc`, `service`/`svc`, `ingress`/`ing`, `deployment`/`rs`/`sts`/`ds` and aliases. **`collection.targets`** accepts `jobs` / `cronjobs` lists matched by `job-name` and standard labels. **Kind E2E in CI** (`make test-e2e-kind`) running with `continue-on-error: true`. Docs hygiene: `pkg/config/sample.go` and `configs/groot.yml.sample` in sync, references to `kubectl` removed. |
 
 ---
 
@@ -78,17 +79,19 @@ Replace fork/exec **kubectl** with **client-go** / metrics APIs; strengthen test
 
 ## 0.4.x — collector depth, docs, and CI E2E
 
+**Implementation plan:** [plan-0.4.0.md](plan-0.4.0.md) (target **`v0.4.0`**). Merge order: **#15 → #16 → #12 → #18 → #13 → #17 → #14**.
+
 Improve diagnostic coverage and operator trust without new top-level commands.
 
 | # | Item | Status |
 |---|------|--------|
-| 12 | **`file_prefix`**: use config value in capture directory and `.tar.gz` naming (today only `<timestamp>-<cluster>` + `--message` / `since-*`). | Pending |
-| 13 | **Extend `k8srunner` `extra_kubectl`**: broader `get`/`describe` kinds (e.g. Ingress, PVC, ConfigMap, CRD instances where safe); document unsupported verbs (`explain`, `wait`) in README. | Pending |
-| 14 | **Log targets**: optional **Job** / **CronJob** selectors in `collection.targets` (label-based, same as Deployments/STS/DS). | Pending |
-| 15 | **Archive manifest**: `extras/manifest.json` (or `README.txt` inside tar) listing paths, groot version, cluster context, collect duration—speeds ticket handoff. | Pending |
-| 16 | **Docs hygiene**: sync `configs/groot.yml.sample` and comments that still say “kubectl” with client-go reality; link **ROADMAP** from README. | Pending (partial—ROADMAP published) |
-| 17 | **Kind E2E in CI**: optional GitHub Actions job (`make test-e2e-kind`), flake policy and runtime budget (pattern: [pgwd](https://github.com/hrodrig/pgwd) `test-e2e-kube`). | Pending |
-| 18 | **`groot collect --dry-run` or `--list-jobs`**: print planned API calls / output paths without mutating disk (operator preview). | Pending |
+| 12 | **`file_prefix`**: use config value in capture directory and `.tar.gz` naming (today only `<timestamp>-<cluster>` + `--message` / `since-*`). | **Done (v0.4.0)** |
+| 13 | **Extend `k8srunner` `extra_kubectl`**: broader `get`/`describe` kinds (e.g. Ingress, PVC, ConfigMap, CRD instances where safe); document unsupported verbs (`explain`, `wait`) in README. | **Done (v0.4.0)** |
+| 14 | **Log targets**: optional **Job** / **CronJob** selectors in `collection.targets` (label-based, same as Deployments/STS/DS). | **Done (v0.4.0)** |
+| 15 | **Archive manifest**: `extras/manifest.json` (or `README.txt` inside tar) listing paths, groot version, cluster context, collect duration—speeds ticket handoff. | **Done (v0.4.0)** |
+| 16 | **Docs hygiene**: sync `configs/groot.yml.sample` and comments that still say “kubectl” with client-go reality; link **ROADMAP** from README. | **Done (v0.4.0)** |
+| 17 | **Kind E2E in CI**: optional GitHub Actions job (`make test-e2e-kind`), flake policy and runtime budget (pattern: [pgwd](https://github.com/hrodrig/pgwd) `test-e2e-kube`). | **Done (v0.4.0)** |
+| 18 | **`groot collect --dry-run` or `--list-jobs`**: print planned API calls / output paths without mutating disk (operator preview). | **Done (v0.4.0)** |
 
 **Out of scope for 0.4.x:** mutating cluster operations, storing archives in cloud by default.
 

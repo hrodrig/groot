@@ -7,11 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-05
+
 ### Added
 
-- **`docs/SPECIFICATIONS.md`**: behavior contract for CLI, config, collection, `extra_kubectl`, notify, and testing baseline.
-- **`docs/ROADMAP.md`**: in-repo source of truth for planned semver bands (**0.4.x** onward) and shipped history; complements SPEC and this changelog.
-- **`docs/README.md`**: documentation index (SPEC, ROADMAP, E2E, badges).
+- **Archive manifest (`0.4.x #15`)**: every successful collect writes **`extras/manifest.json`** inside the archive with `groot_version`, `groot_commit`, `collected_at`, `duration_seconds`, `session_base`, `archive_basename`, `file_prefix`, `cluster` (context/cluster/user/server), `jobs` (total/success/failed), and a sorted `paths[]` listing of the captured files. CLI build metadata is injected from the linker via `SetBuildInfo`.
+- **`groot collect --list-jobs` (`0.4.x #18`)**: prints planned collection jobs (name, output file, args, `optional`) and exits without writing the capture tree, without creating the `.tar.gz`, and without firing notify. Useful as an operator preview before a real run.
+- **Broader `extra_kubectl` resources (`0.4.x #13`)**: `k8srunner` `get` and `describe` now support `configmap`/`cm`, `pvc`, `service`/`svc`, `ingress`/`ing`, and the apps workloads `deployment`/`deploy`, `replicaset`/`rs`, `statefulset`/`sts`, `daemonset`/`ds`. `get --raw <path>` remains the escape hatch for CRDs and generic reads. `explain` and `wait` are still rejected.
+- **Job / CronJob log targets (`0.4.x #14`)**: `collection.targets.<ns>` accepts `jobs` and `cronjobs` lists in addition to `deployments` / `statefulsets` / `daemonsets` / `helm_releases`. Pod matching uses the same label keys as Deployments (`app.kubernetes.io/name`, `app.kubernetes.io/instance`, `app`) plus `job-name` for Job pods.
+- **Kind E2E in CI (`0.4.x #17`)**: new optional GitHub Actions job `test-e2e-kind` runs `make test-e2e-kind` with `continue-on-error: true` so flakes and Docker variance don't block merges while the budget stabilizes.
+- **`docs/plan-0.4.0.md`**: implementation plan for **v0.4.0** (roadmap **0.4.x** items #12–#18), merge order, and release checklist.
+
+### Changed
+
+- **`file_prefix` is now used in naming (`0.4.x #12`)**: `config.file_prefix` (default `groot-capture`) drives both the capture directory and the `.tar.gz` archive basename. Capture folder becomes `<file_prefix>-<timestamp>[-since-<slug>]`; archive becomes `<sessionBase>-<cluster>[-<message>].tar.gz`. Empty value falls back to the default.
+- **Docs hygiene (`0.4.x #16`)**: `pkg/config/sample.go` (`SampleYAML()`) and `configs/groot.yml.sample` are now in sync; comments no longer say "kubectl" — wording reflects the **client-go** runtime. `docs/SPECIFICATIONS.md` updated for `--list-jobs`, `file_prefix`, Job/CronJob targets, archive manifest, and the broader `extra_kubectl` resource set.
+
+### Fixed
+
+- `pkg/cmd.ResetPersistentCLI` now also resets `collectCmd` flags, preventing `--list-jobs` (and other collect-local flags) from leaking across tests in the same package.
 
 ## [0.3.2] - 2026-06-05
 

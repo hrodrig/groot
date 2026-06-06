@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-06-05
+
+### Security
+
+- Address **GO-2026-5026** / **CVE-2026-39821** (`golang.org/x/net` IDNA Punycode) by upgrading `golang.org/x/net` to v0.55.0 and related `golang.org/x/*` modules via `go mod tidy`.
+
+### Changed
+
+- Go toolchain directive **1.26.3 → 1.26.4** in `go.mod`.
+
 ## [0.3.1] - 2026-05-14
 
 **Release note:** **`v0.3.0` was never published** (no git tag and no GitHub Release). **`v0.3.1`** is the first tagged release on that line of work: it includes **everything** listed under **[0.3.0]** below, plus the **0.3.1** items in this section. When upgrading or auditing, treat the **[0.3.0]** section as shipped starting with **`v0.3.1`**.

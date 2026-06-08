@@ -61,6 +61,10 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@v3
 
+      # GoReleaser sboms: invokes syft; not bundled by goreleaser-action.
+      - name: Install syft (SBOM)
+        uses: anchore/sbom-action/download-syft@v0
+
       - name: Require Homebrew tap token
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

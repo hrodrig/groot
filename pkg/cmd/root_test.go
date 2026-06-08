@@ -246,3 +246,16 @@ func TestRoot_help(t *testing.T) {
 		t.Fatalf("help: %s", buf.String())
 	}
 }
+
+func TestSkipUploads_flagAndEnv(t *testing.T) {
+	resetPersistentFlags(t)
+	noUpload = true
+	if !skipUploads() {
+		t.Fatal("flag")
+	}
+	noUpload = false
+	t.Setenv("GROOT_NO_UPLOAD", "yes")
+	if !skipUploads() {
+		t.Fatal("env")
+	}
+}

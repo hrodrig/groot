@@ -1,5 +1,9 @@
 APP_NAME := groot
 BIN_DIR := bin
+DIST := dist
+FREEBSD_ARCH ?= amd64
+OPENBSD_ARCH ?= amd64
+PORT_VERSION := $(shell cat VERSION 2>/dev/null | tr -d '\n\r' | sed 's/^v//')
 IMAGE ?= $(APP_NAME):local
 PLATFORMS ?= linux/amd64,linux/arm64
 IMAGE_AMD64 ?= $(IMAGE)-amd64
@@ -39,7 +43,7 @@ DOCKER_BUILD_ARGS := \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build test cover fmt fmt-check lint-fix lint vet run clean install docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan test-e2e-kind e2e-kind
+.PHONY: help all build test cover fmt fmt-check lint-fix lint vet run clean install docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan test-e2e-kind e2e-kind snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
 
 help:
 	@echo "Available targets:"
@@ -61,6 +65,11 @@ help:
 	@echo "  make lint-fix       gofmt -s -w . (simplify with gofmt -s)"
 	@echo "  make fmt-check      Fail if gofmt -s would change any file (same as CI)"
 	@echo "  make release-check  VERSION semver + goreleaser + fmt-check + vet + cover + security"
+	@echo "  make snapshot       Goreleaser snapshot to dist/ (no tag)"
+	@echo "  make dist-freebsd   Tarball for FreeBSD ports (default FREEBSD_ARCH=amd64)"
+	@echo "  make dist-openbsd   Tarball for OpenBSD ports (default OPENBSD_ARCH=amd64)"
+	@echo "  make port-freebsd-sync   Set PORTVERSION in contrib/freebsd/Makefile from VERSION"
+	@echo "  make port-openbsd-sync   Sync contrib/openbsd/port/Makefile from VERSION"
 	@echo "  make run            Run collector with default config"
 	@echo "  make scan           Build amd64/arm64 images and scan both with Grype"
 	@echo "  make security       govulncheck + gocyclo + grype (dir scan)"
@@ -223,3 +232,76 @@ docker-scan: docker-build
 		docker run --rm --pull=always -v /var/run/docker.sock:/var/run/docker.sock anchore/grype:latest \
 			$(IMAGE) --fail-on $(GRYPE_FAIL_ON); \
 	fi
+
+snapshot:
+	@ver_raw=$$(cat VERSION 2>/dev/null | tr -d '\n\r'); \
+	[ -n "$$ver_raw" ] || { echo "Error: VERSION file is required for snapshot"; exit 1; }; \
+	ver=$${ver_raw#v}; \
+	echo "$$ver" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { echo "Error: VERSION must be semantic MAJOR.MINOR.PATCH (got: $$ver_raw)"; exit 1; }; \
+	goreleaser release --snapshot --clean
+
+port-freebsd-sync:
+	@[ -n "$(PORT_VERSION)" ] || { echo "Error: VERSION file empty or missing"; exit 1; }
+	@sed -i.bak "s/^PORTVERSION=.*/PORTVERSION=\t$(PORT_VERSION)/" contrib/freebsd/Makefile
+	@rm -f contrib/freebsd/Makefile.bak
+	@echo "Updated contrib/freebsd/Makefile PORTVERSION to $(PORT_VERSION)"
+
+port-openbsd-sync:
+	@[ -n "$(PORT_VERSION)" ] || { echo "Error: VERSION file empty or missing"; exit 1; }
+	@test -f contrib/openbsd/port/Makefile || { echo "Error: contrib/openbsd/port/Makefile not found"; exit 1; }
+	@sed -i.bak \
+	  -e 's#^DISTNAME =.*#DISTNAME =	groot_v$(PORT_VERSION)_openbsd_$${MACHINE_ARCH:S/aarch64/arm64/}#' \
+	  -e 's#^PKGNAME =.*#PKGNAME =	groot-$(PORT_VERSION)#' \
+	  -e 's#^MASTER_SITES =.*#MASTER_SITES =	https://github.com/hrodrig/groot/releases/download/v$(PORT_VERSION)/#' \
+	  -e 's#^DISTFILES =.*#DISTFILES =	groot_v$(PORT_VERSION)_openbsd_$${MACHINE_ARCH:S/aarch64/arm64/}.tar.gz#' \
+	  contrib/openbsd/port/Makefile
+	@rm -f contrib/openbsd/port/Makefile.bak
+	@echo "Updated contrib/openbsd/port/Makefile to $(PORT_VERSION)"
+
+dist-freebsd:
+	@set -e; \
+	ver_raw=$$(cat VERSION 2>/dev/null | tr -d '\n\r'); \
+	[ -n "$$ver_raw" ] || { echo "Error: VERSION file is required"; exit 1; }; \
+	ver=$${ver_raw#v}; \
+	echo "$$ver" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { echo "Error: VERSION must be semantic MAJOR.MINOR.PATCH (got: $$ver_raw)"; exit 1; }; \
+	echo "$(FREEBSD_ARCH)" | grep -qE '^(amd64|arm64)$$' || { echo "Error: FREEBSD_ARCH must be amd64 or arm64"; exit 1; }; \
+	arch="$(FREEBSD_ARCH)"; \
+	out="$(DIST)/groot_v$${ver}_freebsd_$$arch.tar.gz"; \
+	stage="/tmp/groot-dist-root-$$PPID"; \
+	tmpbin="$(DIST)/groot-freebsd-$$arch-$$PPID"; \
+	echo "Building groot for FreeBSD $$arch with VERSION=v$$ver..."; \
+	mkdir -p "$(DIST)"; \
+	GOOS=freebsd GOARCH="$$arch" go build -trimpath -ldflags "$(LDFLAGS)" -o "$$tmpbin" ./cmd/groot; \
+	rm -rf "$$stage"; \
+	mkdir -p "$$stage/share/doc/groot" "$$stage/share/examples/groot"; \
+	cp "$$tmpbin" "$$stage/groot"; \
+	rm -f "$$tmpbin"; \
+	cp LICENSE "$$stage/share/doc/groot/LICENSE"; \
+	cp configs/groot.yml.sample "$$stage/share/examples/groot/groot.yml.sample"; \
+	tar -C "$$stage" -czf "$$out" .; \
+	rm -rf "$$stage"; \
+	echo "Wrote $$out"
+
+dist-openbsd:
+	@set -e; \
+	ver_raw=$$(cat VERSION 2>/dev/null | tr -d '\n\r'); \
+	[ -n "$$ver_raw" ] || { echo "Error: VERSION file is required"; exit 1; }; \
+	ver=$${ver_raw#v}; \
+	echo "$$ver" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { echo "Error: VERSION must be semantic MAJOR.MINOR.PATCH (got: $$ver_raw)"; exit 1; }; \
+	echo "$(OPENBSD_ARCH)" | grep -qE '^(amd64|arm64)$$' || { echo "Error: OPENBSD_ARCH must be amd64 or arm64"; exit 1; }; \
+	arch="$(OPENBSD_ARCH)"; \
+	out="$(DIST)/groot_v$${ver}_openbsd_$$arch.tar.gz"; \
+	stage="/tmp/groot-openbsd-dist-root-$$PPID"; \
+	tmpbin="$(DIST)/groot-openbsd-$$arch-$$PPID"; \
+	echo "Building groot for OpenBSD $$arch with VERSION=v$$ver..."; \
+	mkdir -p "$(DIST)"; \
+	GOOS=openbsd GOARCH="$$arch" go build -trimpath -ldflags "$(LDFLAGS)" -o "$$tmpbin" ./cmd/groot; \
+	rm -rf "$$stage"; \
+	mkdir -p "$$stage/share/doc/groot" "$$stage/share/examples/groot"; \
+	cp "$$tmpbin" "$$stage/groot"; \
+	rm -f "$$tmpbin"; \
+	cp LICENSE "$$stage/share/doc/groot/LICENSE"; \
+	cp configs/groot.yml.sample "$$stage/share/examples/groot/groot.yml.sample"; \
+	tar -C "$$stage" -czf "$$out" .; \
+	rm -rf "$$stage"; \
+	echo "Wrote $$out"

@@ -1,66 +1,41 @@
-# FreeBSD port for `groot`
+# FreeBSD port for groot
 
-This directory holds the **FreeBSD ports collection** makefile + metadata
-for `groot`. It is **not** in the upstream FreeBSD ports tree yet (would
-need a maintainer review on `freebsd-ports@`); the file layout is the
-same as if it were, so the port can be dropped into `/usr/ports/sysutils/`
-verbatim and built today.
+Port files for building and installing **groot** (CLI only; no rc.d or daemon).
 
-## File layout
+## Install from port
 
-| File | Purpose |
-|------|---------|
-| `Makefile` | Go-module port (FreeBSD 14.x with `lang/go` 1.26.4). Mirrors nfpms layout: binary to `/usr/local/bin/groot`, sample to `/usr/local/etc/groot/groot.yml.sample`, docs to `/usr/local/share/doc/groot/`. |
-| `distinfo` | Placeholder SHA256 hashes; CI's `release-ports-freebsd` job regenerates with `makesum` against the actual source tarball. |
-| `pkg-descr` | Short description for `pkg-descr(5)`. |
-| `pkg-plist` | File list for `pkg-plist(5)`; uses `@sample` for `groot.yml.sample` so installs don't clobber operator edits. |
-| `files/groot.in` | `rc.d` script (`service groot onestart`). No-op until 0.7.x adds watch mode; documented as such. |
-| `README.md` | This file. |
+When the port is in the official tree:
 
-## Building locally on FreeBSD 14
-
-```sh
-# As root, with the FreeBSD ports tree installed
-git clone https://github.com/hrodrig/groot
-mkdir -p /usr/ports/sysutils/groot
-cp -r groot/contrib/freebsd/* /usr/ports/sysutils/groot/
+```bash
 cd /usr/ports/sysutils/groot
-
-# Regenerate distinfo against the real source tarball
-make distinfo
-
-# Build + install
-make package
-pkg add ./Work/pkg/groot-0.6.0.pkg
-groot --version
+make install
 ```
 
-## Using the rc.d script
+Local port (copy `Makefile`, `pkg-plist`, `pkg-descr` from this directory):
 
-```sh
-sysrc groot_enable=YES
-sysrc groot_config=/usr/local/etc/groot/groot.yml
-cp /usr/local/etc/groot/groot.yml.sample /usr/local/etc/groot/groot.yml
-# Edit the file with your kubeconfig and notify settings
-
-# Today: returns exit 0 with a no-op notice. Use cron(8) to actually
-# run scheduled collects until 0.7.x adds the long-running watch mode.
-service groot onestart
+```bash
+cd ~/ports/sysutils/groot
+make install
 ```
 
-## CI integration
+After changing port files: `make deinstall && make clean && make install`.
 
-The `release-ports-freebsd` job in `.github/workflows/release.yml` runs
-on `tags: ['v*']` and uses `vmactions/freebsd-vm@v1` to:
+## Test with a local distfile
 
-1. Spin up a FreeBSD 14 VM (QEMU-backed)
-2. Install `lang/go` 1.26.4 and the ports tree skeleton
-3. Drop `contrib/freebsd/` into `/usr/ports/sysutils/groot`
-4. `make distinfo` to refresh SHA256 hashes
-5. `make package` to produce `Work/pkg/groot-0.6.0.pkg`
-6. If `distinfo` changed, push a follow-up commit
-7. Upload the `.pkg` to the GitHub Release assets
+1. From the **groot** repo root, sync **PORTVERSION** with **`VERSION`**:
 
-The maintainer-side override for when this lives in the official FreeBSD
-ports tree: drop the `DISTVERSIONPREFIX` / `USE_GITHUB` block and rely on
-the tree's `ports/`, `distfiles/`, and `INDEX`.
+   ```bash
+   make port-freebsd-sync
+   ```
+
+2. Build the tarball expected by **DISTFILES** (default arch **amd64**; override with **`FREEBSD_ARCH=arm64`**):
+
+   ```bash
+   make dist-freebsd
+   ```
+
+   Output: `dist/groot_v<version>_freebsd_<arch>.tar.gz`.
+
+3. Copy into **DISTDIR** or use **`MASTER_SITES=file:///.../`** as in the [FreeBSD Porter's Handbook](https://docs.freebsd.org/en/books/porters-handbook/).
+
+The tarball contains: `groot`, `share/doc/groot/LICENSE`, `share/examples/groot/groot.yml.sample`.

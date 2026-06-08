@@ -18,6 +18,7 @@ type Config struct {
 	FilePrefix string        `mapstructure:"file_prefix"`
 	Collection CollectionCfg `mapstructure:"collection"`
 	Notify     NotifyCfg     `mapstructure:"notify"`
+	Upload     UploadCfg     `mapstructure:"upload"`
 }
 
 type CollectionCfg struct {
@@ -109,6 +110,42 @@ type NotifyRetryCfg struct {
 	MaxBackoff     time.Duration `mapstructure:"max_backoff"`
 }
 
+// UploadCfg controls optional post-collect archive upload to object storage.
+type UploadCfg struct {
+	Enabled         bool          `mapstructure:"enabled"`
+	ContinueOnError bool          `mapstructure:"continue_on_error"`
+	Timeout         time.Duration `mapstructure:"timeout"`
+	S3              S3UploadCfg   `mapstructure:"s3"`
+	GCS             GCSUploadCfg  `mapstructure:"gcs"`
+}
+
+// S3UploadCfg uploads the archive to S3 or an S3-compatible endpoint.
+type S3UploadCfg struct {
+	Enabled      bool              `mapstructure:"enabled"`
+	Bucket       string            `mapstructure:"bucket"`
+	Region       string            `mapstructure:"region"`
+	KeyPrefix    string            `mapstructure:"key_prefix"`
+	Endpoint     string            `mapstructure:"endpoint"`
+	StorageClass string            `mapstructure:"storage_class"`
+	ContentType  string            `mapstructure:"content_type"`
+	SSE          string            `mapstructure:"sse"`
+	SSEKMSKeyID  string            `mapstructure:"sse_kms_key_id"`
+	ACL          string            `mapstructure:"acl"`
+	Metadata     map[string]string `mapstructure:"metadata"`
+}
+
+// GCSUploadCfg uploads the archive to Google Cloud Storage.
+type GCSUploadCfg struct {
+	Enabled       bool              `mapstructure:"enabled"`
+	Bucket        string            `mapstructure:"bucket"`
+	KeyPrefix     string            `mapstructure:"key_prefix"`
+	ContentType   string            `mapstructure:"content_type"`
+	CacheControl  string            `mapstructure:"cache_control"`
+	KMSKey        string            `mapstructure:"kms_key"`
+	PredefinedACL string            `mapstructure:"predefined_acl"`
+	Metadata      map[string]string `mapstructure:"metadata"`
+}
+
 // PagerDutyCfg sends Events API v2 triggers (https://developer.pagerduty.com/docs/events-api-v2-overview).
 type PagerDutyCfg struct {
 	Enabled    bool   `mapstructure:"enabled"`
@@ -145,6 +182,14 @@ func Load(configFile string) (Config, error) {
 		return Config{}, fmt.Errorf("unmarshal config: %w", err)
 	}
 
+	if err := applyLoadedConfig(&cfg); err != nil {
+		return Config{}, err
+	}
+
+	return cfg, nil
+}
+
+func applyLoadedConfig(cfg *Config) error {
 	if envKubeconfig := os.Getenv("KUBECONFIG"); envKubeconfig != "" {
 		cfg.Kubeconfig = envKubeconfig
 	}
@@ -160,26 +205,27 @@ func Load(configFile string) (Config, error) {
 	} else {
 		cfg.Notify.Generic.JSONKey = strings.TrimSpace(cfg.Notify.Generic.JSONKey)
 	}
-	if err := normalizePagerDuty(&cfg); err != nil {
-		return Config{}, err
+	if err := normalizePagerDuty(cfg); err != nil {
+		return err
 	}
 	if err := ValidateExtraKubectl(cfg.Collection.ExtraKubectl); err != nil {
-		return Config{}, err
+		return err
 	}
 	since, err := NormalizePodLogsSince(cfg.Collection.PodLogsSince)
 	if err != nil {
-		return Config{}, err
+		return err
 	}
 	cfg.Collection.PodLogsSince = since
 	cfg.OutputDir = expandPath(cfg.OutputDir)
-	resolveNotificationSecrets(&cfg)
-	if err := validateNotificationConfig(cfg); err != nil {
-		return Config{}, err
+	resolveNotificationSecrets(cfg)
+	resolveUploadSecrets(cfg)
+	if err := validateNotificationConfig(*cfg); err != nil {
+		return err
 	}
-	normalizeNotifyRetry(&cfg)
-	normalizeOnFailure(&cfg)
-
-	return cfg, nil
+	normalizeNotifyRetry(cfg)
+	normalizeOnFailure(cfg)
+	normalizeUpload(cfg)
+	return validateUploadConfig(*cfg)
 }
 
 func normalizeNotifyRetry(cfg *Config) {
@@ -238,6 +284,11 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("notify.retry.initial_backoff", "1s")
 	v.SetDefault("notify.retry.max_backoff", "10s")
 	v.SetDefault("collection.redact_secrets", false)
+	v.SetDefault("upload.enabled", false)
+	v.SetDefault("upload.continue_on_error", true)
+	v.SetDefault("upload.timeout", "5m")
+	v.SetDefault("upload.s3.enabled", false)
+	v.SetDefault("upload.gcs.enabled", false)
 }
 
 // defaultEtcConfigPaths are tried after ./groot.yml and ~/.groot/groot.yml (first existing file wins).
@@ -496,4 +547,38 @@ func expandPath(value string) string {
 		}
 	}
 	return expanded
+}
+
+func normalizeUpload(cfg *Config) {
+	u := &cfg.Upload
+	if u.Timeout <= 0 {
+		u.Timeout = 5 * time.Minute
+	}
+}
+
+func resolveUploadSecrets(cfg *Config) {
+	u := &cfg.Upload
+	u.S3.Bucket = firstNonEmpty(u.S3.Bucket, os.Getenv("GROOT_UPLOAD_S3_BUCKET"))
+	u.S3.Region = firstNonEmpty(u.S3.Region, os.Getenv("GROOT_UPLOAD_S3_REGION"), os.Getenv("AWS_REGION"), os.Getenv("AWS_DEFAULT_REGION"))
+	u.S3.KeyPrefix = firstNonEmpty(u.S3.KeyPrefix, os.Getenv("GROOT_UPLOAD_S3_KEY_PREFIX"))
+	u.S3.Endpoint = firstNonEmpty(u.S3.Endpoint, os.Getenv("GROOT_UPLOAD_S3_ENDPOINT"))
+	u.GCS.Bucket = firstNonEmpty(u.GCS.Bucket, os.Getenv("GROOT_UPLOAD_GCS_BUCKET"))
+	u.GCS.KeyPrefix = firstNonEmpty(u.GCS.KeyPrefix, os.Getenv("GROOT_UPLOAD_GCS_KEY_PREFIX"))
+}
+
+func validateUploadConfig(cfg Config) error {
+	u := cfg.Upload
+	if !u.Enabled {
+		return nil
+	}
+	if !u.S3.Enabled && !u.GCS.Enabled {
+		return fmt.Errorf("upload.enabled=true requires upload.s3.enabled and/or upload.gcs.enabled")
+	}
+	if u.S3.Enabled && strings.TrimSpace(u.S3.Bucket) == "" {
+		return fmt.Errorf("upload.s3.enabled=true requires bucket or env GROOT_UPLOAD_S3_BUCKET")
+	}
+	if u.GCS.Enabled && strings.TrimSpace(u.GCS.Bucket) == "" {
+		return fmt.Errorf("upload.gcs.enabled=true requires bucket or env GROOT_UPLOAD_GCS_BUCKET")
+	}
+	return nil
 }

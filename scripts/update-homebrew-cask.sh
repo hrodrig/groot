@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # scripts/update-homebrew-cask.sh
 # ===============================
-# Render `contrib/homebrew/Casks/groot.rb.template` with VERSION + SHA256
-# placeholders and push the result to the hrodrig/homebrew-groot tap repo.
+# Render Casks/groot.rb in the hrodrig/homebrew-groot tap with VERSION + SHA256
+# placeholders and push the result.
 #
 # Required environment:
 #   VERSION   - bare semver, e.g. "0.6.0"
@@ -22,9 +22,6 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TEMPLATE="${REPO_ROOT}/contrib/homebrew/Casks/groot.rb.template"
-
 if [[ -z "${VERSION:-}" ]]; then
   echo "VERSION env var is required (e.g. 0.6.0)" >&2
   exit 2
@@ -35,15 +32,41 @@ if [[ -z "${SHA256:-}" ]]; then
   exit 2
 fi
 
-if [[ ! -f "${TEMPLATE}" ]]; then
-  echo "Template not found: ${TEMPLATE}" >&2
-  exit 2
-fi
-
 TAP_BRANCH="${TAP_BRANCH:-main}"
 DRY_RUN="${DRY_RUN:-0}"
+WORK=""
+TEMPLATE=""
 
-# Render via Python (more readable than sed/awk for multi-line substitutions).
+cleanup() {
+  if [[ -n "${WORK}" ]]; then
+    rm -rf "${WORK}"
+  fi
+}
+
+resolve_template() {
+  if [[ -n "${TAP_REPO:-}" ]]; then
+    TEMPLATE="${TAP_REPO}/Casks/groot.rb"
+    if [[ ! -f "${TEMPLATE}" ]]; then
+      echo "Cask not found in TAP_REPO: ${TEMPLATE}" >&2
+      exit 2
+    fi
+    return
+  fi
+
+  TAP_GIT="${TAP_GIT:-git@github.com:hrodrig/homebrew-groot.git}"
+  WORK="$(mktemp -d -t homebrew-groot.XXXXXX)"
+  trap cleanup EXIT
+  git clone --depth=1 --branch="${TAP_BRANCH}" "${TAP_GIT}" "${WORK}/tap"
+  TAP_REPO="${WORK}/tap"
+  TEMPLATE="${TAP_REPO}/Casks/groot.rb"
+  if [[ ! -f "${TEMPLATE}" ]]; then
+    echo "Cask not found after clone: ${TEMPLATE}" >&2
+    exit 2
+  fi
+}
+
+resolve_template
+
 export _RENDER_TEMPLATE="${TEMPLATE}"
 RENDERED="$(_RENDER_TEMPLATE="${TEMPLATE}" VERSION="${VERSION}" SHA256="${SHA256}" python3 - <<'PY'
 import os, sys, pathlib
@@ -81,12 +104,11 @@ if [[ "${DRY_RUN}" == "1" ]]; then
   exit 0
 fi
 
-if [[ -z "${TAP_REPO:-}" ]]; then
-  TAP_GIT="${TAP_GIT:-git@github.com:hrodrig/homebrew-groot.git}"
-  WORK="$(mktemp -d -t homebrew-groot.XXXXXX)"
-  trap 'rm -rf "${WORK}"' EXIT
-  git clone --depth=1 --branch="${TAP_BRANCH}" "${TAP_GIT}" "${WORK}/tap"
-  TAP_REPO="${WORK}/tap"
+if [[ -n "${WORK}" ]]; then
+  :
+elif [[ -z "${TAP_REPO:-}" ]]; then
+  echo "TAP_REPO is required after template resolution" >&2
+  exit 2
 else
   if [[ ! -d "${TAP_REPO}/.git" ]]; then
     echo "TAP_REPO=${TAP_REPO} is not a git working tree" >&2

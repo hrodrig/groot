@@ -2,7 +2,7 @@ GROOT is a read-only log and context collector for Kubernetes. It writes a
 timestamped tarball containing pod logs, events, resource manifests, node
 details, and optional notification fan-out.
 
-The package installs the static binary, the MIT license text, and a sample
-configuration under share/examples/groot/.
+This package installs the static binary, license text, and a sample config
+under share/examples/groot/.
 
 WWW: https://github.com/hrodrig/groot

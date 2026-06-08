@@ -5,12 +5,16 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestSampleYAML(t *testing.T) {
 	s := SampleYAML()
 	if !strings.Contains(s, "groot-capture") {
 		t.Fatalf("sample should mention file_prefix default: %q", s)
+	}
+	if !strings.Contains(s, "upload:") {
+		t.Fatalf("sample should document upload block: %q", s)
 	}
 	if !strings.Contains(s, "collection:") {
 		t.Fatal("sample should include collection block")
@@ -483,5 +487,84 @@ notify:
 	}
 	if cfg.Collection.PodLogsSince != "48h" {
 		t.Fatalf("pod_logs_since: got %q want 48h", cfg.Collection.PodLogsSince)
+	}
+}
+
+func TestLoad_uploadEnabledRequiresProvider(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "upload.yaml")
+	if err := os.WriteFile(path, []byte(`
+upload:
+  enabled: true
+notify:
+  slack: { enabled: false }
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := Load(path)
+	if err == nil || !strings.Contains(err.Error(), "upload.s3.enabled") {
+		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestLoad_uploadS3EnvBucket(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "upload-s3.yaml")
+	if err := os.WriteFile(path, []byte(`
+upload:
+  enabled: true
+  s3:
+    enabled: true
+notify:
+  slack: { enabled: false }
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GROOT_UPLOAD_S3_BUCKET", "my-bucket")
+	t.Setenv("GROOT_UPLOAD_S3_REGION", "eu-west-1")
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Upload.S3.Bucket != "my-bucket" || cfg.Upload.S3.Region != "eu-west-1" {
+		t.Fatalf("%+v", cfg.Upload.S3)
+	}
+}
+
+func TestValidateUploadConfig_s3BucketRequired(t *testing.T) {
+	err := validateUploadConfig(Config{Upload: UploadCfg{Enabled: true, S3: S3UploadCfg{Enabled: true}}})
+	if err == nil || !strings.Contains(err.Error(), "bucket") {
+		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestValidateUploadConfig_gcsBucketRequired(t *testing.T) {
+	err := validateUploadConfig(Config{Upload: UploadCfg{Enabled: true, GCS: GCSUploadCfg{Enabled: true}}})
+	if err == nil || !strings.Contains(err.Error(), "bucket") {
+		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestNormalizeUpload_defaultTimeout(t *testing.T) {
+	cfg := Config{}
+	normalizeUpload(&cfg)
+	if cfg.Upload.Timeout != 5*time.Minute {
+		t.Fatalf("timeout=%s", cfg.Upload.Timeout)
+	}
+}
+
+func TestValidateUploadConfig_disabledOK(t *testing.T) {
+	if err := validateUploadConfig(Config{}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestResolveUploadSecrets_env(t *testing.T) {
+	cfg := Config{Upload: UploadCfg{GCS: GCSUploadCfg{Enabled: true}}}
+	t.Setenv("GROOT_UPLOAD_GCS_BUCKET", "gcs-bucket")
+	t.Setenv("GROOT_UPLOAD_GCS_KEY_PREFIX", "pfx")
+	resolveUploadSecrets(&cfg)
+	if cfg.Upload.GCS.Bucket != "gcs-bucket" || cfg.Upload.GCS.KeyPrefix != "pfx" {
+		t.Fatalf("%+v", cfg.Upload.GCS)
 	}
 }

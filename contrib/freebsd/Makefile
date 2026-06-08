@@ -1,66 +1,29 @@
-# New ports collection makefile for: groot
-# Date created: 2026-06-06
-# Whom:        hrodrig <hrodrig@example.invalid>
-#
-# $FreeBSD$
-#
-# This is a Go-module port (FreeBSD ports collection "go-module" category).
-# It builds `groot` from upstream source and installs the binary plus the
-# sample config and docs.
-#
-# Tested on FreeBSD 14.x with go 1.26.4 (lang/go). The port follows the
-# patterns established by the FreeBSD Go team for module-based ports.
-# See Mk/bsd.port.mk and the ports collection's go-module examples.
-
 PORTNAME=	groot
 PORTVERSION=	0.6.0
 DISTVERSIONPREFIX=	v
 CATEGORIES=	sysutils
+# Local test before release: copy the tarball into DISTDIR (see `make -V DISTDIR`
+# from this port directory) using the same name as DISTFILES, or run e.g.
+#   make fetch MASTER_SITES=file:///absolute/path/to/dir/
+# See README.md "Test with a local distfile".
+MASTER_SITES=	https://github.com/hrodrig/groot/releases/download/v${PORTVERSION}/
+DISTFILES=	groot_v${PORTVERSION}_freebsd_${ARCH:S/aarch64/arm64/}.tar.gz
+EXTRACT_SUFX=	.tar.gz
 
-MAINTAINER=	hrodrig@users.noreply.github.com
+MAINTAINER=	hrodrig@usb.ve
 COMMENT=	Read-only log and context collector for Kubernetes
 WWW=		https://github.com/hrodrig/groot
-
 LICENSE=	MIT
-LICENSE_FILE=	${WRKSRC}/LICENSE
 
-USES=		go:modules,1.26
-USE_GITHUB=	yes
-GH_ACCOUNT=	hrodrig
-GH_PROJECT=	groot
-GH_TAGNAME=	${DISTVERSIONPREFIX}${PORTVERSION}
+NO_BUILD=	yes
+ONLY_FOR_ARCHS=	amd64 aarch64
 
-# Build metadata injected the same way as GoReleaser / `make build`
-GO_MODULE=	github.com/hrodrig/groot
-GO_BUILDFLAGS=	-ldflags "-s -w \
-			-X main.version=${PORTVERSION} \
-			-X main.commit=${GH_TAGNAME} \
-			-X main.branch=main \
-			-X main.buildDate=$$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-GO_PKGNAME=	cmd/groot
-GO_TARGET=	./cmd/groot
-
-# Where the sample config and docs land; mirrors nfpms layout
-GROOT_ETCDIR=	${PREFIX}/etc/groot
-GROOT_DOCDIR=	${DOCSDIR}
-
-PLIST_FILES=	bin/groot \
-		etc/groot/groot.yml.sample \
-		share/licenses/${PORTNAME}-${PORTVERSION}/LICENSE \
-		share/doc/${PORTNAME}/README.md
-PORTDOCS=	README.md CHANGELOG.md
-
-# rc.d template is installed via the FILESDIR; see files/groot.in below.
-USE_RC_SUBR=	groot
-
-post-install:
-	@${MKDIR} ${STAGEDIR}${GROOT_ETCDIR}
-	${INSTALL_DATA} ${WRKSRC}/configs/groot.yml.sample \
-		${STAGEDIR}${GROOT_ETCDIR}/groot.yml.sample
-	@${MKDIR} ${STAGEDIR}${GROOT_DOCDIR}
-	${INSTALL_DATA} ${WRKSRC}/README.md ${STAGEDIR}${GROOT_DOCDIR}/README.md
-	@${MKDIR} ${STAGEDIR}${PREFIX}/share/licenses/${PORTNAME}-${PORTVERSION}
-	${INSTALL_DATA} ${WRKSRC}/LICENSE \
-		${STAGEDIR}${PREFIX}/share/licenses/${PORTNAME}-${PORTVERSION}/LICENSE
+do-install:
+	${INSTALL_PROGRAM} ${WRKDIR}/groot ${STAGEDIR}${PREFIX}/bin/groot
+	${MKDIR} ${STAGEDIR}${PREFIX}/share/doc/groot
+	${INSTALL_DATA} ${WRKDIR}/share/doc/groot/LICENSE ${STAGEDIR}${PREFIX}/share/doc/groot/
+	${MKDIR} ${STAGEDIR}${PREFIX}/share/examples/groot
+	${INSTALL_DATA} ${WRKDIR}/share/examples/groot/groot.yml.sample \
+		${STAGEDIR}${PREFIX}/share/examples/groot/
 
 .include <bsd.port.mk>

@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.5.0-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.6.0-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -53,6 +53,7 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - [Console output modes](#console-output-modes)
 - [Typical collected data](#typical-collected-data)
 - [Notifications](#notifications)
+- [Upload (S3 / GCS)](#upload-s3--gcs)
 - [In-cluster deploy (Helm / CronJob)](#in-cluster-deploy-helm--cronjob)
 - [Secret redaction](#secret-redaction)
 - [Rootless container](#rootless-container)
@@ -92,19 +93,18 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 
 Pre-built **`.deb`**, **`.rpm`**, **`.tar.gz`** (and **`.zip`** on Windows) are on **[GitHub Releases](https://github.com/hrodrig/groot/releases)** and **[latest release](https://github.com/hrodrig/groot/releases/latest)**. The **release** badge at the top of this README shows the current tag at a glance.
 
-**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. GoReleaser puts the **semver without `v`** in filenames (for example **`groot_0.5.0_amd64.deb`**), while the download URL path uses the **git tag with `v`** (`…/download/v0.5.0/…`). Do not use `groot_${TAG}_…` with `TAG=v0.5.0` in the filename—that causes **404**. Options: **pick names from the release page**, use the **snippet below**, or use the **badge**.
+**Why not a single `latest` URL for every file?** GitHub’s `…/releases/latest/download/<file>` only works if the **asset filename is identical** on every release. From **v0.6.0** onward, basenames embed the **git tag** (for example **`groot_v0.6.0_amd64.deb`**), matching the URL path (`…/download/v0.6.0/groot_v0.6.0_amd64.deb`). Older releases used **`groot_0.5.0_*`** (no `v` in the basename). Options: **pick names from the release page**, use the **snippet below**, or use the **badge**.
 
 ### Install latest `.deb` (Debian / Ubuntu, `amd64`)
 
 ```bash
-# Latest published release tag (python3 or jq). Asset basename has NO "v" — see VER below.
+# Latest published release tag (python3 or jq). Basename uses the tag (v0.6.0+).
 TAG="$(curl -fsSL https://api.github.com/repos/hrodrig/groot/releases/latest | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')"
 # Alternative: TAG="$(curl -fsSL https://api.github.com/repos/hrodrig/groot/releases/latest | jq -r .tag_name)"
 
 [ -n "$TAG" ] || { echo "Could not resolve tag (empty). Install python3 or jq, or set TAG manually from the Releases page." >&2; exit 1; }
 
-VER="${TAG#v}"   # e.g. v0.5.0 -> 0.5.0 (matches GoReleaser .deb filename)
-DEB="groot_${VER}_amd64.deb"
+DEB="groot_${TAG}_amd64.deb"
 URL="https://github.com/hrodrig/groot/releases/download/${TAG}/${DEB}"
 TMP="/tmp/${DEB}"
 
@@ -130,15 +130,17 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
-| Format | Example (tag **`v0.5.0`** in the URL path; artifact basename uses **`0.5.0`** without `v`) |
+| Format | Example (tag **`v0.6.0`** in URL path and basename since **v0.6.0**) |
 |--------|------------------------------------------------------------------|
-| **`.deb`** | `curl -fsSL -o /tmp/groot_0.5.0_amd64.deb https://github.com/hrodrig/groot/releases/download/v0.5.0/groot_0.5.0_amd64.deb` then `sudo apt install /tmp/groot_0.5.0_amd64.deb` (use `/tmp` so `_apt` can read the file if `$HOME` is `700`) |
-| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.5.0/groot_0.5.0_amd64.rpm` then `sudo rpm -Uvh groot_0.5.0_amd64.rpm` or `sudo dnf install ./groot_0.5.0_amd64.rpm` |
-| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.5.0/groot_0.5.0_linux_amd64.tar.gz` then `tar xzf groot_0.5.0_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
+| **`.deb`** | `curl -fsSL -o /tmp/groot_v0.6.0_amd64.deb https://github.com/hrodrig/groot/releases/download/v0.6.0/groot_v0.6.0_amd64.deb` then `sudo apt install /tmp/groot_v0.6.0_amd64.deb` (use `/tmp` so `_apt` can read the file if `$HOME` is `700`) |
+| **`.rpm`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.6.0/groot_v0.6.0_amd64.rpm` then `sudo rpm -Uvh groot_v0.6.0_amd64.rpm` or `sudo dnf install ./groot_v0.6.0_amd64.rpm` |
+| **`.tar.gz`** | `curl -fsSLO https://github.com/hrodrig/groot/releases/download/v0.6.0/groot_v0.6.0_linux_amd64.tar.gz` then `tar xzf groot_v0.6.0_linux_amd64.tar.gz` and run `./groot` inside the extracted directory |
 
 **Update:** download a newer release and run the same install command again (`rpm -Uvh`, `apt install` over the `.deb`, or replace the tarball tree).
 
-**Basename change in 0.6.x:** release artifacts switch from `groot_0.5.0_*` to `groot_v0.6.0_*` (v-prefixed tag in the basename, matching the URL path and the pgwd/kzero family convention). Any script that pinned the old `groot_${VER}_*` form needs the `v` added. The Homebrew cask (above) handles the rename automatically.
+**Basename change in 0.6.x:** release artifacts switch from `groot_0.5.0_*` to `groot_v0.6.0_*` (v-prefixed tag in the basename, matching pgwd/kzero). Scripts that used `VER="${TAG#v}"` and `groot_${VER}_*` must use `groot_${TAG}_*` instead.
+
+**Supply chain (v0.6.0+):** each release attaches **SPDX** and **CycloneDX** SBOMs, **Cosign** signatures for `checksums.txt` and GHCR images. Verify checksums with `cosign verify-blob` (see release assets); verify images with `cosign verify --certificate-identity-regexp=… ghcr.io/hrodrig/groot:v0.6.0`.
 
 **Windows:** use the **`.zip`** asset for your arch, unpack, and run `groot.exe` on a host that can reach the Kubernetes API with a valid **kubeconfig** (or in-cluster credentials).
 
@@ -175,7 +177,7 @@ brew upgrade --cask hrodrig/groot/groot
 
 The cask installs the **`groot`** binary to `$(brew --prefix)/bin/groot` and adds it to your `PATH` (already on it in default Homebrew setups). A **sample config** is not bundled with the cask; generate it with `groot --print-sample-config > ~/.config/groot/groot.yml` and edit.
 
-> The tap repo lives at **[github.com/hrodrig/homebrew-groot](https://github.com/hrodrig/homebrew-groot)**. The cask file is **auto-generated** by GoReleaser on every tag from the `homebrew_casks:` stanza in `.goreleaser.yaml`, with the human-readable source of truth at `contrib/homebrew/Casks/groot.rb.template` in the upstream repo (see [`contrib/homebrew/README.md`](contrib/homebrew/README.md)). On the first release where the tap repo does not yet exist, create it empty on GitHub and add a CI secret **`HOMEBREW_TAP_TOKEN`** (PAT with `repo` scope on the tap) — or set `--skip=homebrew_casks` in the release job and update the cask by hand with `scripts/update-homebrew-cask.sh`.
+> The tap repo lives at **[github.com/hrodrig/homebrew-groot](https://github.com/hrodrig/homebrew-groot)** (`Casks/groot.rb`). GoReleaser updates it on every tag via the `homebrew_casks:` stanza in `.goreleaser.yaml`. Add CI secret **`HOMEBREW_TAP_TOKEN`** (PAT with `repo` scope on the tap) — or set `--skip=homebrew_casks` in the release job and run `scripts/update-homebrew-cask.sh` against a local clone of the tap.
 
 ### Install with Go
 
@@ -185,7 +187,7 @@ From any machine with Go **1.26+** (installs to `$(go env GOPATH)/bin`; ensure t
 go install github.com/hrodrig/groot/cmd/groot@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.5.0`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.6.0`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
 
 Useful runtime flags (global or with `collect`):
 
@@ -194,6 +196,7 @@ Useful runtime flags (global or with `collect`):
 - `--verbose` shows each executed command as `CMD`, plus `OK`/`ERR` results
 - `--quiet` suppresses normal **console** output (INFO/WARN/CMD/OK) and only prints errors; **notify integrations still run** (Slack, Discord, Teams, PagerDuty, Telegram, generic) unless you disable them in config or use `--no-notify`
 - `--no-notify` skips all notifications after a successful collect (useful for cron when you only want the archive). Same effect as env `GROOT_NO_NOTIFY=1` (or `true` / `yes`, case-insensitive)
+- `--no-upload` skips post-collect S3/GCS upload when `upload.enabled` is true. Same effect as env `GROOT_NO_UPLOAD=1`
 - `--no-color` disables ANSI colors
 - `--message "label text"` appends a sanitized suffix to archive and capture-related output names
 - `--kubeconfig /path/to/config` overrides kubeconfig from file/env
@@ -410,7 +413,7 @@ notify:
 
 #### `collection`
 
-Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.tsv`** (fourth column **`pod_log_file`** when Groot collects that pod’s log). After all jobs finish, **`extras/all-pods-rca.tsv`** merges that placement with **cluster-wide pod metrics** from **metrics.k8s.io** (when **`include_pod_metrics`** is on — the same snapshot **`top pods -A`** would show) so you get **namespace, pod, node, cpu_cores, memory_bytes, pod_log_file** in one table — similar to emergency **kel** `all-*-pods-nodes.txt`, but **cluster-wide** and aligned with Groot’s log paths.
+Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.tsv`** (fourth column **`pod_log_file`** when Groot collects that pod’s log). After all jobs finish, **`extras/all-pods-rca.tsv`** merges that placement with **cluster-wide pod metrics** from **metrics.k8s.io** (when **`include_pod_metrics`** is on — the same snapshot **`top pods -A`** would show) so you get **namespace, pod, node, cpu_cores, memory_bytes, pod_log_file** in one table — **cluster-wide** and aligned with Groot’s log paths for RCA handoff.
 
 | Key | What it does |
 |-----|----------------|
@@ -539,7 +542,7 @@ Directory layout:
 - pod log files: `<pod>__<node>.log` (and `.previous.log` when enabled), same pattern for control-plane pods under `kube-system/`
 - after archive creation, the timestamp directory is automatically removed
 
-Inside the `.tar.gz`, every path is prefixed with the capture folder name (`<session>/…`, for example `20260502-174207/kube-system/…` or `20260503-081049-since-12h/kube-system/…`). Extracting into a shared directory (for example `~/tmp/groot-out`) keeps each run under its own subdirectory instead of mixing `kube-system/`, `cloudbridge/`, etc. at the extraction root. Archives produced by older Groot versions may still have a flat layout at the tar root.
+Inside the `.tar.gz`, every path is prefixed with the capture folder name (`<session>/…`, for example `20260502-174207/kube-system/…` or `20260503-081049-since-12h/kube-system/…`). Extracting into a shared directory (for example `~/tmp/groot-out`) keeps each run under its own subdirectory instead of mixing `kube-system/`, `production/`, etc. at the extraction root. Archives produced by older Groot versions may still have a flat layout at the tar root.
 
 [↑ Back to top](#readme-top)
 
@@ -698,6 +701,27 @@ HTTP clients retry transient **5xx** and network errors only; **4xx** fails imme
 
 [↑ Back to top](#readme-top)
 
+## Upload (S3 / GCS)
+
+After a successful collect, optionally upload the **`.tar.gz`** to object storage. Credentials come from the standard **AWS** / **Google** SDK env vars (not from long-lived keys in YAML).
+
+```yaml
+upload:
+  enabled: true
+  continue_on_error: true
+  s3:
+    enabled: true
+    bucket: my-archives
+    region: us-east-1
+    key_prefix: groot/prod
+```
+
+Env overrides: `GROOT_UPLOAD_S3_BUCKET`, `GROOT_UPLOAD_S3_REGION`, `GROOT_UPLOAD_S3_KEY_PREFIX`, `GROOT_UPLOAD_S3_ENDPOINT` (S3-compatible), `GROOT_UPLOAD_GCS_BUCKET`, `GROOT_UPLOAD_GCS_KEY_PREFIX`. Upload runs **after** notify; failures are logged but **do not fail** the collect. Skip with **`--no-upload`** or **`GROOT_NO_UPLOAD=1`**.
+
+Minimum IAM: S3 `s3:PutObject` on the bucket/prefix; GCS `roles/storage.objectCreator` (or tighter custom role).
+
+[↑ Back to top](#readme-top)
+
 ## In-cluster deploy (Helm / CronJob)
 
 Run **`groot collect`** on a schedule inside the cluster. Image: **`ghcr.io/hrodrig/groot`** (see [Releases](https://github.com/hrodrig/groot/releases)).
@@ -707,7 +731,7 @@ Run **`groot collect`** on a schedule inside the cluster. Image: **`ghcr.io/hrod
 ```bash
 helm upgrade --install groot ./deploy/helm/groot \
   --namespace groot --create-namespace \
-  --set image.tag=0.5.0 \
+  --set image.tag=0.6.0 \
   --set schedule="0 */6 * * *"
 ```
 

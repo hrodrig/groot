@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-06
+
+### Added
+
+- **Homebrew cask tap (`0.6.x #25`)**: `homebrew_casks` in GoReleaser; release basenames `groot_vX.Y.Z_*` (`{{ .Tag }}`); cask in [homebrew-groot](https://github.com/hrodrig/homebrew-groot) + `scripts/update-homebrew-cask.sh`; README install block.
+- **SBOM (`0.6.x #26`)**: SPDX-JSON (archives) + CycloneDX-JSON (binaries) via GoReleaser `sboms:`.
+- **Cosign signing (`0.6.x #27`)**: keyless `signs` for `checksums.txt` + `docker_signs` for GHCR images; `cosign-installer` and `id-token: write` in release workflow.
+- **Post-collect upload (`0.6.x #28`)**: `upload:` config (S3 + GCS), `pkg/uploader/`, `--no-upload` / `GROOT_NO_UPLOAD`; runs after notify; upload errors do not fail collect.
+- **BSD ports (`0.6.x #29`)**: `contrib/freebsd/` + `contrib/openbsd/port/` (kzero/pgwd repackage pattern); FreeBSD/OpenBSD release tarballs via GoReleaser; `make port-*-sync` + `make dist-*`.
+- **`docs/plan-0.6.0.md`**: implementation plan for **v0.6.0** (roadmap **0.6.x** items #25–#29).
+
 ### Changed
 
-- **Docs hygiene** post-**v0.5.0**: empty stale `[Unreleased]` bullets; `plan-0.5.0.md` marked shipped; ROADMAP strategic direction reflects **0.5.x** notify/deploy and **0.6.x** focus.
+- **Release artifact basenames** break scripts that assumed `groot_0.5.0_*`; new form is `groot_v0.6.0_*` (README basename note).
+- **`HOMEBREW_TAP_TOKEN`** passed to GoReleaser in `release.yml`.
+- **Docs hygiene** post-**v0.5.0**: positioning copy and ROADMAP refresh (also noted under **[0.5.0]**).
 
 ## [0.5.0] - 2026-06-06
 

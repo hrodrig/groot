@@ -9,7 +9,7 @@ User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sam
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-06 (**0.5.x** closed in **v0.5.0**; focus **0.6.x**)
+**Last reviewed:** 2026-06-06 (**0.6.x** closed in **v0.6.0**; focus **1.0.0**)
 
 ### Versioning note
 
@@ -19,16 +19,16 @@ Public releases start at **v0.1.3** (early CLI and packaging). Section headings 
 
 GROOT is a **read-only log and context collector**: one **`groot collect`** produces a **timestamped `.tar.gz`** for incident response and RCA. The runtime path is **client-go** end-to-end (no `kubectl` binary). Configuration is **YAML + env**; optional **notify** fan-out fires after a **successful** collect and, when configured, on **abort** or **partial job failure** (**0.5.x #19**).
 
-**Target architecture:** deepen **collector fidelity** (more resources, clearer archive layout) while keeping the **single-command** UX. **In-cluster scheduling** is available via Helm/CronJob (**0.5.x #22**). **Notifications** cover webhooks (with templates and HMAC), email, retry, and failure alerts (**0.5.x #19–#24**). **Next band (0.6.x):** supply chain and wider distribution—**Homebrew** cask, SBOM, Cosign, optional object-store upload—without turning GROOT into a long-running controller.
+**Target architecture:** deepen **collector fidelity** (more resources, clearer archive layout) while keeping the **single-command** UX. **In-cluster scheduling** via Helm/CronJob (**0.5.x #22**). **Notifications** and optional **S3/GCS upload** (**0.5.x #19–#24**, **0.6.x #28**). **Distribution** spans Linux packages, container, **Homebrew** cask, BSD ports, SBOM, and Cosign (**0.6.x #25–#29**). **Next band (1.0.0):** stable config contract, multi-cluster, inspect/validate commands.
 
 **Honest gaps today:**
 
 - **`k8srunner`** `extra_kubectl` is intentionally narrow (`get`/`describe`/`top` subsets; no `explain`/`wait`).
-- **Release artifact basenames** use `groot_0.4.1_*` (GoReleaser `{{ .Version }}`); **pgwd** / **kzero** use `*_v0.x.y_*` (`{{ .Tag }}`). Align before **0.6.x #25** so Homebrew cask URLs match the family convention.
-- **No post-collect object-store upload** (S3/GCS) — credentials via env only in **0.6.x #28**.
-- **No Homebrew cask tap** yet (**0.6.x #25**).
+- **Container image SBOM** not attached (docker driver limit; archive SBOM covers dependencies — **0.7.x** follow-up).
+- **No `config_version`** or formal migration path (**1.0.0 #30**).
+- **No second command** (`validate` / `inspect`) (**1.0.0 #31**).
 
-**Completed bands:** **0.1.x–0.2.x** (initial CLI, packaging, notifications, container). **0.3.x** (client-go collector, RCA tables, kind E2E harness, security hardening through **v0.3.2**). **0.4.x** (archive manifest, `file_prefix` naming, `--list-jobs`, broader `extra_kubectl`, Job/CronJob targets, kind E2E in CI) — see [plan-0.4.0.md](plan-0.4.0.md). **0.5.x** (notify on failure, rich webhooks, email, retry, secret redaction, in-cluster Helm/CronJob) — see [plan-0.5.0.md](plan-0.5.0.md).
+**Completed bands:** **0.1.x–0.2.x** (initial CLI, packaging, notifications, container). **0.3.x** (client-go collector, RCA tables, kind E2E harness, security hardening through **v0.3.2**). **0.4.x** (archive manifest, `file_prefix` naming, `--list-jobs`, broader `extra_kubectl`, Job/CronJob targets, kind E2E in CI) — see [plan-0.4.0.md](plan-0.4.0.md). **0.5.x** (notify on failure, rich webhooks, email, retry, secret redaction, in-cluster Helm/CronJob) — see [plan-0.5.0.md](plan-0.5.0.md). **0.6.x** (Homebrew cask, SBOM, Cosign, S3/GCS upload, BSD ports) — see [plan-0.6.0.md](plan-0.6.0.md).
 
 **Current focus (planned work):**
 
@@ -37,7 +37,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.3.x** | **Closed** (last item **#11** security patch in **v0.3.2**) |
 | **0.4.x** | **Closed** in **v0.4.0** (items **#12–#18**); see [plan-0.4.0.md](plan-0.4.0.md) |
 | **0.5.x** | **Closed** in **v0.5.0** (items **#19–#24**); see [plan-0.5.0.md](plan-0.5.0.md) |
-| **0.6.x** | **Homebrew**, SBOM/Cosign, optional object-store upload |
+| **0.6.x** | **Closed** in **v0.6.0** (items **#25–#29**); see [plan-0.6.0.md](plan-0.6.0.md) |
 | **1.0.0** | Config schema stability, multi-cluster / inspect commands, K8s version matrix in CI |
 
 ---
@@ -52,6 +52,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.4.0** | **Archive manifest** `extras/manifest.json` with version, cluster, jobs, paths. **`file_prefix`** now drives capture dir and archive basename. **`groot collect --list-jobs`** prints planned jobs without writing output. **`extra_kubectl` `get`/`describe`** supports `configmap`/`cm`, `pvc`, `service`/`svc`, `ingress`/`ing`, `deployment`/`rs`/`sts`/`ds` and aliases. **`collection.targets`** accepts `jobs` / `cronjobs` lists matched by `job-name` and standard labels. **Kind E2E in CI** (`make test-e2e-kind`) running with `continue-on-error: true`. Docs hygiene: `pkg/config/sample.go` and `configs/groot.yml.sample` in sync, references to `kubectl` removed. |
 | **0.4.1** | **`Dockerfile`** builder **Go 1.26.4** (Security Grype image build); README download examples for **v0.4.1**. |
 | **0.5.0** | **Notify on failure** (`notify.on_failure`: abort + partial-failure threshold). **Rich generic webhooks** (`extra_fields`, `body_template`, HMAC). **Email/SMTP** channel. **HTTP notify retry/backoff**. **Optional log redaction** (`collection.redact_secrets`). **In-cluster deploy**: Helm chart (`deploy/helm/groot/`) and flat CronJob manifests (`deploy/k8s/`). |
+| **0.6.0** | **Homebrew cask** tap + `groot_vX.Y.Z_*` release basenames. **SBOM** (SPDX + CycloneDX). **Cosign** keyless signing (checksums + images). **Post-collect S3/GCS upload**. **FreeBSD + OpenBSD** ports with release CI. |
 
 ---
 
@@ -118,11 +119,11 @@ Make GROOT easier to run on a schedule inside the cluster and more honest when c
 
 | # | Item | Status |
 |---|------|--------|
-| 25 | **Homebrew cask tap** ([homebrew-groot](https://github.com/hrodrig/homebrew-groot)): `homebrew_casks` in GoReleaser (same pattern as [pgwd](https://github.com/hrodrig/homebrew-pgwd)), `HOMEBREW_TAP_TOKEN` in CI, release **`.tar.gz`** basenames aligned to `groot_vX.Y.Z_*` (`{{ .Tag }}` like pgwd/kzero). | Pending |
-| 26 | **SBOM** generation in GoReleaser (Syft or equivalent). | Pending |
-| 27 | **Cosign** image/binary signing in release pipeline. | Pending |
-| 28 | **Optional post-collect upload**: S3/GCS-compatible push of `.tar.gz` (credentials via env; no long-lived keys in config). | Pending |
-| 29 | **FreeBSD port** or documented community packaging (if demand). | Pending |
+| 25 | **Homebrew cask tap** ([homebrew-groot](https://github.com/hrodrig/homebrew-groot)): `homebrew_casks` in GoReleaser (same pattern as [pgwd](https://github.com/hrodrig/homebrew-pgwd)), `HOMEBREW_TAP_TOKEN` in CI, release **`.tar.gz`** basenames aligned to `groot_vX.Y.Z_*` (`{{ .Tag }}` like pgwd/kzero). | **Done (v0.6.0)** |
+| 26 | **SBOM** generation in GoReleaser (Syft or equivalent). | **Done (v0.6.0)** |
+| 27 | **Cosign** image/binary signing in release pipeline. | **Done (v0.6.0)** |
+| 28 | **Optional post-collect upload**: S3/GCS-compatible push of `.tar.gz` (credentials via env; no long-lived keys in config). | **Done (v0.6.0)** |
+| 29 | **FreeBSD port** or documented community packaging (if demand). | **Done (v0.6.0)** |
 
 ---
 
@@ -137,6 +138,7 @@ Major when config shape, archive layout, and CLI surface are stable enough for l
 | 32 | **Multi-cluster collect** into one archive (multiple kubecontexts, prefixed paths). | Pending |
 | 33 | **CI matrix**: kind E2E against more than one Kubernetes minor; documented minimum supported cluster version in README. | Pending |
 | 34 | **Stable archive layout version** field for downstream RCA tooling. | Pending |
+| 35 | **`pkg/` → `internal/` layout** (kzero/pgwd parity): `pkg/cmd`→`internal/cli`, `pkg/config`→`internal/config`, `pkg/collector`→`internal/collector`, `pkg/notifier`→`internal/notifier`, `pkg/uploader`→`internal/uploader`, `pkg/k8srunner`→`internal/k8srunner`, `pkg/kubeloader`→`internal/kubeloader`, `pkg/kubetest`→`internal/kubetest`, `pkg/archive`→`internal/archive`, `pkg/logx`→`internal/log`; update imports + SPEC/docs; no user-facing CLI change. Do **before** promising stable library surface—groot is a CLI, not a public SDK. | Pending (1.0.x) |
 
 ---
 

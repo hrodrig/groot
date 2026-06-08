@@ -321,7 +321,42 @@ config:
 
 Install: `helm upgrade --install groot ./deploy/helm/groot -n groot --create-namespace`.
 
-## 10. Testing baseline
+## 10. Post-collect upload
+
+Optional upload of the finished **`.tar.gz`** after notify on the success path.
+
+| Key | Type | Default | Behavior |
+|-----|------|---------|----------|
+| `upload.enabled` | bool | `false` | Master switch. |
+| `upload.continue_on_error` | bool | `true` | Try remaining providers when one fails. |
+| `upload.timeout` | duration | `5m` | Per-provider upload deadline. |
+| `upload.s3.enabled` | bool | `false` | Enable S3 (or S3-compatible) upload. |
+| `upload.s3.bucket` | string | — | Required when S3 enabled; env `GROOT_UPLOAD_S3_BUCKET`. |
+| `upload.s3.region` | string | — | AWS region; env `GROOT_UPLOAD_S3_REGION` or `AWS_REGION`. |
+| `upload.s3.key_prefix` | string | — | Object key prefix; env `GROOT_UPLOAD_S3_KEY_PREFIX`. |
+| `upload.s3.endpoint` | string | — | S3-compatible endpoint URL; env `GROOT_UPLOAD_S3_ENDPOINT`. |
+| `upload.gcs.enabled` | bool | `false` | Enable GCS upload. |
+| `upload.gcs.bucket` | string | — | Required when GCS enabled; env `GROOT_UPLOAD_GCS_BUCKET`. |
+| `upload.gcs.key_prefix` | string | — | Object key prefix; env `GROOT_UPLOAD_GCS_KEY_PREFIX`. |
+
+- Credentials: **AWS** via standard `AWS_*` env vars; **GCS** via `GOOGLE_APPLICATION_CREDENTIALS` (or workload identity in-cluster).
+- Object key: `<key_prefix>/<archive-basename>` (prefix optional).
+- Runs **after** archive write and success notify; **upload errors do not fail** the collect command (logged at ERROR).
+- **`--no-upload`** / `GROOT_NO_UPLOAD=1` skips upload entirely.
+
+### S3 example
+
+```yaml
+upload:
+  enabled: true
+  s3:
+    enabled: true
+    bucket: my-archives
+    region: us-east-1
+    key_prefix: groot/prod
+```
+
+## 11. Testing baseline
 
 | Layer | Expectation |
 |-------|-------------|

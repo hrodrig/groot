@@ -15,6 +15,7 @@ import (
 	"github.com/hrodrig/groot/pkg/kubeloader"
 	"github.com/hrodrig/groot/pkg/logx"
 	"github.com/hrodrig/groot/pkg/notifier"
+	"github.com/hrodrig/groot/pkg/uploader"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -25,6 +26,7 @@ var printSampleConfig bool
 var verbose bool
 var quiet bool
 var noNotify bool
+var noUpload bool
 var noColor bool
 var message string
 var kubeconfigOverride string
@@ -180,6 +182,17 @@ var collectCmd = &cobra.Command{
 			}
 		}
 
+		if summary.ArchivePath != "" && uploader.ShouldUpload(cfg) && !skipUploads() {
+			uploadSvc := uploader.NewFanOut(cfg)
+			for _, outcome := range uploadSvc.Upload(ctx, summary.ArchivePath, summary) {
+				if outcome.Err != nil {
+					logger.Error("%s upload failed: %v", outcome.Provider, outcome.Err)
+					continue
+				}
+				logger.OK("%s", uploader.FormatResult(outcome.Result))
+			}
+		}
+
 		if !quiet {
 			logger.Info("collection completed in %s", summary.Duration.Round(time.Second))
 			logger.Info("output dir: %s", summary.OutputDir)
@@ -234,6 +247,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Enable detailed command execution output")
 	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress normal console output (INFO/WARN/CMD/OK); does not affect webhooks or other notify integrations")
 	rootCmd.PersistentFlags().BoolVar(&noNotify, "no-notify", false, "Skip all notify integrations after collect (Slack, Discord, Teams, PagerDuty, Telegram, generic). Also honored when env GROOT_NO_NOTIFY is 1/true/yes")
+	rootCmd.PersistentFlags().BoolVar(&noUpload, "no-upload", false, "Skip post-collect archive upload (S3/GCS). Also honored when env GROOT_NO_UPLOAD is 1/true/yes")
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable colorized console output")
 	rootCmd.PersistentFlags().StringVar(&message, "message", "", "Custom suffix appended to capture output names")
 	rootCmd.PersistentFlags().StringVar(&kubeconfigOverride, "kubeconfig", "", "Override kubeconfig path for the Kubernetes API client")
@@ -289,5 +303,13 @@ func skipNotifications() bool {
 		return true
 	}
 	v := strings.TrimSpace(strings.ToLower(os.Getenv("GROOT_NO_NOTIFY")))
+	return v == "1" || v == "true" || v == "yes"
+}
+
+func skipUploads() bool {
+	if noUpload {
+		return true
+	}
+	v := strings.TrimSpace(strings.ToLower(os.Getenv("GROOT_NO_UPLOAD")))
 	return v == "1" || v == "true" || v == "yes"
 }

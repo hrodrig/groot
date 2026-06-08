@@ -19,6 +19,8 @@ builds:
       - linux
       - darwin
       - windows
+      - freebsd
+      - openbsd
     goarch:
       - amd64
       - arm64
@@ -47,6 +49,11 @@ archives:
     # breaking rename for anyone scripting off the old `groot_0.5.0_*`
     # form; paired with Homebrew cask landing in the same release.
     name_template: "groot_{{ .Tag }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - src: LICENSE
+        dst: share/doc/groot/LICENSE
+      - src: configs/groot.yml.sample
+        dst: share/examples/groot/groot.yml.sample
 
 nfpms:
   - id: groot-packages
@@ -61,6 +68,9 @@ nfpms:
       GROOT is a Go CLI that collects Kubernetes diagnostics (resources, events,
       pod logs, node details, and optional notifications).
     license: MIT
+    scripts:
+      preremove: contrib/deb/prerm.sh
+      postremove: contrib/deb/postrm.sh
     formats:
       - deb
       - rpm
@@ -77,6 +87,22 @@ nfpms:
 
 checksum:
   name_template: checksums.txt
+
+# Cosign keyless signing (GitHub Actions OIDC). Requires `id-token: write`
+# in release.yml and sigstore/cosign-installer. Signs checksums.txt and
+# container images pushed to ghcr.io.
+signs:
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - "--output-signature=${signature}"
+      - "--output-certificate=${certificate}"
+      - "${artifact}"
+      - --yes
+    artifacts: checksum
 
 changelog:
   use: git
@@ -147,15 +173,23 @@ dockers_v2:
       org.opencontainers.image.revision: "{{ .FullCommit }}"
       org.opencontainers.image.created: "{{ .Date }}"
 
+# Cosign keyless signing for container manifests built by dockers_v2.
+docker_signs:
+  - cmd: cosign
+    env:
+      - COSIGN_EXPERIMENTAL=1
+    args:
+      - sign
+      - "${artifact}@${digest}"
+      - --yes
+
 # Homebrew cask tap: on every release tag, GoReleaser generates the
 # cask from this stanza and pushes a branch (or PR) to the
 # hrodrig/homebrew-groot tap repo.
 #
-# The on-disk template at contrib/homebrew/Casks/groot.rb.template
-# is the human-readable source of truth; GoReleaser does NOT read it
-# (cask files are generated, not templated), but it lets a reviewer
-# know what the rendered file will look like and supports the manual
-# fallback path (scripts/update-homebrew-cask.sh).
+# The cask file lives in the hrodrig/homebrew-groot tap repo (Casks/groot.rb).
+# GoReleaser generates and pushes it on each tag. Manual fallback:
+# scripts/update-homebrew-cask.sh (reads/writes the tap repo directly).
 #
 # Required CI secret: HOMEBREW_TAP_TOKEN (PAT with `repo` scope on
 # hrodrig/homebrew-groot). Skip with `--skip=homebrew_casks` if the

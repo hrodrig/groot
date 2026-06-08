@@ -150,3 +150,19 @@ notify:
     max_attempts: 3
     initial_backoff: 1s
     max_backoff: 10s
+
+# Optional post-collect upload of the .tar.gz archive (credentials via env; off by default).
+upload:
+  enabled: false
+  continue_on_error: true
+  timeout: 5m
+  s3:
+    enabled: false
+    bucket: ""
+    region: ""
+    key_prefix: "groot-archives"
+    # endpoint: "https://s3.amazonaws.com"  # optional S3-compatible endpoint
+  gcs:
+    enabled: false
+    bucket: ""
+    key_prefix: "groot-archives"

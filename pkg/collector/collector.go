@@ -501,7 +501,7 @@ func sanitizeMessage(value string) string {
 }
 
 // podLogArtifactRelPath is the capture-relative path for the main pod log file
-// (same pattern as kel: <namespace>/<pod>__<node>.log with sanitized segments).
+// (<namespace>/<pod>__<node>.log with sanitized segments).
 func podLogArtifactRelPath(namespace, podName, node string) string {
 	n := strings.TrimSpace(node)
 	if n == "" {
@@ -571,7 +571,7 @@ func parseKubectlTopPodsAll(content string) map[string]topPodMetrics {
 }
 
 // writePodRCATable merges all-pod-node-placement.tsv with all-pods-top.txt (when present)
-// into extras/all-pods-rca.tsv — one table for RCA (kel-style pod/node + CPU/RAM + log path).
+// into extras/all-pods-rca.tsv — one table for RCA (pod/node + CPU/RAM + log path).
 func (s *Service) writePodRCATable(captureDir string) error {
 	placementPath := filepath.Join(captureDir, "extras", "all-pod-node-placement.tsv")
 	raw, err := os.ReadFile(placementPath)

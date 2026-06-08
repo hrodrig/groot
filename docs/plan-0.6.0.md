@@ -1,7 +1,7 @@
 # Plan 0.6.0 — distribution, supply chain, and upload
 
-**Status:** draft  \
-**Target release:** `v0.6.0`  \
+**Status:** **shipped** — **`v0.6.0`** on `develop` (pending tag/push)  \
+**Target release:** `v0.6.0` ✓  \
 **Roadmap band:** [ROADMAP.md](ROADMAP.md) **0.6.x** items **#25–#29**  \
 **Delivery model:** one PR per item on `develop`. No tag until you decide.
 
@@ -39,14 +39,13 @@ Each item is a **separate PR** on `develop`. Merge order matches above so #28 (r
   - `nfpms[0].file_name_template`: `groot_{{ .Tag }}_{{ .Arch }}`
   - new top-level `brews:` stanza pointing at `homebrew-groot` tap (repo: `hrodrig/homebrew-groot`, folder: `Casks/groot.rb`, **Pull Request** mode, **skip upload** for the cask — same as pgwd pattern)
 - `README.md`: install block `brew install hrodrig/groot/groot`
-- `contrib/homebrew/Casks/groot.rb.template` — placeholder source-of-truth cask file. Goreleaser will copy this into the tap repo on release and substitute `version` / `sha256` / `url`. The PR reviewer (you) opens the new tap repo with this template as a starting point; goreleaser keeps the tap in sync on every tag.
-- `contrib/homebrew/README.md` — explains: (1) the tap repo `hrodrig/homebrew-groot` is bootstrapped from `groot.rb.template`; (2) the GoReleaser `brews:` stanza auto-updates the tap on each release; (3) the manual fallback `make update-cask` command (a tiny `scripts/update-homebrew-cask.sh`) for situations where automation is disabled
-- `scripts/update-homebrew-cask.sh` — read `contrib/homebrew/Casks/groot.rb.template`, substitute `{{VERSION}}` and `{{SHA256}}` from latest release artifacts, write to tap repo (clone or git pull if `TAP_REPO` env set), commit, push. Idempotent.
+- `hrodrig/homebrew-groot` tap repo — `Casks/groot.rb` bootstrap (not under `groot/contrib/`). GoReleaser `homebrew_casks:` updates it on each tag.
+- `scripts/update-homebrew-cask.sh` — manual fallback: read/write `Casks/groot.rb` in a clone of the tap repo (`TAP_REPO` or `TAP_GIT`), substitute `{{VERSION}}` / `{{SHA256}}`, commit, push.
 - `.github/workflows/release.yml`: add `HOMEBREW_TAP_TOKEN` (PAT with `repo` scope on the tap repo) to release job env
 
 **Bootstrap of the tap repo `hrodrig/homebrew-groot` (you do this manually, I prepare the source):**
 1. You create the repo `hrodrig/homebrew-groot` (public, no GitHub Pages needed)
-2. Copy `contrib/homebrew/Casks/groot.rb.template` to that repo at `Casks/groot.rb`, commit `chore: bootstrap from hrodrig/groot contrib/homebrew`
+2. Seed `Casks/groot.rb` in the tap repo (see local `homebrew-groot` workspace), commit `chore: bootstrap homebrew-groot tap`
 3. From that point on, goreleaser owns it via the `brews:` stanza in `.goreleaser.yaml`
 
 **PR title:** `release(0.6.x #25): Homebrew cask + release basename alignment`
@@ -152,51 +151,43 @@ Each item is a **separate PR** on `develop`. Merge order matches above so #28 (r
 
 ---
 
-### #29 — BSD ports (FreeBSD + OpenBSD, full quality)
+### #29 — BSD ports (FreeBSD + OpenBSD, kzero/pgwd pattern)
 
-**Roadmap:** real, building, installable ports on both BSDs — not a skeleton.
+**Roadmap:** repackage release tarballs — same model as kzero and pgwd. The port **does not compile Go**; it fetches `groot_vX.Y.Z_{freebsd,openbsd}_<arch>.tar.gz` from GitHub Releases.
+
+#### GoReleaser / Makefile
+
+- `.goreleaser.yaml`: add `freebsd` + `openbsd` to `builds`; `archives.files` bundles `LICENSE` + `configs/groot.yml.sample` under `share/doc/groot/` and `share/examples/groot/`
+- `Makefile`: `port-freebsd-sync`, `port-openbsd-sync`, `dist-freebsd`, `dist-openbsd` (from `VERSION`)
 
 #### FreeBSD — `contrib/freebsd/`
 
-- `contrib/freebsd/Makefile` — Go port skeleton (Go 1.26.4, `go install` from upstream tag, `DISTNAME=groot-${PORTVERSION}`, `GO_MODULE=github.com/hrodrig/groot`, fetches source tarball from `MASTER_SITES=GH`, `WRKSRC` set so `go build ./cmd/groot` lands the binary)
-- `contrib/freebsd/distinfo` — placeholder SHA256 hashes; CI step in `release.yml` runs `makesum` against the real source tarball and commits
-- `contrib/freebsd/pkg-descr` — short description + `WWW` URL
-- `contrib/freebsd/pkg-plist` — `/usr/local/bin/groot`, `/usr/local/etc/groot/groot.yml.sample`, `share/licenses/groot-*/LICENSE`, `share/doc/groot/README.md` (mirrors the `nfpms` layout; sample config is `sample|noreplace`)
-- `contrib/freebsd/files/groot.in` — `rc.d` daemon template (NEWS+`-f` noop until 0.7.x adds watch mode; for now the script just `enable`s cleanly and `status` reports `groot not running` — same pattern as kzero `contrib/freebsd/`)
-- `contrib/freebsd/README.md` — testing in a FreeBSD 14 jail, step-by-step: `git clone …/groot`, `cp -r contrib/freebsd /usr/ports/sysutils/groot`, `cd /usr/ports/sysutils/groot && make package`
-- `deploy/README.md` — link to `contrib/freebsd/`
+- `Makefile` — `NO_BUILD=yes`, `MASTER_SITES` + `DISTFILES` pointing at release tarball
+- `pkg-plist` — `bin/groot`, `share/doc/groot/LICENSE`, `share/examples/groot/groot.yml.sample`
+- `pkg-descr`, `README.md` — local test via `make dist-freebsd` + `MASTER_SITES=file:///.../`
+- **No** `distinfo` in repo (generated with `make makesum` in ports checkout)
+- **No** rc.d (CLI only, like kzero)
 
-#### OpenBSD — `contrib/openbsd/`
+#### OpenBSD — `contrib/openbsd/port/`
 
-OpenBSD port is **not** in the standard ports tree, but lives next to the project. Structure mirrors FreeBSD but uses OpenBSD conventions:
+- `Makefile` — `NO_BUILD = Yes`, same tarball naming as FreeBSD
+- `pkg/PLIST`, `pkg/DESCR`, `README.md`
+- `contrib/openbsd/README.md` — pointer to `port/`
+- **No** `distinfo` in repo
 
-- `contrib/openbsd/Makefile` — OpenBSD port Makefile (`MODGO_MOD_NAME`, `MODGO_VERSION`, `GH_ACCOUNT=hrodrig GH_PROJECT=groot`, `WRKDIST=${WRKSRC}`, `MODGO_LDFLAGS="-X main.version=${GH_TAGNAME}"`); honors `MODGO_IMPORT_PATH` per OpenBSD Go ports policy
-- `contrib/openbsd/distinfo` — placeholder SHA256 hashes; CI step regenerates
-- `contrib/openbsd/pkg/DESCR` — short description (`D`irectory layout follows OpenBSD)
-- `contrib/openbsd/pkg/PLIST` — `/usr/local/bin/groot`, `/usr/local/share/examples/groot/groot.yml.sample`, `/usr/local/share/doc/groot/README.md`, `/usr/local/share/doc/groot/LICENSE`, `/usr/local/share/doc/groot/CHANGELOG.md`
-- `contrib/openbsd/README.md` — testing in an OpenBSD 7.x VM: `doas pkg_add go`, then `cd /usr/ports/sysutils/groot && make package` (once added) or `cd contrib/openbsd && make package` against the local copy
-- `deploy/README.md` — link to `contrib/openbsd/`
+#### CI
 
-#### CI for BSD ports
-
-`.github/workflows/release.yml`:
-- new `release-ports` job (BSD-friendly) using `vmactions/freebsd-vm@v1` and `vmactions/openbsd-vm@v1` (QEMU-backed, multi-arch)
-- both jobs run only on `tags: ['v*']`
-- FreeBSD: `cd contrib/freebsd && make package` produces `pkg` artifact, uploads to release
-- OpenBSD: `cd contrib/openbsd && make package` produces `.tgz`, uploads to release
-- on hash mismatch, CI runs `makesum` for the touched port and pushes a follow-up commit (so `distinfo` stays in sync)
+No separate `release-ports.yml`. BSD tarballs ship with the main GoReleaser release on `v*` tags (same as kzero).
 
 #### ROADMAP
 
-#29 flips to **Done (v0.6.0)** when the release tag publishes the first built port artifacts. Until then, the **PR** marks items **Done (PR#, develop)** with a "first build pending tag" note.
-
-**PR title:** `chore(packaging): FreeBSD + OpenBSD ports (0.6.x #29)`
+#29 is **Done (v0.6.0)** when the first tag publishes `groot_v0.6.0_freebsd_*` and `groot_v0.6.0_openbsd_*` assets and a maintainer can `make package` from the port skeleton.
 
 **Verification:**
-- FreeBSD: `cd contrib/freebsd && make package` succeeds in a FreeBSD 14 jail, produces `Work/pkg/groot-0.6.0.pkg`
-- OpenBSD: `cd contrib/openbsd && make package` succeeds in OpenBSD 7.5, produces `groot-0.6.0.tgz`
-- `pkg install` / `pkg_add` of the artifact installs `groot` and runs `groot --version` successfully
-- RC.d script (`groot.in`) parses with `service groot onestart` exit-0 (no-op until watch mode lands)
+- `make port-freebsd-sync && make dist-freebsd` produces `dist/groot_v0.6.0_freebsd_amd64.tar.gz`
+- `make port-openbsd-sync && make dist-openbsd` produces matching OpenBSD tarball
+- FreeBSD jail: copy port → `make fetch` (file URL or GitHub) → `make package` → `groot --version`
+- OpenBSD VM: same with `make makesum` after fetch
 
 ---
 

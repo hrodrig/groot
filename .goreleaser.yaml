@@ -197,7 +197,7 @@ docker_signs:
 homebrew_casks:
   - name: groot
     ids:
-      - groot
+      - groot-dist
     binaries:
       - groot
     repository:

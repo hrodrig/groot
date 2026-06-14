@@ -9,7 +9,7 @@ User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sam
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-06 (**0.6.x** closed in **v0.6.0**; focus **1.0.0**)
+**Last reviewed:** 2026-06-09 (**0.6.x** closed in **v0.6.0**; focus **0.7.x** airgapped upload, then **1.0.0**)
 
 ### Versioning note
 
@@ -19,12 +19,13 @@ Public releases start at **v0.1.3** (early CLI and packaging). Section headings 
 
 GROOT is a **read-only log and context collector**: one **`groot collect`** produces a **timestamped `.tar.gz`** for incident response and RCA. The runtime path is **client-go** end-to-end (no `kubectl` binary). Configuration is **YAML + env**; optional **notify** fan-out fires after a **successful** collect and, when configured, on **abort** or **partial job failure** (**0.5.x #19**).
 
-**Target architecture:** deepen **collector fidelity** (more resources, clearer archive layout) while keeping the **single-command** UX. **In-cluster scheduling** via Helm/CronJob (**0.5.x #22**). **Notifications** and optional **S3/GCS upload** (**0.5.x #19–#24**, **0.6.x #28**). **Distribution** spans Linux packages, container, **Homebrew** cask, BSD ports, SBOM, and Cosign (**0.6.x #25–#29**). **Next band (1.0.0):** stable config contract, multi-cluster, inspect/validate commands.
+**Target architecture:** deepen **collector fidelity** (more resources, clearer archive layout) while keeping the **single-command** UX. **In-cluster scheduling** via Helm/CronJob (**0.5.x #22**). **Notifications** and optional **S3/GCS upload** (**0.5.x #19–#24**, **0.6.x #28**). **Distribution** spans Linux packages, container, **Homebrew** cask, BSD ports, SBOM, and Cosign (**0.6.x #25–#29**). **0.7.x** adds **SCP/SFTP post-collect upload** for bastion / airgapped clusters (**#36–#37**) and **container image SBOM** (**#38**). **Next band (1.0.0):** stable config contract, multi-cluster, inspect/validate commands.
 
 **Honest gaps today:**
 
 - **`k8srunner`** `extra_kubectl` is intentionally narrow (`get`/`describe`/`top` subsets; no `explain`/`wait`).
-- **Container image SBOM** not attached (docker driver limit; archive SBOM covers dependencies — **0.7.x** follow-up).
+- **Container image SBOM** not attached (docker driver limit; archive SBOM covers dependencies — **0.7.x #38**).
+- **No SCP/SFTP upload** for bastion → SSH relay topologies (S3/GCS only today — **0.7.x #36**).
 - **No `config_version`** or formal migration path (**1.0.0 #30**).
 - **No second command** (`validate` / `inspect`) (**1.0.0 #31**).
 
@@ -38,6 +39,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.4.x** | **Closed** in **v0.4.0** (items **#12–#18**); see [plan-0.4.0.md](plan-0.4.0.md) |
 | **0.5.x** | **Closed** in **v0.5.0** (items **#19–#24**); see [plan-0.5.0.md](plan-0.5.0.md) |
 | **0.6.x** | **Closed** in **v0.6.0** (items **#25–#29**); see [plan-0.6.0.md](plan-0.6.0.md) |
+| **0.7.x** | **SCP/SFTP upload** (#36), **airgapped relay playbook** (#37), **container image SBOM** (#38); see [plan-0.7.0.md](plan-0.7.0.md) |
 | **1.0.0** | Config schema stability, multi-cluster / inspect commands, K8s version matrix in CI |
 
 ---
@@ -124,6 +126,22 @@ Make GROOT easier to run on a schedule inside the cluster and more honest when c
 | 27 | **Cosign** image/binary signing in release pipeline. | **Done (v0.6.0)** |
 | 28 | **Optional post-collect upload**: S3/GCS-compatible push of `.tar.gz` (credentials via env; no long-lived keys in config). | **Done (v0.6.0)** |
 | 29 | **FreeBSD port** or documented community packaging (if demand). | **Done (v0.6.0)** |
+
+---
+
+## 0.7.x — airgapped upload and supply-chain follow-up
+
+**Implementation plan:** [plan-0.7.0.md](plan-0.7.0.md) (target **`v0.7.0`**). Merge order: **#36 → #37 → #38**.
+
+Post-collect delivery for clusters **without outbound internet**: groot runs on a **bastion** with kubeconfig to the API; the bastion is the only hop allowed to SSH a **relay host** (e.g. one external IP); the relay syncs archives to cloud storage (OneDrive via **rclone** on Linux — **out of groot scope**, documented in **#37**).
+
+| # | Item | Status |
+|---|------|--------|
+| 36 | **SCP/SFTP post-collect upload**: optional `upload.scp` / `upload.sftp` push of `.tar.gz` to a remote Linux host over SSH (key-based auth via env; `known_hosts` file; `BatchMode`-equivalent — no password prompts). Same failure semantics as S3/GCS (`continue_on_error`, `--no-upload`). | Pending |
+| 37 | **Airgapped relay playbook**: `contrib/relay/` (or `docs/airgapped-upload.md`) — reference topology bastion → SSH relay → **rclone** OneDrive inbox watcher on Linux; sample `groot.yml`, `systemd.path` unit, hardening notes. No groot code. | Pending |
+| 38 | **Container image SBOM**: enable OCI SBOM attestation on `dockers_v2` when release workflow uses buildx `docker-container` driver (archive SBOM already ships in **0.6.x #26**). | Pending |
+
+**Out of scope for 0.7.x:** native OneDrive / Microsoft Graph upload inside groot; password-based SSH; groot running inside AKS pods with egress to relay (bastion is the supported runtime for this topology).
 
 ---
 

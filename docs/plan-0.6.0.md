@@ -39,8 +39,7 @@ Each item is a **separate PR** on `develop`. Merge order matches above so #28 (r
   - `nfpms[0].file_name_template`: `groot_{{ .Tag }}_{{ .Arch }}`
   - new top-level `brews:` stanza pointing at `homebrew-groot` tap (repo: `hrodrig/homebrew-groot`, folder: `Casks/groot.rb`, **Pull Request** mode, **skip upload** for the cask — same as pgwd pattern)
 - `README.md`: install block `brew install hrodrig/groot/groot`
-- `hrodrig/homebrew-groot` tap repo — `Casks/groot.rb` bootstrap (not under `groot/contrib/`). GoReleaser `homebrew_casks:` updates it on each tag.
-- `scripts/update-homebrew-cask.sh` — manual fallback: read/write `Casks/groot.rb` in a clone of the tap repo (`TAP_REPO` or `TAP_GIT`), substitute `{{VERSION}}` / `{{SHA256}}`, commit, push.
+- `hrodrig/homebrew-groot` tap repo — `Casks/groot.rb` (not under `groot/contrib/`). GoReleaser `homebrew_casks:` updates it on each tag.
 - `.github/workflows/release.yml`: add `HOMEBREW_TAP_TOKEN` (PAT with `repo` scope on the tap repo) to release job env
 
 **Bootstrap of the tap repo `hrodrig/homebrew-groot` (you do this manually, I prepare the source):**

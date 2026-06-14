@@ -177,7 +177,7 @@ brew upgrade --cask hrodrig/groot/groot
 
 The cask installs the **`groot`** binary to `$(brew --prefix)/bin/groot` and adds it to your `PATH` (already on it in default Homebrew setups). A **sample config** is not bundled with the cask; generate it with `groot --print-sample-config > ~/.config/groot/groot.yml` and edit.
 
-> The tap repo lives at **[github.com/hrodrig/homebrew-groot](https://github.com/hrodrig/homebrew-groot)** (`Casks/groot.rb`). GoReleaser updates it on every tag via the `homebrew_casks:` stanza in `.goreleaser.yaml`. Add CI secret **`HOMEBREW_TAP_TOKEN`** (PAT with `repo` scope on the tap) — or set `--skip=homebrew_casks` in the release job and run `scripts/update-homebrew-cask.sh` against a local clone of the tap.
+> The tap repo lives at **[github.com/hrodrig/homebrew-groot](https://github.com/hrodrig/homebrew-groot)** (`Casks/groot.rb`). GoReleaser updates it on every tag via the `homebrew_casks:` stanza in `.goreleaser.yaml`. CI needs secret **`HOMEBREW_TAP_TOKEN`** (PAT with `repo` scope on the tap).
 
 ### Install with Go
 

@@ -26,7 +26,7 @@ groot is a **CLI** only: these ports do not install **rc.d** or systemd units. S
 
 ## Homebrew cask
 
-The cask lives in the separate tap repo **[hrodrig/homebrew-groot](https://github.com/hrodrig/homebrew-groot)** (`Casks/groot.rb`). GoReleaser updates it on every tag via the **`homebrew_casks:`** stanza in `.goreleaser.yaml`. Manual fallback: **`scripts/update-homebrew-cask.sh`** (reads/writes the tap repo, not this tree).
+The cask lives in the separate tap repo **[hrodrig/homebrew-groot](https://github.com/hrodrig/homebrew-groot)** (`Casks/groot.rb`). GoReleaser updates it on every tag via the **`homebrew_casks:`** stanza in `.goreleaser.yaml`.
 
 ## Scheduling (optional, operator-owned)
 

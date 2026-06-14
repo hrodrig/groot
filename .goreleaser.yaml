@@ -170,16 +170,10 @@ docker_signs:
       - --yes
 
 # Homebrew cask tap: on every release tag, GoReleaser generates the
-# cask from this stanza and pushes a branch (or PR) to the
-# hrodrig/homebrew-groot tap repo.
-#
-# The cask file lives in the hrodrig/homebrew-groot tap repo (Casks/groot.rb).
-# GoReleaser generates and pushes it on each tag. Manual fallback:
-# scripts/update-homebrew-cask.sh (reads/writes the tap repo directly).
+# cask from this stanza and pushes to hrodrig/homebrew-groot (main).
 #
 # Required CI secret: HOMEBREW_TAP_TOKEN (PAT with `repo` scope on
-# hrodrig/homebrew-groot). Skip with `--skip=homebrew_casks` if the
-# token is missing.
+# hrodrig/homebrew-groot).
 homebrew_casks:
   - name: groot
     ids:
@@ -200,9 +194,9 @@ homebrew_casks:
     url:
       template: "https://github.com/hrodrig/groot/releases/download/{{ .Tag }}/groot_{{ .Tag }}_{{ .Os }}_{{ .Arch }}.tar.gz"
       verified: "github.com/hrodrig/groot/"
-    # skip_upload keeps goreleaser from creating a GitHub release for
-    # the tap repo (the tap only ever gets a commit on its main branch).
-    skip_upload: true
+    commit_author:
+      name: Hermes Rodríguez
+      email: hrodrig@usb.ve
     custom_block: |
       livecheck do
         url :stable

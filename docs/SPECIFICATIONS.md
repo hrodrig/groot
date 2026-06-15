@@ -338,9 +338,17 @@ Optional upload of the finished **`.tar.gz`** after notify on the success path.
 | `upload.gcs.enabled` | bool | `false` | Enable GCS upload. |
 | `upload.gcs.bucket` | string | — | Required when GCS enabled; env `GROOT_UPLOAD_GCS_BUCKET`. |
 | `upload.gcs.key_prefix` | string | — | Object key prefix; env `GROOT_UPLOAD_GCS_KEY_PREFIX`. |
+| `upload.sftp.enabled` | bool | `false` | Enable SFTP upload (bastion → relay). |
+| `upload.sftp.host` | string | — | Required when SFTP enabled; env `GROOT_UPLOAD_SFTP_HOST`. |
+| `upload.sftp.port` | int | `22` | SSH port; env `GROOT_UPLOAD_SFTP_PORT`. |
+| `upload.sftp.user` | string | — | SSH user; env `GROOT_UPLOAD_SFTP_USER`. |
+| `upload.sftp.remote_dir` | string | — | Remote target directory; env `GROOT_UPLOAD_SFTP_REMOTE_DIR`. |
+| `upload.sftp.known_hosts_file` | string | — | Path to `known_hosts`; env `GROOT_UPLOAD_SFTP_KNOWN_HOSTS`. |
+| `upload.sftp.identity_file` | string | — | **Env only** (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`); never in YAML. |
 
-- Credentials: **AWS** via standard `AWS_*` env vars; **GCS** via `GOOGLE_APPLICATION_CREDENTIALS` (or workload identity in-cluster).
-- Object key: `<key_prefix>/<archive-basename>` (prefix optional).
+- Credentials: **AWS** via standard `AWS_*` env vars; **GCS** via `GOOGLE_APPLICATION_CREDENTIALS` (or workload identity in-cluster); **SFTP** via SSH key (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`).
+- SFTP auth: **public-key only** (BatchMode — password/keyboard-interactive rejected). Host key verified against `known_hosts_file`; fails closed on mismatch.
+- Object key: `<key_prefix>/<archive-basename>` (prefix optional). SFTP remote path: `<remote_dir>/<archive-basename>`.
 - Runs **after** archive write and success notify; **upload errors do not fail** the collect command (logged at ERROR).
 - **`--no-upload`** / `GROOT_NO_UPLOAD=1` skips upload entirely.
 
@@ -355,6 +363,22 @@ upload:
     region: us-east-1
     key_prefix: groot/prod
 ```
+
+### SFTP example (bastion → relay)
+
+```yaml
+upload:
+  enabled: true
+  sftp:
+    enabled: true
+    host: ipA.example.com
+    port: 22
+    user: groot-inbox
+    remote_dir: inbox
+    known_hosts_file: /etc/groot/known_hosts
+```
+
+Identity file from env: `GROOT_UPLOAD_SFTP_IDENTITY_FILE=/home/groot/.ssh/id_ed25519`
 
 ## 11. Testing baseline
 

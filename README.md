@@ -54,7 +54,7 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - [Console output modes](#console-output-modes)
 - [Typical collected data](#typical-collected-data)
 - [Notifications](#notifications)
-- [Upload (S3 / GCS)](#upload-s3--gcs)
+- [Upload (S3 / GCS / SFTP)](#upload-s3--gcs--sftp)
 - [Operator deployment (groot-selfhosted)](#operator-deployment-groot-selfhosted)
 - [Secret redaction](#secret-redaction)
 - [Container image](#container-image)
@@ -205,7 +205,7 @@ Useful runtime flags (global or with `collect`):
 - `--verbose` shows each executed command as `CMD`, plus `OK`/`ERR` results
 - `--quiet` suppresses normal **console** output (INFO/WARN/CMD/OK) and only prints errors; **notify integrations still run** (Slack, Discord, Teams, PagerDuty, Telegram, generic) unless you disable them in config or use `--no-notify`
 - `--no-notify` skips all notifications after a successful collect (useful for cron when you only want the archive). Same effect as env `GROOT_NO_NOTIFY=1` (or `true` / `yes`, case-insensitive)
-- `--no-upload` skips post-collect S3/GCS upload when `upload.enabled` is true. Same effect as env `GROOT_NO_UPLOAD=1`
+- `--no-upload` skips post-collect S3/GCS/SFTP upload when `upload.enabled` is true. Same effect as env `GROOT_NO_UPLOAD=1`
 - `--no-color` disables ANSI colors
 - `--message "label text"` appends a sanitized suffix to archive and capture-related output names
 - `--kubeconfig /path/to/config` overrides kubeconfig from file/env
@@ -710,7 +710,7 @@ HTTP clients retry transient **5xx** and network errors only; **4xx** fails imme
 
 [↑ Back to top](#readme-top)
 
-## Upload (S3 / GCS)
+## Upload (S3 / GCS / SFTP)
 
 After a successful collect, optionally upload the **`.tar.gz`** to object storage. Credentials come from the standard **AWS** / **Google** SDK env vars (not from long-lived keys in YAML).
 
@@ -728,6 +728,28 @@ upload:
 Env overrides: `GROOT_UPLOAD_S3_BUCKET`, `GROOT_UPLOAD_S3_REGION`, `GROOT_UPLOAD_S3_KEY_PREFIX`, `GROOT_UPLOAD_S3_ENDPOINT` (S3-compatible), `GROOT_UPLOAD_GCS_BUCKET`, `GROOT_UPLOAD_GCS_KEY_PREFIX`. Upload runs **after** notify; failures are logged but **do not fail** the collect. Skip with **`--no-upload`** or **`GROOT_NO_UPLOAD=1`**.
 
 Minimum IAM: S3 `s3:PutObject` on the bucket/prefix; GCS `roles/storage.objectCreator` (or tighter custom role).
+
+### SFTP (airgapped clusters)
+
+For clusters **without outbound internet**, GROOT runs on a **bastion** (has kubeconfig) and pushes `.tar.gz` via SFTP to a **relay host** that syncs to cloud storage.
+
+```yaml
+upload:
+  enabled: true
+  sftp:
+    enabled: true
+    host: ipA.example.com
+    port: 22
+    user: groot-inbox
+    remote_dir: inbox
+    known_hosts_file: /etc/groot/known_hosts
+```
+
+Identity from env (never in YAML): `GROOT_UPLOAD_SFTP_IDENTITY_FILE=/home/groot/.ssh/id_ed25519`
+
+Auth: **public-key only** (BatchMode — password rejected). Host key verified against `known_hosts_file`; fails closed on mismatch. Same failure semantics as S3/GCS.
+
+Full relay playbook (systemd watcher → rclone → OneDrive): **[groot-selfhosted → airgapped-relay](https://github.com/hrodrig/groot-selfhosted/blob/main/run/examples/airgapped-relay/README.md)**.
 
 [↑ Back to top](#readme-top)
 

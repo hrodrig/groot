@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -117,6 +118,7 @@ type UploadCfg struct {
 	Timeout         time.Duration `mapstructure:"timeout"`
 	S3              S3UploadCfg   `mapstructure:"s3"`
 	GCS             GCSUploadCfg  `mapstructure:"gcs"`
+	SFTP            SFTPUploadCfg `mapstructure:"sftp"`
 }
 
 // S3UploadCfg uploads the archive to S3 or an S3-compatible endpoint.
@@ -144,6 +146,18 @@ type GCSUploadCfg struct {
 	KMSKey        string            `mapstructure:"kms_key"`
 	PredefinedACL string            `mapstructure:"predefined_acl"`
 	Metadata      map[string]string `mapstructure:"metadata"`
+}
+
+// SFTPUploadCfg uploads the archive to a remote Linux host via SFTP over SSH.
+// Credentials (identity file) come from env only — never stored in YAML.
+type SFTPUploadCfg struct {
+	Enabled        bool   `mapstructure:"enabled"`
+	Host           string `mapstructure:"host"`
+	Port           int    `mapstructure:"port"`
+	User           string `mapstructure:"user"`
+	RemoteDir      string `mapstructure:"remote_dir"`
+	KnownHostsFile string `mapstructure:"known_hosts_file"`
+	IdentityFile   string `mapstructure:"-"` // env only
 }
 
 // PagerDutyCfg sends Events API v2 triggers (https://developer.pagerduty.com/docs/events-api-v2-overview).
@@ -289,6 +303,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("upload.timeout", "5m")
 	v.SetDefault("upload.s3.enabled", false)
 	v.SetDefault("upload.gcs.enabled", false)
+	v.SetDefault("upload.sftp.enabled", false)
+	v.SetDefault("upload.sftp.port", 22)
 }
 
 // defaultEtcConfigPaths are tried after ./groot.yml and ~/.groot/groot.yml (first existing file wins).
@@ -564,6 +580,17 @@ func resolveUploadSecrets(cfg *Config) {
 	u.S3.Endpoint = firstNonEmpty(u.S3.Endpoint, os.Getenv("GROOT_UPLOAD_S3_ENDPOINT"))
 	u.GCS.Bucket = firstNonEmpty(u.GCS.Bucket, os.Getenv("GROOT_UPLOAD_GCS_BUCKET"))
 	u.GCS.KeyPrefix = firstNonEmpty(u.GCS.KeyPrefix, os.Getenv("GROOT_UPLOAD_GCS_KEY_PREFIX"))
+
+	u.SFTP.Host = firstNonEmpty(u.SFTP.Host, os.Getenv("GROOT_UPLOAD_SFTP_HOST"))
+	u.SFTP.User = firstNonEmpty(u.SFTP.User, os.Getenv("GROOT_UPLOAD_SFTP_USER"))
+	u.SFTP.RemoteDir = firstNonEmpty(u.SFTP.RemoteDir, os.Getenv("GROOT_UPLOAD_SFTP_REMOTE_DIR"))
+	u.SFTP.IdentityFile = firstNonEmpty(u.SFTP.IdentityFile, os.Getenv("GROOT_UPLOAD_SFTP_IDENTITY_FILE"))
+	u.SFTP.KnownHostsFile = firstNonEmpty(u.SFTP.KnownHostsFile, os.Getenv("GROOT_UPLOAD_SFTP_KNOWN_HOSTS"))
+	if port := os.Getenv("GROOT_UPLOAD_SFTP_PORT"); port != "" {
+		if p, err := strconv.Atoi(port); err == nil && p > 0 {
+			u.SFTP.Port = p
+		}
+	}
 }
 
 func validateUploadConfig(cfg Config) error {
@@ -571,14 +598,23 @@ func validateUploadConfig(cfg Config) error {
 	if !u.Enabled {
 		return nil
 	}
-	if !u.S3.Enabled && !u.GCS.Enabled {
-		return fmt.Errorf("upload.enabled=true requires upload.s3.enabled and/or upload.gcs.enabled")
+	anyEnabled := u.S3.Enabled || u.GCS.Enabled || u.SFTP.Enabled
+	if !anyEnabled {
+		return fmt.Errorf("upload.enabled=true requires at least one provider (upload.s3.enabled, upload.gcs.enabled, or upload.sftp.enabled)")
 	}
 	if u.S3.Enabled && strings.TrimSpace(u.S3.Bucket) == "" {
 		return fmt.Errorf("upload.s3.enabled=true requires bucket or env GROOT_UPLOAD_S3_BUCKET")
 	}
 	if u.GCS.Enabled && strings.TrimSpace(u.GCS.Bucket) == "" {
 		return fmt.Errorf("upload.gcs.enabled=true requires bucket or env GROOT_UPLOAD_GCS_BUCKET")
+	}
+	if u.SFTP.Enabled {
+		if strings.TrimSpace(u.SFTP.Host) == "" {
+			return fmt.Errorf("upload.sftp.enabled=true requires host or env GROOT_UPLOAD_SFTP_HOST")
+		}
+		if u.SFTP.Port < 1 || u.SFTP.Port > 65535 {
+			return fmt.Errorf("upload.sftp.port must be in range 1-65535 (got %d)", u.SFTP.Port)
+		}
 	}
 	return nil
 }

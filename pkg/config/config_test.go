@@ -568,3 +568,69 @@ func TestResolveUploadSecrets_env(t *testing.T) {
 		t.Fatalf("%+v", cfg.Upload.GCS)
 	}
 }
+
+func TestValidateUploadConfig_sftpHostRequired(t *testing.T) {
+	err := validateUploadConfig(Config{Upload: UploadCfg{Enabled: true, SFTP: SFTPUploadCfg{Enabled: true}}})
+	if err == nil || !strings.Contains(err.Error(), "host") {
+		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestResolveUploadSecrets_sftpEnv(t *testing.T) {
+	cfg := Config{Upload: UploadCfg{SFTP: SFTPUploadCfg{Enabled: true, Port: 22}}}
+	t.Setenv("GROOT_UPLOAD_SFTP_HOST", "relay.example.com")
+	t.Setenv("GROOT_UPLOAD_SFTP_USER", "groot-inbox")
+	t.Setenv("GROOT_UPLOAD_SFTP_REMOTE_DIR", "inbox")
+	t.Setenv("GROOT_UPLOAD_SFTP_IDENTITY_FILE", "/home/groot/.ssh/id_ed25519")
+	t.Setenv("GROOT_UPLOAD_SFTP_KNOWN_HOSTS", "/etc/groot/known_hosts")
+	t.Setenv("GROOT_UPLOAD_SFTP_PORT", "2222")
+	resolveUploadSecrets(&cfg)
+	s := cfg.Upload.SFTP
+	if s.Host != "relay.example.com" || s.User != "groot-inbox" || s.RemoteDir != "inbox" {
+		t.Fatalf("%+v", s)
+	}
+	if s.IdentityFile != "/home/groot/.ssh/id_ed25519" || s.KnownHostsFile != "/etc/groot/known_hosts" {
+		t.Fatalf("identity=%s known_hosts=%s", s.IdentityFile, s.KnownHostsFile)
+	}
+	if s.Port != 2222 {
+		t.Fatalf("port=%d", s.Port)
+	}
+}
+
+func TestValidateUploadConfig_sftpWithAllThreeProviders(t *testing.T) {
+	cfg := Config{Upload: UploadCfg{
+		Enabled: true,
+		S3:      S3UploadCfg{Enabled: true, Bucket: "b"},
+		GCS:     GCSUploadCfg{Enabled: true, Bucket: "g"},
+		SFTP:    SFTPUploadCfg{Enabled: true, Host: "h", Port: 22},
+	}}
+	if err := validateUploadConfig(cfg); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestValidateUploadConfig_sftpPortRange(t *testing.T) {
+	tests := []struct {
+		port int
+		ok   bool
+	}{
+		{0, false},
+		{1, true},
+		{22, true},
+		{65535, true},
+		{65536, false},
+	}
+	for _, tc := range tests {
+		cfg := Config{Upload: UploadCfg{
+			Enabled: true,
+			SFTP:    SFTPUploadCfg{Enabled: true, Host: "h", Port: tc.port},
+		}}
+		err := validateUploadConfig(cfg)
+		if tc.ok && err != nil {
+			t.Errorf("port=%d expected ok, got %v", tc.port, err)
+		}
+		if !tc.ok && err == nil {
+			t.Errorf("port=%d expected error", tc.port)
+		}
+	}
+}

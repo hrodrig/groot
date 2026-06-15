@@ -34,12 +34,15 @@ type FanOut struct {
 // NewFanOut builds uploaders from configuration.
 func NewFanOut(cfg config.Config) *FanOut {
 	u := cfg.Upload
-	out := make([]Uploader, 0, 2)
+	out := make([]Uploader, 0, 3)
 	if u.S3.Enabled {
 		out = append(out, newS3Uploader(u.S3, u.Timeout))
 	}
 	if u.GCS.Enabled {
 		out = append(out, newGCSUploader(u.GCS, u.Timeout))
+	}
+	if u.SFTP.Enabled {
+		out = append(out, newSFTPUploader(u.SFTP, u.Timeout))
 	}
 	return &FanOut{uploaders: out, continueOnError: u.ContinueOnError}
 }
@@ -49,7 +52,7 @@ func ShouldUpload(cfg config.Config) bool {
 	if !cfg.Upload.Enabled {
 		return false
 	}
-	return cfg.Upload.S3.Enabled || cfg.Upload.GCS.Enabled
+	return cfg.Upload.S3.Enabled || cfg.Upload.GCS.Enabled || cfg.Upload.SFTP.Enabled
 }
 
 // Outcome is one provider upload attempt.

@@ -166,3 +166,12 @@ upload:
     enabled: false
     bucket: ""
     key_prefix: "groot-archives"
+  sftp:
+    enabled: false
+    host: ""
+    port: 22
+    user: "groot-inbox"
+    remote_dir: "inbox"
+    # known_hosts_file: "/etc/groot/known_hosts"  # required in production
+    # Credentials (identity file) via env — never in YAML:
+    #   GROOT_UPLOAD_SFTP_IDENTITY_FILE=/home/groot/.ssh/id_ed25519

@@ -137,7 +137,7 @@ Post-collect delivery for clusters **without outbound internet**: groot runs on 
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 36 | 2 | **SFTP post-collect upload** (`upload.sftp`): push `.tar.gz` to a remote Linux host over SSH (public-key auth via env `GROOT_UPLOAD_SFTP_IDENTITY_FILE`; `known_hosts` file; `BatchMode` — no password prompts). Same failure semantics as S3/GCS (`continue_on_error`, `--no-upload`). Operators say "SCP to relay" — this is the SFTP implementation of that pattern. | Pending |
+| 36 | 2 | **SFTP post-collect upload** (`upload.sftp`): push `.tar.gz` to a remote Linux host over SSH (public-key auth via env `GROOT_UPLOAD_SFTP_IDENTITY_FILE`; `known_hosts` file; `BatchMode` — no password prompts). Same failure semantics as S3/GCS (`continue_on_error`, `--no-upload`). Operators say "SCP to relay" — this is the SFTP implementation of that pattern. | **Done (v0.7.0)** |
 | 37 | 2 | **Airgapped relay playbook**: `contrib/relay/` (or `docs/airgapped-upload.md`) — reference topology bastion → SSH relay → **rclone** OneDrive inbox watcher on Linux; sample `groot.yml`, `systemd.path` unit, hardening notes. No groot code. | Pending |
 | 38 | 2 | **Container image SBOM**: enable OCI SBOM attestation on `dockers_v2` when release workflow uses buildx `docker-container` driver (archive SBOM already ships in #26). | Pending |
 

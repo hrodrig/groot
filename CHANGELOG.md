@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-06-15
+
+### Changed
+
+- **Documentation: product vs operator repo split** — Helm chart and flat CronJob manifests moved to **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**; README, SPEC links, and `AGENTS.md` clarify product scope. No CLI behavior change.
+- **Homebrew cask (`0.6.x #25`)**: post-install hook clears macOS quarantine (`xattr -dr`) on staged binary.
+
 ## [0.6.0] - 2026-06-06
 
 ### Added

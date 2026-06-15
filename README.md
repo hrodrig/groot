@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.6.0-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.6.1-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -16,7 +16,7 @@
 [![Article on DEV](https://img.shields.io/badge/dev.to-article-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/groot/)
 
-**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Spec:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) · **Deploy:** [deploy/](deploy/) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
+**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Spec:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) · **Operator:** [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 
 <p align="center">
   <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes log collector CLI" width="100%" />
@@ -32,12 +32,13 @@ GROOT is a **read-only Kubernetes log and context collector**: a single **`groot
 
 That workflow supports **incident response**, **troubleshooting**, and **root cause analysis (RCA)**: one reproducible bundle replaces scattered `kubectl` copy-paste, so you can reconstruct *what the cluster looked like* when you ran collect and shorten postmortems.
 
+> **Operator deployment** (bastion, cron, `docker run`, Helm CronJob, flat manifests): **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** — this repo ships the CLI binary, packages, and container image only.
+
 ## Table of contents
 
 - [README badge reference](docs/badges.md)
 - [Specifications (behavior contract)](docs/SPECIFICATIONS.md)
 - [Roadmap (planned work)](docs/ROADMAP.md)
-- [Deploy (Helm / CronJob)](deploy/)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Install or update](#install-or-update)
@@ -54,9 +55,9 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - [Typical collected data](#typical-collected-data)
 - [Notifications](#notifications)
 - [Upload (S3 / GCS)](#upload-s3--gcs)
-- [In-cluster deploy (Helm / CronJob)](#in-cluster-deploy-helm--cronjob)
+- [Operator deployment (groot-selfhosted)](#operator-deployment-groot-selfhosted)
 - [Secret redaction](#secret-redaction)
-- [Rootless container](#rootless-container)
+- [Container image](#container-image)
 - [Security note](#security-note)
 - [Get involved](#get-involved)
 - [License](#license)
@@ -74,8 +75,8 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - **Notify on failure** (collect abort or partial job failures above a threshold)
 - **HTTP retry/backoff** for transient webhook errors
 - Optional **secret redaction** in collected log files
-- **Helm chart** and flat **CronJob** manifests for scheduled in-cluster collection (`deploy/`)
-- Rootless container image support
+- **In-cluster scheduling** supported via published image; Helm chart and manifests live in **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** (`run/deploy/`)
+- Rootless container image (`ghcr.io/hrodrig/groot`; distroless nonroot)
 
 **Libraries** (see [`go.mod`](go.mod)): [Cobra](https://github.com/spf13/cobra) **v1.10.2**, [Viper](https://github.com/spf13/viper) **v1.21.0**, [client-go](https://github.com/kubernetes/client-go) for cluster access (no `kubectl` binary required).
 
@@ -176,6 +177,14 @@ brew upgrade --cask hrodrig/groot/groot
 ```
 
 The cask installs the **`groot`** binary to `$(brew --prefix)/bin/groot` and adds it to your `PATH` (already on it in default Homebrew setups). A **sample config** is not bundled with the cask; generate it with `groot --print-sample-config > ~/.config/groot/groot.yml` and edit.
+
+**macOS first run:** unsigned CLI binaries may trigger Gatekeeper (“Apple could not verify…”). The cask clears the download quarantine on install. If you still see the dialog, run once:
+
+```bash
+xattr -dr com.apple.quarantine "$(command -v groot)"
+```
+
+Or use **System Settings → Privacy & Security → Open Anyway**. Same applies to binaries installed from GitHub `.tar.gz` (see [Install or update](#install-or-update)).
 
 > The tap repo lives at **[github.com/hrodrig/homebrew-groot](https://github.com/hrodrig/homebrew-groot)** (`Casks/groot.rb`). GoReleaser updates it on every tag via the `homebrew_casks:` stanza in `.goreleaser.yaml`. CI needs secret **`HOMEBREW_TAP_TOKEN`** (PAT with `repo` scope on the tap).
 
@@ -722,39 +731,26 @@ Minimum IAM: S3 `s3:PutObject` on the bucket/prefix; GCS `roles/storage.objectCr
 
 [↑ Back to top](#readme-top)
 
-## In-cluster deploy (Helm / CronJob)
+## Operator deployment (groot-selfhosted)
 
-Run **`groot collect`** on a schedule inside the cluster. Image: **`ghcr.io/hrodrig/groot`** (see [Releases](https://github.com/hrodrig/groot/releases)).
+This repository ships the **CLI**, **packages**, and **`ghcr.io/hrodrig/groot`** image. How you **run** GROOT in production — bastion Docker, cron, Helm CronJob, flat Kubernetes manifests — lives in the operator repo:
 
-### Helm (recommended)
+**[github.com/hrodrig/groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** → start at [`run/README.md`](https://github.com/hrodrig/groot-selfhosted/blob/main/run/README.md)
 
-```bash
-helm upgrade --install groot ./deploy/helm/groot \
-  --namespace groot --create-namespace \
-  --set image.tag=0.6.0 \
-  --set schedule="0 */6 * * *"
-```
+| Mode | Where |
+|------|--------|
+| Docker / Podman on a bastion | [run/docker/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/docker) |
+| Helm CronJob (in-cluster) | [run/deploy/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/deploy) |
+| Flat CronJob YAML | [run/deploy/k8s/cronjob.yaml](https://github.com/hrodrig/groot-selfhosted/blob/main/run/deploy/k8s/cronjob.yaml) |
+| cron / systemd (Releases binary) | [run/standalone/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/standalone) |
 
-Embed your config (notify, namespaces, redaction):
-
-```bash
-helm upgrade --install groot ./deploy/helm/groot \
-  --namespace groot --create-namespace \
-  --set-file config.grootYml=./groot.yml \
-  --set image.tag=0.5.0
-```
-
-Archives land on the **`/out`** volume (PVC by default). See **`deploy/helm/groot/README.md`** for values reference.
-
-### Flat manifests (no Helm)
+Pull the image from here:
 
 ```bash
-kubectl apply -f deploy/k8s/cronjob.yaml
+docker pull ghcr.io/hrodrig/groot:0.6.1
 ```
 
-Edit the ConfigMap **`groot-config`** and image tag before production use. Includes Namespace, ServiceAccount, ClusterRole, PVC, and CronJob.
-
-More detail: **`deploy/README.md`**.
+In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](docs/SPECIFICATIONS.md#8-runtime-and-kubernetes-access).
 
 [↑ Back to top](#readme-top)
 
@@ -785,28 +781,11 @@ authorization: [REDACTED]
 
 [↑ Back to top](#readme-top)
 
-## Rootless container
+## Container image
 
-```bash
-make docker-build
-make docker-buildx
-make scan
+Published image: **`ghcr.io/hrodrig/groot`** (distroless **nonroot**). Build locally with `make docker-build` when hacking on this repo.
 
-docker run --rm \
-  -v "$HOME/.kube:/home/nonroot/.kube:ro" \
-  -v "$(pwd)/out:/app/out" \
-  groot:local
-```
-
-For strict rootless runtime, use Podman:
-
-```bash
-podman build -t groot:local .
-podman run --rm \
-  -v "$HOME/.kube:/home/nonroot/.kube:ro" \
-  -v "$(pwd)/out:/app/out" \
-  groot:local
-```
+For **`docker run`** / Podman with kubeconfig mounts, cron, Helm, and in-cluster manifests, see **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**.
 
 [↑ Back to top](#readme-top)
 

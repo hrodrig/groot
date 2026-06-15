@@ -47,7 +47,7 @@ Homebrew, SBOM, and object-store upload stay in **0.6.x** (see [ROADMAP.md](ROAD
 
 ## Configuration examples (operator)
 
-See also [README → Notifications](../../README.md#notifications), [SPEC §9](SPECIFICATIONS.md#9-configuration-examples), and [deploy/README.md](../../deploy/README.md).
+See also [README → Notifications](../../README.md#notifications), [SPEC §9](SPECIFICATIONS.md#9-configuration-examples), and [groot-selfhosted run/deploy](https://github.com/hrodrig/groot-selfhosted/tree/main/run/deploy) (manifests moved from this repo in **v0.6.1**).
 
 ### Failure alert when any optional job fails
 

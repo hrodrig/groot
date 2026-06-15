@@ -19,6 +19,7 @@
 !CONTRIBUTING.md
 !CODE_OF_CONDUCT.md
 !SECURITY.md
+!AGENTS.md
 !codecov.yml
 !docker-compose.yml
 !go.mod
@@ -31,9 +32,6 @@
 
 !scripts/
 !scripts/**
-
-!deploy/
-!deploy/**
 
 !contrib/
 !contrib/**

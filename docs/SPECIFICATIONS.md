@@ -16,7 +16,7 @@ This document is the source of truth for **observable behavior** and test expect
 - Timestamped capture directory, then **`.tar.gz`** archive beside `output_dir`; ephemeral capture folder removed after archiving.
 - Optional outbound **notify** channels after a **completed** collect (HTTP webhooks, Telegram, PagerDuty Events v2, email/SMTP).
 - Rootless container image (distroless nonroot) for manual or cron-style runs.
-- Optional **Helm chart** and flat **CronJob** manifests for scheduled in-cluster collection (see `deploy/`).
+- Optional **Helm chart** and flat **CronJob** manifests for scheduled in-cluster collection (maintained in **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** `run/deploy/`).
 
 ### Out of scope (v1)
 
@@ -247,7 +247,7 @@ Argv is split on whitespace in config—**no shell quoting** for pipelines or re
 
 - **`pkg/kubeloader`**: kubeconfig path or in-cluster config → `rest.Config`.
 - **RBAC**: read/list/get/watch logs as required by selected jobs; metrics API when `include_pod_metrics` or RCA metrics columns used.
-- **In-cluster scheduling**: Helm chart `deploy/helm/groot/` and flat manifests `deploy/k8s/cronjob.yaml` (CronJob + ClusterRole + ConfigMap + optional PVC for `/out`). Image: `ghcr.io/hrodrig/groot`.
+- **In-cluster scheduling**: CronJob + ClusterRole + ConfigMap + optional PVC for `/out`; image `ghcr.io/hrodrig/groot`. Helm chart and flat manifests: **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** `run/deploy/`.
 - **Tested client modules:** `k8s.io/*` v0.32.5 (see `go.mod`).
 
 ## 9. Configuration examples
@@ -319,7 +319,7 @@ config:
         enabled: true
 ```
 
-Install: `helm upgrade --install groot ./deploy/helm/groot -n groot --create-namespace`.
+Install: see **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted/blob/main/run/deploy/README.md)** (`helm upgrade --install groot ./run/deploy/helm/groot …`).
 
 ## 10. Post-collect upload
 

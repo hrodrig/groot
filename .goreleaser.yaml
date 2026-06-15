@@ -197,6 +197,12 @@ homebrew_casks:
     commit_author:
       name: Hermes Rodríguez
       email: hrodrig@usb.ve
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/groot"]
+          end
     custom_block: |
       livecheck do
         url :stable

@@ -30,4 +30,4 @@ The cask lives in the separate tap repo **[hrodrig/homebrew-groot](https://githu
 
 ## Scheduling (optional, operator-owned)
 
-If you want periodic runs, invoke **`groot collect`** from **cron**, **Helm CronJob**, **CI**, or your own wrappers. The packages do not enable or ship any long-running service.
+If you want periodic runs, invoke **`groot collect`** from **cron**, **Helm CronJob**, **CI**, or your own wrappers. Examples and manifests: **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** (`run/standalone/`, `run/deploy/`). The packages do not enable or ship any long-running service.

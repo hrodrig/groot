@@ -9,7 +9,7 @@ User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sam
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-09 (**0.6.x** closed in **v0.6.0**; focus **0.7.x** airgapped upload, then **1.0.0**)
+**Last reviewed:** 2026-06-15 (**0.6.x** doc split in **v0.6.1**; focus **0.7.x** airgapped upload, then **1.0.0**)
 
 ### Versioning note
 
@@ -55,6 +55,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.4.1** | **`Dockerfile`** builder **Go 1.26.4** (Security Grype image build); README download examples for **v0.4.1**. |
 | **0.5.0** | **Notify on failure** (`notify.on_failure`: abort + partial-failure threshold). **Rich generic webhooks** (`extra_fields`, `body_template`, HMAC). **Email/SMTP** channel. **HTTP notify retry/backoff**. **Optional log redaction** (`collection.redact_secrets`). **In-cluster deploy**: Helm chart (`deploy/helm/groot/`) and flat CronJob manifests (`deploy/k8s/`). |
 | **0.6.0** | **Homebrew cask** tap + `groot_vX.Y.Z_*` release basenames. **SBOM** (SPDX + CycloneDX). **Cosign** keyless signing (checksums + images). **Post-collect S3/GCS upload**. **FreeBSD + OpenBSD** ports with release CI. |
+| **0.6.1** | **Product vs operator split**: Helm/CronJob manifests and deploy runbooks moved to **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**; README/SPEC/AGENTS clarify product scope (docs only). |
 
 ---
 

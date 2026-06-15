@@ -60,24 +60,22 @@ jobs:
           fi
           git fetch origin
 
-      - name: Install chart-releaser
-        run: |
-          set -euo pipefail
-          ver=v1.7.0
-          curl -sSL "https://github.com/helm/chart-releaser/releases/download/${ver}/chart-releaser_${ver#v}_linux_amd64.tar.gz" | tar xz cr
-          sudo install -m 755 cr /usr/local/bin/chart-releaser
-          chart-releaser version
-
+      # chart-releaser v1.7+ uses cr package/upload/index (not `cr release`).
+      # Run upstream cr.sh from the selfhosted git root so tag-based change detection works.
       - name: Run chart-releaser (selfhosted git → groot gh-pages)
         working-directory: selfhosted
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
-          chart-releaser release \
+          set -euo pipefail
+          curl -sSL -o /tmp/cr.sh https://raw.githubusercontent.com/helm/chart-releaser-action/v1.7.0/cr.sh
+          chmod +x /tmp/cr.sh
+          /tmp/cr.sh \
             --owner hrodrig \
             --repo groot \
             --charts-dir run/deploy/helm \
-            --skip-existing
+            --skip-existing true \
+            --version v1.7.0
 
       - name: Publish Helm repo landing page (GitHub Pages)
         run: |

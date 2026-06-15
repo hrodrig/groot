@@ -1,6 +1,6 @@
 # Plan 0.7.0 — airgapped upload and supply-chain follow-up
 
-**Status:** planning  \
+**Status:** **shipped** — **`v0.7.0`** tagged on `main` (2026-06-15)  \
 **Target release:** `v0.7.0`  \
 **Roadmap band:** [ROADMAP.md](ROADMAP.md) **0.7.x** items **#36–#38**  \
 **Delivery model:** one PR per item on `develop`. No tag until release checklist passes.

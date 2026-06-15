@@ -740,7 +740,7 @@ This repository ships the **CLI**, **packages**, and **`ghcr.io/hrodrig/groot`**
 | Mode | Where |
 |------|--------|
 | Docker / Podman on a bastion | [run/docker/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/docker) |
-| Helm CronJob (in-cluster) | [run/deploy/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/deploy) · **`helm repo add groot https://hrodrig.github.io/groot`** |
+| Helm CronJob (in-cluster) | [run/deploy/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/deploy) · **`helm repo add groot https://hrodrig.github.io/groot-selfhosted`** |
 | Flat CronJob YAML | [run/deploy/k8s/cronjob.yaml](https://github.com/hrodrig/groot-selfhosted/blob/main/run/deploy/k8s/cronjob.yaml) |
 | cron / systemd (Releases binary) | [run/standalone/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/standalone) |
 

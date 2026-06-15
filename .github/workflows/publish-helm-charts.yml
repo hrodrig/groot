@@ -61,19 +61,19 @@ jobs:
           git fetch origin
 
       - name: Install chart-releaser
-        uses: helm/chart-releaser-action@v1.7.0
-        with:
-          install_only: true
-          version: v1.7.0
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          set -euo pipefail
+          ver=v1.7.0
+          curl -sSL "https://github.com/helm/chart-releaser/releases/download/${ver}/chart-releaser_${ver#v}_linux_amd64.tar.gz" | tar xz cr
+          sudo install -m 755 cr /usr/local/bin/chart-releaser
+          chart-releaser version
 
       - name: Run chart-releaser (selfhosted git → groot gh-pages)
         working-directory: selfhosted
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
-          cr release \
+          chart-releaser release \
             --owner hrodrig \
             --repo groot \
             --charts-dir run/deploy/helm \

@@ -65,6 +65,8 @@ jobs:
         with:
           install-only: true
           version: v1.7.0
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Run chart-releaser (selfhosted git → groot gh-pages)
         working-directory: selfhosted

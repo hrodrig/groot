@@ -33,6 +33,7 @@ jobs:
           repository: hrodrig/groot-selfhosted
           ref: ${{ github.event.client_payload.ref || inputs.ref }}
           path: selfhosted
+          fetch-depth: 0
 
       - name: Configure Git
         run: |
@@ -59,13 +60,22 @@ jobs:
           fi
           git fetch origin
 
-      - name: Run chart-releaser
+      - name: Install chart-releaser
         uses: helm/chart-releaser-action@v1.7.0
         with:
-          charts_dir: selfhosted/run/deploy/helm
-          skip_existing: true
+          install-only: true
+          version: v1.7.0
+
+      - name: Run chart-releaser (selfhosted git → groot gh-pages)
+        working-directory: selfhosted
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        run: |
+          cr release \
+            --owner hrodrig \
+            --repo groot \
+            --charts-dir run/deploy/helm \
+            --skip-existing
 
       - name: Publish Helm repo landing page (GitHub Pages)
         run: |

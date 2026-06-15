@@ -9,7 +9,7 @@ User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sam
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-15 (Band 1 shipped; focus **Band 2** 0.7.x airgapped upload, then **Band 3** 1.0.0)
+**Last reviewed:** 2026-06-15 (Band 1 + Band 2 shipped; focus **Band 3** 1.0.0)
 
 ### Versioning note
 
@@ -26,8 +26,6 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 **Honest gaps today:**
 
 - **`k8srunner`** `extra_kubectl` is intentionally narrow (`get`/`describe`/`top` subsets; no `explain`/`wait`).
-- **Container image SBOM** not attached (docker driver limit; archive SBOM covers dependencies — #38).
-- **No SFTP upload** for bastion → SSH relay topologies (S3/GCS only today — #36).
 - **No `config_version`** or formal migration path (#30).
 - **No second command** (`validate` / `inspect`) (#31).
 
@@ -36,7 +34,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | Band | Status | Items |
 |------|--------|-------|
 | **Band 1** (0.1.x–0.6.x) | **Shipped** (#1–#29) | Initial CLI through BSD ports; see [plan-0.4.0](plan-0.4.0.md), [plan-0.5.0](plan-0.5.0.md), [plan-0.6.0](plan-0.6.0.md) |
-| **Band 2** (0.7.x) | **Active** (#36–#38) | SFTP upload (SCP-compatible relay), airgapped relay playbook, container image SBOM; see [plan-0.7.0.md](plan-0.7.0.md) |
+| **Band 2** (0.7.x) | **Shipped** (#36–#38) | SFTP upload (SCP-compatible relay), airgapped relay playbook, container image SBOM; see [plan-0.7.0.md](plan-0.7.0.md) |
 | **Band 3** (1.0.0) | **Future** (#30–#35) | Config schema stability, multi-cluster, inspect/validate, CI matrix, `pkg/` → `internal/` |
 
 ---
@@ -53,6 +51,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.5.0** | 1 | **Notify on failure** (`notify.on_failure`: abort + partial-failure threshold). **Rich generic webhooks** (`extra_fields`, `body_template`, HMAC). **Email/SMTP** channel. **HTTP notify retry/backoff**. **Optional log redaction** (`collection.redact_secrets`). **In-cluster deploy**: Helm chart (`deploy/helm/groot/`) and flat CronJob manifests (`deploy/k8s/`). |
 | **0.6.0** | 1 | **Homebrew cask** tap + `groot_vX.Y.Z_*` release basenames. **SBOM** (SPDX + CycloneDX). **Cosign** keyless signing (checksums + images). **Post-collect S3/GCS upload**. **FreeBSD + OpenBSD** ports with release CI. |
 | **0.6.1** | 1 | **Product vs operator split**: Helm/CronJob manifests and deploy runbooks moved to **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**; README/SPEC/AGENTS clarify product scope (docs only). |
+| **0.7.0** | 2 | **SFTP post-collect upload** (`upload.sftp`): bastion → SSH relay via public-key SFTP (`--no-upload` honored). **Airgapped relay playbook** (groot-selfhosted): bastion → SFTP → rclone → OneDrive topology with systemd watcher. **Container image SBOM**: OCI attestation enabled on `dockers_v2` (`sbom: true` via buildx docker-container driver). |
 
 ---
 
@@ -138,8 +137,8 @@ Post-collect delivery for clusters **without outbound internet**: groot runs on 
 | # | Band | Item | Status |
 |---|------|------|--------|
 | 36 | 2 | **SFTP post-collect upload** (`upload.sftp`): push `.tar.gz` to a remote Linux host over SSH (public-key auth via env `GROOT_UPLOAD_SFTP_IDENTITY_FILE`; `known_hosts` file; `BatchMode` — no password prompts). Same failure semantics as S3/GCS (`continue_on_error`, `--no-upload`). Operators say "SCP to relay" — this is the SFTP implementation of that pattern. | **Done (v0.7.0)** |
-| 37 | 2 | **Airgapped relay playbook**: `contrib/relay/` (or `docs/airgapped-upload.md`) — reference topology bastion → SSH relay → **rclone** OneDrive inbox watcher on Linux; sample `groot.yml`, `systemd.path` unit, hardening notes. No groot code. | Pending |
-| 38 | 2 | **Container image SBOM**: enable OCI SBOM attestation on `dockers_v2` when release workflow uses buildx `docker-container` driver (archive SBOM already ships in #26). | Pending |
+| 37 | 2 | **Airgapped relay playbook**: **[groot-selfhosted → airgapped-relay](https://github.com/hrodrig/groot-selfhosted/blob/main/run/examples/airgapped-relay/README.md)** — topology bastion → SSH relay → **rclone** OneDrive. `groot-bastion.yml`, `systemd.path`+`.service` watcher, SSH hardening. No groot code. | **Done (v0.7.0)** |
+| 38 | 2 | **Container image SBOM**: OCI SBOM attestation enabled on `dockers_v2` (`sbom: true`) — release workflow already uses buildx `docker-container` driver via `docker/setup-buildx-action@v3`. | **Done (v0.7.0)** |
 
 **Out of scope for Band 2:** native OneDrive / Microsoft Graph upload inside groot; password-based SSH; groot running inside AKS pods with egress to relay (bastion is the supported runtime for this topology).
 

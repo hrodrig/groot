@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **SFTP post-collect upload (band 2 #36)**: `upload.sftp` pushes `.tar.gz` to a remote Linux host over SSH (public-key only, `known_hosts` verification, `BatchMode`). Env: `GROOT_UPLOAD_SFTP_*`. Same failure semantics as S3/GCS. Relay playbook → [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) `run/examples/airgapped-relay/`.
+- **Airgapped relay playbook (band 2 #37)**: `run/examples/airgapped-relay/` in groot-selfhosted — end-to-end topology bastion → SFTP → rclone → OneDrive, systemd watcher, SSH hardening. No groot code.
+- **Container image SBOM (band 2 #38)**: OCI attestation enabled on `dockers_v2` (`sbom: true`); release workflow uses buildx `docker-container` driver.
 
 ## [0.6.1] - 2026-06-15
 

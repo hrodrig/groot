@@ -124,7 +124,6 @@ snapshot:
 # (e.g. "spdx-json") — GoReleaser would emit duplicate release asset
 # names and GitHub upload fails with 422 already_exists / draft release.
 #
-# Container image SBOM attestation is deferred to 0.7.x #38.
 sboms:
   - id: groot-sbom-spdx
     artifacts: source
@@ -138,10 +137,11 @@ sboms:
     args: ["$artifact", "--output", "cyclonedx-json=$document"]
 
 # Multi-arch images via pre-built binaries (Dockerfile.release).
-# sbom: false — many buildx setups lack attestation support for the docker driver.
+# sbom: true — OCI SBOM attestation now enabled (buildx docker-container driver
+# set up in release workflow via docker/setup-buildx-action@v3).
 dockers_v2:
   - dockerfile: Dockerfile.release
-    sbom: false
+    sbom: true
     ids:
       - groot
     extra_files:

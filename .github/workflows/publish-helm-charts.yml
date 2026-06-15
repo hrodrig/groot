@@ -75,6 +75,7 @@ jobs:
             --repo groot \
             --charts-dir run/deploy/helm \
             --skip-existing true \
+            --packages-with-index true \
             --version v1.7.0
 
       - name: Publish Helm repo landing page (GitHub Pages)

@@ -63,7 +63,7 @@ jobs:
       - name: Install chart-releaser
         uses: helm/chart-releaser-action@v1.7.0
         with:
-          install-only: true
+          install_only: true
           version: v1.7.0
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

@@ -14,9 +14,10 @@ import (
 
 // Config represents the YAML and env configuration.
 type Config struct {
-	Kubeconfig string        `mapstructure:"kubeconfig"`
-	OutputDir  string        `mapstructure:"output_dir"`
-	FilePrefix string        `mapstructure:"file_prefix"`
+	Kubeconfig  string        `mapstructure:"kubeconfig"`
+	ClusterName string        `mapstructure:"cluster_name"`
+	OutputDir   string        `mapstructure:"output_dir"`
+	FilePrefix  string        `mapstructure:"file_prefix"`
 	Collection CollectionCfg `mapstructure:"collection"`
 	Notify     NotifyCfg     `mapstructure:"notify"`
 	Upload     UploadCfg     `mapstructure:"upload"`

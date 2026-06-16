@@ -87,6 +87,7 @@ This document is the source of truth for **observable behavior** and test expect
 | Key | Type | Default (if omitted) | Notes |
 |-----|------|----------------------|-------|
 | `kubeconfig` | string | `""` | Empty → client-go default rules + in-cluster when applicable. |
+| `cluster_name` | string | `""` | Optional archive basename cluster label. When empty, resolved from kubeconfig → `kube-public/cluster-info` → API server host. |
 | `output_dir` | string | `./out` | Supports `~` and `${VAR}` expansion. |
 | `file_prefix` | string | `groot-capture` | **Used** in capture directory and archive basename (ROADMAP **0.4.x #12**). |
 | `collection` | object | see below | |
@@ -155,7 +156,7 @@ Validation: enabled channels must have non-empty credentials after env merge.
    - `<sanitize(file_prefix)>-<timestamp>-since-<slug>` when `pod_logs_since` / `--since` is set (`slug` = sanitized since value).
    - Default `file_prefix` is `groot-capture`; empty value falls back to the same default.
 2. **Archive file**: `<sessionBase>-<cluster>[-<message-suffix>].tar.gz` in `output_dir`.
-   - `<cluster>` from kubeconfig context metadata (sanitized), else `unknown-cluster`.
+   - `<cluster>` resolution order: `cluster_name` config (if set) → kubeconfig cluster metadata → `kube-public/cluster-info` ConfigMap → API server host (sanitized) → `unknown-cluster`.
    - `<message-suffix>` from `--message` when non-empty after sanitization.
 3. After successful tar, **capture folder is deleted**; only `.tar.gz` remains.
 

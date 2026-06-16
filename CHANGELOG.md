@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`cluster_name` config and in-cluster archive naming**: optional `cluster_name:` overrides the archive basename cluster segment. When empty, Groot resolves kubeconfig cluster metadata, then `kube-public/cluster-info`, then the API server host, before `unknown-cluster`. Helps in-cluster CronJobs and on-demand pods without kubeconfig context.
 - **SFTP post-collect upload (band 2 #36)**: `upload.sftp` pushes `.tar.gz` to a remote Linux host over SSH (public-key only, `known_hosts` verification, `BatchMode`). Env: `GROOT_UPLOAD_SFTP_*`. Same failure semantics as S3/GCS. Relay playbook → [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) `run/examples/airgapped-relay/`.
 - **Airgapped relay playbook (band 2 #37)**: `run/examples/airgapped-relay/` in groot-selfhosted — end-to-end topology bastion → SFTP → rclone → OneDrive, systemd watcher, SSH hardening. No groot code.
 - **Container image SBOM (band 2 #38)**: OCI attestation enabled on `dockers_v2` (`sbom: true`); release workflow uses buildx `docker-container` driver.

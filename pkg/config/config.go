@@ -18,9 +18,9 @@ type Config struct {
 	ClusterName string        `mapstructure:"cluster_name"`
 	OutputDir   string        `mapstructure:"output_dir"`
 	FilePrefix  string        `mapstructure:"file_prefix"`
-	Collection CollectionCfg `mapstructure:"collection"`
-	Notify     NotifyCfg     `mapstructure:"notify"`
-	Upload     UploadCfg     `mapstructure:"upload"`
+	Collection  CollectionCfg `mapstructure:"collection"`
+	Notify      NotifyCfg     `mapstructure:"notify"`
+	Upload      UploadCfg     `mapstructure:"upload"`
 }
 
 type CollectionCfg struct {

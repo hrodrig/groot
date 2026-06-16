@@ -143,14 +143,7 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		s.invokeOnFailed("pod-rca-table", err)
 	}
 
-	clusterName := "unknown-cluster"
-	if meta, err := s.ReadKubeMetadata(ctx); err == nil {
-		if c := strings.TrimSpace(meta.Cluster); c != "" {
-			clusterName = sanitize(c)
-		}
-	} else {
-		s.invokeOnFailed("cluster-name", err)
-	}
+	clusterName := s.resolveClusterName(ctx)
 	archiveName := archiveBasename(sessionBase, clusterName, s.message)
 
 	if err := s.writeManifest(ctx, captureDir, sessionBase, archiveName, summary); err != nil {
@@ -648,11 +641,17 @@ func (s *Service) writeMetadata(ctx context.Context, captureDir string) error {
 	if err != nil {
 		return err
 	}
+	cluster := s.resolveClusterName(ctx)
+	if s.restConfig == nil && strings.TrimSpace(meta.Server) == "" {
+		meta.Server = restHostFromKubeconfig(s.cfg.Kubeconfig)
+	} else if strings.TrimSpace(meta.Server) == "" && s.restConfig != nil {
+		meta.Server = strings.TrimSpace(s.restConfig.Host)
+	}
 
 	content := fmt.Sprintf(
 		"context: %s\ncluster: %s\nuser: %s\nserver: %s\n",
 		emptyAsUnknown(meta.Context),
-		emptyAsUnknown(meta.Cluster),
+		emptyAsUnknown(cluster),
 		emptyAsUnknown(meta.User),
 		emptyAsUnknown(meta.Server),
 	)

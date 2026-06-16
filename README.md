@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.6.1-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.7.1-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -415,6 +415,7 @@ notify:
 | Key | What it does |
 |-----|----------------|
 | **`kubeconfig`** | Path to the kubeconfig file used to build the **client-go** REST config (same discovery rules as **client-go** / **`clientcmd`**). Empty: use **`KUBECONFIG`** if set, then the default kubeconfig locations (for example **`~/.kube/config`**), or in-cluster credentials when Groot runs as a pod. **`groot --kubeconfig`** overrides this for a single run (see [Resolution and precedence](#resolution-and-precedence)). |
+| **`cluster_name`** | Optional label for the **`<cluster>`** segment in archive basenames. When empty, Groot resolves: kubeconfig cluster name → **`kube-public/cluster-info`** → API server host → **`unknown-cluster`**. Set explicitly for in-cluster pods without kubeconfig context. Env: **`GROOT_CLUSTER_NAME`**. |
 | **`output_dir`** | Base directory: each run creates **`<file_prefix>-<timestamp>[-since-<slug>]/`**, then **`<sessionBase>-<cluster>[-<message>].tar.gz`** beside it. Supports **`~`** and **`${VAR}`** expansion. |
 | **`file_prefix`** | Prefix for capture directory and archive basename (default **`groot-capture`**). Example session: **`groot-capture-20260606-120000-my-cluster.tar.gz`**. |
 | **`collection`** | Tuning for timeouts, parallelism, namespaces, pod logs, optional **`extra_kubectl`** argv lines, redaction, etc. (see below). |

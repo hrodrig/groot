@@ -13,6 +13,9 @@ func TestSampleYAML(t *testing.T) {
 	if !strings.Contains(s, "groot-capture") {
 		t.Fatalf("sample should mention file_prefix default: %q", s)
 	}
+	if !strings.Contains(s, "cluster_name:") {
+		t.Fatalf("sample should document cluster_name: %q", s)
+	}
 	if !strings.Contains(s, "upload:") {
 		t.Fatalf("sample should document upload block: %q", s)
 	}

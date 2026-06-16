@@ -12,6 +12,11 @@ output_dir: "./out"
 # Prefix for capture directory and archive basename: <file_prefix>-<timestamp>[-since-<slug>]-<cluster>
 file_prefix: "groot-capture"
 
+# Optional label for archive basename <cluster> segment. When empty, Groot resolves in order:
+# kubeconfig cluster name → kube-public/cluster-info → API server host → unknown-cluster.
+# Use this for in-cluster pods (no kubeconfig context), e.g. cluster_name: "prod-eks"
+cluster_name: ""
+
 collection:
   # Maximum duration for the whole collect run (context deadline); entire job aborts after this.
   timeout: 20m

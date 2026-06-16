@@ -59,6 +59,14 @@ func (s *Service) writeManifest(
 	if err != nil {
 		return err
 	}
+	cluster := s.resolveClusterName(ctx)
+	if strings.TrimSpace(meta.Server) == "" {
+		if s.restConfig != nil {
+			meta.Server = strings.TrimSpace(s.restConfig.Host)
+		} else {
+			meta.Server = restHostFromKubeconfig(s.cfg.Kubeconfig)
+		}
+	}
 
 	paths, err := listCaptureRelPaths(captureDir)
 	if err != nil {
@@ -80,7 +88,7 @@ func (s *Service) writeManifest(
 		FilePrefix:      strings.TrimSpace(s.cfg.FilePrefix),
 		Cluster: manifestCluster{
 			Context: emptyAsUnknown(meta.Context),
-			Cluster: emptyAsUnknown(meta.Cluster),
+			Cluster: emptyAsUnknown(cluster),
 			User:    emptyAsUnknown(meta.User),
 			Server:  emptyAsUnknown(meta.Server),
 		},

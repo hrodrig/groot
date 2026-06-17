@@ -225,11 +225,48 @@ func TestRoot_version(t *testing.T) {
 	rootCmd.SetOut(&buf)
 	rootCmd.SetErr(&buf)
 	rootCmd.SetArgs([]string{"--version"})
-	if err := rootCmd.Execute(); err != nil {
+	if err := Execute(); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(buf.String(), "0.9.9") {
-		t.Fatalf("version output: %s", buf.String())
+	out := buf.String()
+	if !strings.Contains(out, "groot v0.9.9") {
+		t.Fatalf("version output: %s", out)
+	}
+	if strings.Contains(out, "I am Groot") {
+		t.Fatalf("short version should not include greeting: %s", out)
+	}
+}
+
+func TestRoot_version_long(t *testing.T) {
+	resetPersistentFlags(t)
+	t.Cleanup(func() { SetBuildInfo("dev", "unknown", "unknown", "unknown") })
+	SetBuildInfo("0.9.9", "abc", "dev", "2000-01-01")
+	var buf bytes.Buffer
+	rootCmd.SetOut(&buf)
+	rootCmd.SetErr(&buf)
+	rootCmd.SetArgs([]string{"--version", "--long"})
+	if err := Execute(); err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if !strings.HasPrefix(strings.TrimSpace(out), "I am Groot v0.9.9") {
+		t.Fatalf("long version output: %s", out)
+	}
+}
+
+func TestRoot_version_subcommand(t *testing.T) {
+	resetPersistentFlags(t)
+	t.Cleanup(func() { SetBuildInfo("dev", "unknown", "unknown", "unknown") })
+	SetBuildInfo("0.9.9", "abc", "dev", "2000-01-01")
+	var buf bytes.Buffer
+	rootCmd.SetOut(&buf)
+	rootCmd.SetErr(&buf)
+	rootCmd.SetArgs([]string{"version", "--long"})
+	if err := Execute(); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), "I am Groot v0.9.9") {
+		t.Fatalf("version subcommand output: %s", buf.String())
 	}
 }
 

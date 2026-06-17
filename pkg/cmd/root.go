@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -211,7 +212,11 @@ var collectCmd = &cobra.Command{
 
 // Execute runs the CLI.
 func Execute() error {
-	return rootCmd.Execute()
+	err := rootCmd.Execute()
+	if errors.Is(err, ErrVersionPrinted) {
+		return nil
+	}
+	return err
 }
 
 // ResetPersistentCLI restores root and collect-command flags to defaults (for tests calling Execute from main package).
@@ -236,11 +241,11 @@ func SetBuildInfo(version, commit, branch, date string) {
 	buildCommit = commit
 	buildBranch = branch
 	buildDate = date
-	rootCmd.Version = fmt.Sprintf("%s (commit=%s branch=%s built=%s)", buildVersion, buildCommit, buildBranch, buildDate)
 }
 
 func init() {
-	rootCmd.Version = fmt.Sprintf("%s (commit=%s branch=%s built=%s)", buildVersion, buildCommit, buildBranch, buildDate)
+	rootCmd.PersistentPreRunE = versionPreRun
+	initVersionFlags(rootCmd)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Path to YAML config file")
 	rootCmd.PersistentFlags().BoolVar(&printSampleConfig, "print-sample-config", false, "Print sample groot.yml and exit")
 	rootCmd.PersistentFlags().BoolVar(&testConnection, "test-connection", false, "Validate Kubernetes connectivity and exit")
@@ -253,7 +258,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&kubeconfigOverride, "kubeconfig", "", "Override kubeconfig path for the Kubernetes API client")
 	collectCmd.Flags().StringVar(&collectLogsSince, "since", "", "Pod logs only: --since duration (e.g. 24h, 45m; bare number means hours). Overrides collection.pod_logs_since in config when set")
 	collectCmd.Flags().BoolVar(&listJobs, "list-jobs", false, "Print planned collection jobs and exit without writing output")
-	rootCmd.AddCommand(collectCmd)
+	rootCmd.AddCommand(collectCmd, versionCmd)
 }
 
 type connMeta struct {

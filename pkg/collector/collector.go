@@ -173,7 +173,7 @@ func (s *Service) buildJobs(ctx context.Context) ([]job, error) {
 		return nil, err
 	}
 
-	jobs, err = s.appendNodeKubeletLogJobs(ctx, jobs)
+	jobs, err = s.appendNodeLogJobs(ctx, jobs)
 	if err != nil {
 		return nil, err
 	}
@@ -252,33 +252,37 @@ func kubeletLogQueryRawPath(nodeName string, tailLines int) string {
 }
 
 // nodeVarLogMessagesRawPath matches kubectl get --raw …/proxy/logs/messages (host /var/log/messages
-// when the kubelet exposes it; same pattern as node emergency log scripts).
+// when the kubelet exposes it on the node).
 func nodeVarLogMessagesRawPath(nodeName string) string {
 	return fmt.Sprintf("/api/v1/nodes/%s/proxy/logs/messages", url.PathEscape(nodeName))
 }
 
-func (s *Service) appendNodeKubeletLogJobs(ctx context.Context, jobs []job) ([]job, error) {
+// appendNodeLogJobs captures per-node host logs. Primary path: GET …/proxy/logs/messages
+// → nodes/<node>.log (common on managed clouds such as AKS). Kubelet log query (Node Log
+// Query API, 1.27+) is best-effort when the cluster exposes it.
+func (s *Service) appendNodeLogJobs(ctx context.Context, jobs []job) ([]job, error) {
 	if !s.cfg.Collection.IncludeNodeLogs {
 		return jobs, nil
 	}
 	nodes, err := s.listNodesAsResources(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list nodes for kubelet logs: %w", err)
+		return nil, fmt.Errorf("list nodes for node logs: %w", err)
 	}
 	tail := s.cfg.Collection.NodeLogTailLines
 	for _, node := range nodes {
 		nodeSafe := sanitize(node)
 		nodeName := strings.TrimPrefix(node, "node/")
+		jobs = append(jobs, job{
+			Name:     "node-log-" + nodeSafe,
+			Args:     []string{"get", "--raw", nodeVarLogMessagesRawPath(nodeName)},
+			FileName: filepath.Join("nodes", nodeSafe+".log"),
+			Optional: true,
+		})
 		raw := kubeletLogQueryRawPath(nodeName, tail)
 		jobs = append(jobs, job{
 			Name:     "node-log-kubelet-" + nodeSafe,
 			Args:     []string{"get", "--raw", raw},
 			FileName: filepath.Join("nodes", nodeSafe+"-kubelet.log"),
-		})
-		jobs = append(jobs, job{
-			Name:     "node-log-messages-" + nodeSafe,
-			Args:     []string{"get", "--raw", nodeVarLogMessagesRawPath(nodeName)},
-			FileName: filepath.Join("nodes", nodeSafe+"-messages.log"),
 			Optional: true,
 		})
 	}

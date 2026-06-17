@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.7.1-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.7.2-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -200,7 +200,7 @@ Use a **release tag** instead of `@latest` if you want a pinned version (for exa
 
 Useful runtime flags (global or with `collect`):
 
-- `--version` prints version, commit, branch, and build date
+- `--version` / `-v` prints `groot vX.Y.Z (commit=… branch=… built=…)`
 - `--test-connection` validates Kubernetes connectivity and exits
 - `--verbose` shows each executed command as `CMD`, plus `OK`/`ERR` results
 - `--quiet` suppresses normal **console** output (INFO/WARN/CMD/OK) and only prints errors; **notify integrations still run** (Slack, Discord, Teams, PagerDuty, Telegram, generic) unless you disable them in config or use `--no-notify`
@@ -436,8 +436,8 @@ Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.t
 | **`pod_log_tail_lines`** | When **`>0`**, passes **`--tail N`** to pod log commands. **`0`** means **no `--tail`** (full log stream — can be very large). |
 | **`pod_logs_since`** | When set, passes **`--since=…`** to **pod log** commands only (digits-only = **hours**, e.g. **`24`** → **`24h`**; otherwise a Go duration like **`24h`**, **`45m`**). **`groot collect --since`** overrides this when the flag is set. The capture directory and **`.tar.gz`** basename include **`since-<slug>`** after the timestamp so runs with a log window are identifiable on disk (see [Output naming](#output-naming)). |
 | **`include_node_details`** | When **`true`**, for each node writes **describe**-style summaries and **node metrics** (when the metrics API is available) under **`nodes/`**. |
-| **`include_node_logs`** | When **`true`**, for each node: (1) **GET** **`/api/v1/nodes/<node>/proxy/logs/?query=kubelet`** (optional **`&tailLines=N`**) → **`nodes/<node>-kubelet.log`** (kubelet via **node log query**; Kubernetes **1.27+**, RBAC **`nodes/proxy`**, kubelet log-query settings — see [Node log query](https://kubernetes.io/blog/2023/04/21/node-log-query-alpha/)); (2) **GET** **`/api/v1/nodes/<node>/proxy/logs/messages`** → **`nodes/<node>-messages.log`** (host **`/var/log/messages`** when the kubelet serves it). The **messages** job is **optional** (failure does not fail the run) because many nodes use journald only or do not expose that path. |
-| **`node_log_tail_lines`** | When **`>0`**, appends **`tailLines`** to the kubelet log query (**default `5000`**). **`0`** omits **`tailLines`** (server default limit). |
+| **`include_node_logs`** | When **`true`**, for each node: (1) **GET** **`/api/v1/nodes/<node>/proxy/logs/messages`** → **`nodes/<node>.log`** (host **`/var/log/messages`** when the kubelet serves it — common on **AKS** and other managed nodes); (2) **GET** **`/api/v1/nodes/<node>/proxy/logs/?query=kubelet`** (optional **`&tailLines=N`**) → **`nodes/<node>-kubelet.log`** when the cluster exposes the **Node Log Query** API (Kubernetes **1.27+**; often **404 on AKS**). **Both** jobs are **optional** (failure does not fail the run). |
+| **`node_log_tail_lines`** | When **`>0`**, appends **`tailLines`** to the optional kubelet log query (**default `5000`**). **`0`** omits **`tailLines`** (server default limit). Does not apply to the **`messages`** proxy. |
 | **`include_pod_metrics`** | When **`true`**, writes cluster-wide pod CPU/memory to **`extras/all-pods-top.txt`** (via **metrics.k8s.io**; requires **metrics-server** or an equivalent metrics provider). |
 | **`redact_secrets`** | When **`true`**, scans collected **`*.log`** files and replaces likely secret values with **`[REDACTED]`** before the manifest and archive (see [Secret redaction](#secret-redaction)). Default **`false`**. |
 | **`redact_patterns`** | Optional list of extra regex patterns (RE2 syntax). Invalid patterns fail at collect time. |

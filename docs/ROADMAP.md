@@ -9,7 +9,7 @@ User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sam
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-15 (Band 1 + Band 2 shipped; focus **Band 3** 1.0.0)
+**Last reviewed:** 2026-06-17 (Band 2 patch **0.7.2** — node log capture; Band 3 next)
 
 ### Versioning note
 
@@ -52,6 +52,8 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.6.0** | 1 | **Homebrew cask** tap + `groot_vX.Y.Z_*` release basenames. **SBOM** (SPDX + CycloneDX). **Cosign** keyless signing (checksums + images). **Post-collect S3/GCS upload**. **FreeBSD + OpenBSD** ports with release CI. |
 | **0.6.1** | 1 | **Product vs operator split**: Helm/CronJob manifests and deploy runbooks moved to **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**; README/SPEC/AGENTS clarify product scope (docs only). |
 | **0.7.0** | 2 | **SFTP post-collect upload** (`upload.sftp`): bastion → SSH relay via public-key SFTP (`--no-upload` honored). **Airgapped relay playbook** (groot-selfhosted): bastion → SFTP → rclone → OneDrive topology with systemd watcher. **Container image SBOM**: OCI attestation enabled on `dockers_v2` (`sbom: true` via buildx docker-container driver). |
+| **0.7.1** | 2 | **`cluster_name` config**: optional archive basename cluster label; resolution chain when empty (kubeconfig → cluster-info → API server host). |
+| **0.7.2** | 2 | **Node log capture**: host logs via node proxy → `nodes/<node>.log`; kubelet log query optional; fewer spurious failures on managed clouds (e.g. AKS). |
 
 ---
 

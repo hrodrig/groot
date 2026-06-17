@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-06-17
+
+### Changed
+
+- **Node log capture**: primary host logs via `…/proxy/logs/messages` → `nodes/<node>.log`; optional kubelet Node Log Query → `nodes/<node>-kubelet.log`. Both job types are optional so managed clusters without log query (e.g. AKS) no longer report spurious job failures.
+- **`--version` output**: prints `groot vX.Y.Z (commit=… branch=… built=…)` (aligned with [vision](https://github.com/hrodrig/vision)). New `groot version` subcommand.
+
 ## [0.7.1] - 2026-06-16
 
 ### Added

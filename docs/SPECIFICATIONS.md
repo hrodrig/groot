@@ -40,7 +40,8 @@ This document is the source of truth for **observable behavior** and test expect
 |---------|----------|
 | `groot` (no subcommand) | Prints help unless a global action flag is set. |
 | `groot collect` | Runs the full collection workflow (see §5). |
-| `groot --version` | Build metadata (`version`, `commit`, `branch`, `buildDate`). |
+| `groot --version` / `groot -v` | `groot vX.Y.Z (commit=… branch=… built=…)`. |
+| `groot version` | Same output as `--version`. |
 | `groot --print-sample-config` | Writes sample YAML to **stdout** and exits (root or `collect`). |
 | `groot --test-connection` | Loads config, lists one namespace via API, prints connection OK (root or `collect`). |
 
@@ -107,8 +108,8 @@ This document is the source of truth for **observable behavior** and test expect
 | `pod_log_tail_lines` | `1500` | `0` = no tail limit. |
 | `pod_logs_since` | `""` | Optional `--since` for pod logs; affects session slug (§5). |
 | `include_node_details` | `true` | Per-node describe + top under `nodes/`. |
-| `include_node_logs` | `true` | Kubelet log query + optional `/var/log/messages` proxy. |
-| `node_log_tail_lines` | `5000` | `0` = API default for kubelet query. |
+| `include_node_logs` | `true` | Per-node host logs via `…/proxy/logs/messages` → `nodes/<node>.log`; optional kubelet log query → `nodes/<node>-kubelet.log`. Both job types are optional (failure does not abort the run). |
+| `node_log_tail_lines` | `5000` | When kubelet log query runs: `0` = API default; `>0` adds `tailLines`. Ignored for the messages proxy. |
 | `include_pod_metrics` | `true` | Cluster-wide `top pods` when metrics-server available. |
 | `redact_secrets` | `false` | When `true`, scan collected `*.log` files and replace likely secret values before archiving. |
 | `redact_patterns` | `[]` | Optional extra regex patterns (RE2 syntax); invalid patterns fail at collect time. |
@@ -206,7 +207,9 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
 | `extras/all-pods-rca.tsv` | RCA-oriented table |
 | `<ns>/resources.txt` | JSON sections for workloads in namespace |
 | `<ns>/<pod>__<node>.log` | Pod logs (`unknown-node` if unscheduled) |
-| `nodes/` | Per-node describe, metrics, kubelet logs when enabled |
+| `nodes/<node>.log` | Host `/var/log/messages` via node proxy when enabled |
+| `nodes/<node>-kubelet.log` | Kubelet via Node Log Query API when cluster supports it (optional) |
+| `nodes/<node>-describe.txt`, `-top.txt` | Per-node describe and metrics when `include_node_details` |
 
 ## 6. `extra_kubectl` and `k8srunner`
 

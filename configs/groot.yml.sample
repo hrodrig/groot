@@ -66,10 +66,11 @@ collection:
   # When true, per-node describe and top under nodes/.
   include_node_details: true
 
-  # When true, per-node kubelet query + …/proxy/logs/messages (optional; see README).
+  # When true, per-node host logs (…/proxy/logs/messages → nodes/<node>.log)
+  # plus optional kubelet log query (nodes/<node>-kubelet.log). Both are optional jobs.
   include_node_logs: true
 
-  # When >0, adds tailLines to kubelet log query; 0 uses API default length.
+  # When >0, adds tailLines to optional kubelet log query; 0 uses API default length.
   node_log_tail_lines: 5000
 
   # When true, cluster-wide pod metrics into extras/all-pods-top.txt (requires metrics-server).

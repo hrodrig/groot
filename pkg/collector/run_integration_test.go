@@ -246,11 +246,74 @@ func TestService_Run_writesPodRCAInArchive(t *testing.T) {
 	if len(rca) == 0 {
 		t.Fatal("all-pods-rca.tsv missing from archive")
 	}
-	if !bytes.Contains(rca, []byte("namespace\tpod\tnode\tcpu_cores\tmemory_bytes\tpod_log_file")) {
+	if !bytes.Contains(rca, []byte("namespace\tpod\tnode\tcpu_cores\tmemory_bytes\tcpu_request\tcpu_limit\tmemory_request\tmemory_limit\tpod_log_file")) {
 		t.Fatalf("header: %s", rca)
 	}
 	if !bytes.Contains(rca, []byte("default\tpod-a\tnode1\t5m\t10Mi")) {
 		t.Fatalf("expected merged metrics row: %s", rca)
+	}
+}
+
+func TestService_Run_writesWorkloadResourcesInArchive(t *testing.T) {
+	kc, cleanup := kubetest.StartAPIServer(t)
+	defer cleanup()
+
+	out := t.TempDir()
+	cfg := config.Config{
+		Kubeconfig: kc,
+		OutputDir:  out,
+		Collection: config.CollectionCfg{
+			Timeout:            30 * time.Second,
+			WorkerConcurrency:  2,
+			IncludePodLogs:     false,
+			IncludeNodeDetails: false,
+			IncludeNodeLogs:    false,
+		},
+	}
+
+	sum, err := New(cfg).Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f, err := os.Open(sum.ArchivePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	gzr, err := gzip.NewReader(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer gzr.Close()
+
+	var wr []byte
+	tr := tar.NewReader(gzr)
+	for {
+		h, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasSuffix(h.Name, "extras/workload-resources.tsv") {
+			continue
+		}
+		wr, err = io.ReadAll(tr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		break
+	}
+	if len(wr) == 0 {
+		t.Fatal("workload-resources.tsv missing from archive")
+	}
+	if !bytes.Contains(wr, []byte("namespace\tpod\tnode\tcontainer\tinit_container")) {
+		t.Fatalf("header: %s", wr)
+	}
+	if !bytes.Contains(wr, []byte("default\tpod-a\tnode1\t")) {
+		t.Fatalf("row missing: %s", wr)
 	}
 }
 

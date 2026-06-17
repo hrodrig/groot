@@ -139,7 +139,11 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		s.runRedactPass(captureDir)
 	}
 
-	if err := s.writePodRCATable(captureDir); err != nil {
+	podResources, err := s.writeWorkloadResourcesTable(ctx, captureDir)
+	if err != nil {
+		s.invokeOnFailed("workload-resources", err)
+	}
+	if err := s.writePodRCATable(captureDir, podResources); err != nil {
 		s.invokeOnFailed("pod-rca-table", err)
 	}
 
@@ -568,8 +572,8 @@ func parseKubectlTopPodsAll(content string) map[string]topPodMetrics {
 }
 
 // writePodRCATable merges all-pod-node-placement.tsv with all-pods-top.txt (when present)
-// into extras/all-pods-rca.tsv — one table for RCA (pod/node + CPU/RAM + log path).
-func (s *Service) writePodRCATable(captureDir string) error {
+// and pod resource totals into extras/all-pods-rca.tsv — one table for RCA handoff.
+func (s *Service) writePodRCATable(captureDir string, podResources map[string]podResourceTotals) error {
 	placementPath := filepath.Join(captureDir, "extras", "all-pod-node-placement.tsv")
 	raw, err := os.ReadFile(placementPath)
 	if err != nil {
@@ -582,13 +586,13 @@ func (s *Service) writePodRCATable(captureDir string) error {
 	}
 
 	var b strings.Builder
-	b.WriteString("namespace\tpod\tnode\tcpu_cores\tmemory_bytes\tpod_log_file\n")
+	b.WriteString("namespace\tpod\tnode\tcpu_cores\tmemory_bytes\tcpu_request\tcpu_limit\tmemory_request\tmemory_limit\tpod_log_file\n")
 	for _, line := range strings.Split(strings.ReplaceAll(string(raw), "\r\n", "\n"), "\n") {
 		line = strings.TrimSpace(strings.TrimSuffix(line, "\r"))
 		if line == "" {
 			continue
 		}
-		if strings.HasPrefix(line, "namespace\tpod\tnode\tpod_log_file") {
+		if strings.HasPrefix(line, "namespace\tpod\tnode") {
 			continue
 		}
 		parts := strings.Split(line, "\t")
@@ -602,7 +606,15 @@ func (s *Service) writePodRCATable(captureDir string) error {
 				cpu, mem = m.CPU, m.Mem
 			}
 		}
-		b.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\n", ns, pod, node, cpu, mem, logFile))
+		cpuReq, cpuLim, memReq, memLim := "", "", "", ""
+		if podResources != nil {
+			if totals, ok := podResources[ns+"/"+pod]; ok {
+				cpuReq, cpuLim = totals.CPURequest, totals.CPULimit
+				memReq, memLim = totals.MemoryRequest, totals.MemoryLimit
+			}
+		}
+		b.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			ns, pod, node, cpu, mem, cpuReq, cpuLim, memReq, memLim, logFile))
 	}
 
 	target := filepath.Join(captureDir, "extras", "all-pods-rca.tsv")

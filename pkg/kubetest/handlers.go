@@ -61,7 +61,7 @@ func handleExactCore(w http.ResponseWriter, p string) bool {
 		writeJSON(w, `{"kind":"NodeList","apiVersion":"v1","metadata":{},"items":[{"metadata":{"name":"node1"},"status":{"conditions":[{"type":"Ready","status":"True"}],"nodeInfo":{"kubeletVersion":"v1.30.0"}}}]}`)
 		return true
 	case "/api/v1/pods":
-		writeJSON(w, `{"kind":"PodList","apiVersion":"v1","metadata":{},"items":[{"metadata":{"namespace":"default","name":"pod-a","labels":{"app.kubernetes.io/name":"api"}},"spec":{"nodeName":"node1"},"status":{"phase":"Running","containerStatuses":[{"name":"c","ready":true,"restartCount":0}]}}]}`)
+		writeJSON(w, `{"kind":"PodList","apiVersion":"v1","metadata":{},"items":[{"metadata":{"namespace":"default","name":"pod-a","labels":{"app.kubernetes.io/name":"api"}},"spec":{"nodeName":"node1","containers":[{"name":"c","resources":{"requests":{"cpu":"100m","memory":"64Mi"},"limits":{"cpu":"200m","memory":"128Mi"}}}]},"status":{"phase":"Running","containerStatuses":[{"name":"c","ready":true,"restartCount":0}]}}]}`)
 		return true
 	default:
 		return false

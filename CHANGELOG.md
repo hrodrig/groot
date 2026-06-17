@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-17
+
+### Added
+
+- **Workload resource RCA extras (0.8.x #39)**: **`extras/workload-resources.tsv`** — per-container CPU/memory requests and limits for every pod, plus controller owner kind/name. **`extras/all-pods-rca.tsv`** adds pod-level `cpu_request`, `cpu_limit`, `memory_request`, and `memory_limit` columns (summed across init + app containers) alongside usage metrics and log paths.
+
 ## [0.7.2] - 2026-06-17
 
 ### Changed

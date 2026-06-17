@@ -204,7 +204,8 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
 | `extras/all-pods-top.txt` | Pod metrics (if enabled) |
 | `extras/kubeconfig.txt` | Context/cluster/user/server |
 | `extras/all-pod-node-placement.tsv` | Pod → node placement |
-| `extras/all-pods-rca.tsv` | RCA-oriented table |
+| `extras/workload-resources.tsv` | Per-container CPU/memory requests and limits + owner reference |
+| `extras/all-pods-rca.tsv` | RCA-oriented table (usage + declared resources + log path) |
 | `<ns>/resources.txt` | JSON sections for workloads in namespace |
 | `<ns>/<pod>__<node>.log` | Pod logs (`unknown-node` if unscheduled) |
 | `nodes/<node>.log` | Host `/var/log/messages` via node proxy when enabled |

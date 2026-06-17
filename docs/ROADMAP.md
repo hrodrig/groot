@@ -9,13 +9,13 @@ User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sam
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-17 (Band 2 patch **0.7.2** — node log capture; Band 3 next)
+**Last reviewed:** 2026-06-17 (Band **0.8.0** — workload resource RCA extras; Band 3 next)
 
 ### Versioning note
 
 Public releases start at **v0.1.3** (early CLI and packaging). **`v0.3.0` was never published**; treat **[0.3.0]** changelog material as shipped from **`v0.3.1`** onward.
 
-Bands group semver minors into three planning horizons — **Band 1** (shipped, 0.1.x–0.6.x), **Band 2** (current, 0.7.x), **Band 3** (future, 1.0.0). Individual items carry **global IDs** (#1–#38) stable across bands.
+Bands group semver minors into planning horizons — **Band 1** (shipped, 0.1.x–0.6.x), **Band 2** (shipped, 0.7.x), **Band 0.8.x** (RCA depth), **Band 3** (future, 1.0.0). Individual items carry **global IDs** (#1–#39) stable across bands.
 
 ### Strategic direction
 
@@ -35,6 +35,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 |------|--------|-------|
 | **Band 1** (0.1.x–0.6.x) | **Shipped** (#1–#29) | Initial CLI through BSD ports; see [plan-0.4.0](plan-0.4.0.md), [plan-0.5.0](plan-0.5.0.md), [plan-0.6.0](plan-0.6.0.md) |
 | **Band 2** (0.7.x) | **Shipped** (#36–#38) | SFTP upload (SCP-compatible relay), airgapped relay playbook, container image SBOM; see [plan-0.7.0.md](plan-0.7.0.md) |
+| **Band 0.8.x** | **Ready** (#39) | Workload requests/limits in RCA extras — **`v0.8.0`** on `develop` |
 | **Band 3** (1.0.0) | **Future** (#30–#35) | Config schema stability, multi-cluster, inspect/validate, CI matrix, `pkg/` → `internal/` |
 
 ---
@@ -54,6 +55,17 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.7.0** | 2 | **SFTP post-collect upload** (`upload.sftp`): bastion → SSH relay via public-key SFTP (`--no-upload` honored). **Airgapped relay playbook** (groot-selfhosted): bastion → SFTP → rclone → OneDrive topology with systemd watcher. **Container image SBOM**: OCI attestation enabled on `dockers_v2` (`sbom: true` via buildx docker-container driver). |
 | **0.7.1** | 2 | **`cluster_name` config**: optional archive basename cluster label; resolution chain when empty (kubeconfig → cluster-info → API server host). |
 | **0.7.2** | 2 | **Node log capture**: host logs via node proxy → `nodes/<node>.log`; kubelet log query optional; fewer spurious failures on managed clouds (e.g. AKS). |
+| **0.8.0** | 0.8 | **Workload resource RCA**: `extras/workload-resources.tsv` (per-container requests/limits + owner); **`all-pods-rca.tsv`** adds declared resource columns for OOM/capacity RCA (#39). |
+
+---
+
+## Band 0.8.x — RCA depth (collector fidelity)
+
+| # | Band | Item | Status |
+|---|------|------|--------|
+| 39 | 0.8 | **Workload requests/limits in RCA extras**: `extras/workload-resources.tsv` (per-container CPU/memory requests and limits, owner kind/name); **`all-pods-rca.tsv`** merges pod-level declared resources with metrics and log paths. | **Done (v0.8.0)** |
+
+**Out of scope for 0.8.x:** continuous metrics agent (time-series CSV belongs outside groot); mutating cluster operations.
 
 ---
 

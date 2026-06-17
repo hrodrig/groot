@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.7.2-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.8.0-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -423,7 +423,7 @@ notify:
 
 #### `collection`
 
-Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.tsv`** (fourth column **`pod_log_file`** when Groot collects that pod’s log). After all jobs finish, **`extras/all-pods-rca.tsv`** merges that placement with **cluster-wide pod metrics** from **metrics.k8s.io** (when **`include_pod_metrics`** is on — the same snapshot **`top pods -A`** would show) so you get **namespace, pod, node, cpu_cores, memory_bytes, pod_log_file** in one table — **cluster-wide** and aligned with Groot’s log paths for RCA handoff.
+Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.tsv`** (fourth column **`pod_log_file`** when Groot collects that pod’s log). **`extras/workload-resources.tsv`** lists **per-container** CPU/memory **requests and limits** (plus controller owner kind/name). After all jobs finish, **`extras/all-pods-rca.tsv`** merges placement with **cluster-wide pod metrics** from **metrics.k8s.io** (when **`include_pod_metrics`** is on — the same snapshot **`top pods -A`** would show) and **pod-level declared resources** so you get **namespace, pod, node, cpu_cores, memory_bytes, cpu_request, cpu_limit, memory_request, memory_limit, pod_log_file** in one table — **cluster-wide** and aligned with Groot’s log paths for RCA handoff (compare **memory_limit** vs **memory_bytes** for OOM-style incidents).
 
 | Key | What it does |
 |-----|----------------|

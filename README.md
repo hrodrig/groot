@@ -26,7 +26,7 @@
   <img src="docs/demo.gif" alt="groot terminal demo: help, version, validate, completion, sample config" width="92%" />
 </p>
 
-<p align="center"><sub>Terminal demo recorded with <a href="https://github.com/charmbracelet/vhs">VHS</a>. Regenerate: <code>make install && bash -c "vhs docs/demo.tape"</code> · <a href="docs/demo.tape"><code>docs/demo.tape</code></a></sub></p>
+<p align="center"><sub>Terminal demo recorded with <a href="https://github.com/charmbracelet/vhs">VHS</a>. Regenerate: <code>make build && bash -c "vhs docs/demo.tape"</code> · <a href="docs/demo.tape"><code>docs/demo.tape</code></a></sub></p>
 
 GROOT is a **read-only Kubernetes log and context collector**: a single **`groot collect`** pulls **pod logs**, control-plane logs, **events**, and selected API snapshots—in parallel, from YAML—and packs them into one **`.tar.gz`**. It does **not** analyze the cluster or render a diagnosis; it **archives evidence** you can attach to tickets, hand to teammates, or retain for compliance.
 

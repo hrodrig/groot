@@ -23,7 +23,7 @@
 From the repository root:
 
 ```bash
-make install
+make build
 bash -c "vhs docs/demo.tape"
 ```
 

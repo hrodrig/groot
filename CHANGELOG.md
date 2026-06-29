@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-06-29
+
+### Fixed
+
+- **Windows release build**: split `diskFree` into `diskfree_unix.go` (`syscall.Statfs`) and `diskfree_windows.go` (`GetDiskFreeSpaceEx`) so GoReleaser cross-compiles for `GOOS=windows` after `groot validate` disk preflight landed in **v0.9.0**.
+
 ## [0.9.0] - 2026-06-28
 
 ### Fixed

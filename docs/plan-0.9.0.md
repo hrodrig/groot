@@ -1,9 +1,9 @@
 # Plan 0.9.0 — path to 1.0 (operator wins)
 
-**Status:** **done** (unreleased on `develop`)  
-**Target release:** **`v0.9.0`** (one or more tags on `develop` before **1.0.0**)  
-**Roadmap band:** [ROADMAP.md](../ROADMAP.md) **Band 0.9.x** items **#31**, **#42**, **#60**, **#64**, **#79–#86**  
-**Delivery model:** one PR per item (or paired where noted). No **1.0.0** tag until [plan-1.0.0.md](plan-1.0.0.md) completes.
+**Status:** **shipped** — **`v0.9.2`** tagged on `main` (2026-06-29)  \
+**Target release:** **`v0.9.0`**–**`v0.9.2`** (features in **v0.9.0**; **v0.9.1**/**v0.9.2** GoReleaser cross-compile fixes) ✓  \
+**Roadmap band:** [ROADMAP.md](../ROADMAP.md) **Band 0.9.x** items **#31**, **#42**, **#60**, **#64**, **#79–#86**  \
+**Delivery model:** one PR per item (or paired where noted). **1.0.0** work is unblocked — see [plan-1.0.0.md](plan-1.0.0.md).
 
 ---
 
@@ -145,12 +145,13 @@ README links to profiles; no new config keys required.
 
 ---
 
-## Release checklist (at **v0.9.0** tag)
+## Release checklist (completed at **v0.9.2**)
 
-1. All items above merged; `make release-check` green.
-2. ROADMAP — Band **0.9.x** items **Done (v0.9.0)**; focus → **1.0.0** ([plan-1.0.0.md](plan-1.0.0.md)).
-3. CHANGELOG — `[0.9.0]` with `(0.9.x #N)` refs.
-4. VERSION → `0.9.0`; README badge; VHS demo refresh if CLI UX changed.
+1. ✓ All items above merged; `make release-check` green.
+2. ✓ ROADMAP — Band **0.9.x** items **Done (v0.9.0)**; focus → **1.0.0** ([plan-1.0.0.md](plan-1.0.0.md)).
+3. ✓ CHANGELOG — `[0.9.0]`–`[0.9.2]` with `(0.9.x #N)` refs.
+4. ✓ VERSION → `0.9.2`; README badge; VHS demo refreshed for **0.9.x** CLI (`validate`, `completion`).
+5. ✓ Operator repo [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) pinned at **v0.2.4** / image **0.9.2**.
 
 ## Success criteria for v0.9.0
 

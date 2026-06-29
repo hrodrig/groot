@@ -4,8 +4,8 @@
 |----------|---------|
 | [SPECIFICATIONS.md](SPECIFICATIONS.md) | Behavior contract and test expectations (what the CLI does **today**), with config examples in §9 |
 | [ROADMAP.md](ROADMAP.md) | Prioritized planned work and known gaps (in-repo source of truth) |
-| [plan-0.9.0.md](plan-0.9.0.md) | Implementation plan for **v0.9.0** (path to 1.0 — validate, plugin, summary) |
-| [plan-1.0.0.md](plan-1.0.0.md) | Implementation plan for **v1.0.0** (config/archive contract, internal/) |
+| [plan-0.9.0.md](plan-0.9.0.md) | **Shipped** at **v0.9.2** — operator wins (validate, plugin, summary) |
+| [plan-1.0.0.md](plan-1.0.0.md) | **Active** — implementation plan for **v1.0.0** (config/archive contract, `internal/`) |
 | [plan-0.4.0.md](plan-0.4.0.md) | Implementation plan for **v0.4.0** (manifest, naming, list-jobs, CI E2E) |
 | [plan-0.5.0.md](plan-0.5.0.md) | Implementation plan for **v0.5.0** (notify, redaction, Helm, retry) |
 | [plan-0.6.0.md](plan-0.6.0.md) | Implementation plan for **v0.6.0** (Homebrew, SBOM, upload, BSD) |

@@ -1,6 +1,6 @@
 # Plan 1.0.0 — stable contract
 
-**Status:** **planned** — blocked on **v0.9.0** ([plan-0.9.0.md](plan-0.9.0.md))  
+**Status:** **active** — prerequisite **v0.9.2** shipped ([plan-0.9.0.md](plan-0.9.0.md))  
 **Target release:** **`v1.0.0`**  
 **Roadmap band:** [ROADMAP.md](../ROADMAP.md) **Band 3 (1.0.0)** items **#30**, **#34**, **#35**, **#40**, **#48**, **#87**  
 **Delivery model:** one PR per item on `develop`. Tag **only** when this checklist passes.
@@ -97,7 +97,7 @@
 
 ## Release checklist (at **v1.0.0** tag)
 
-1. **v0.9.0** shipped; all **#30–#35**, **#40**, **#48**, **#87** merged.
+1. **v0.9.2** shipped; all **#30–#35**, **#40**, **#48**, **#87** merged.
 2. `make release-check` green on `develop`.
 3. ROADMAP — Band 3 items **Done (v1.0.0)**; Shipped table row; focus → **Band 4**.
 4. CHANGELOG — `[1.0.0]` section; triad sync (SPEC, VERSION, README badges).

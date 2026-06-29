@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" alt="groot terminal demo: help, version, sample config" width="92%" />
+  <img src="docs/demo.gif" alt="groot terminal demo: help, version, validate, completion, sample config" width="92%" />
 </p>
 
 <p align="center"><sub>Terminal demo recorded with <a href="https://github.com/charmbracelet/vhs">VHS</a>. Regenerate: <code>make install && bash -c "vhs docs/demo.tape"</code> · <a href="docs/demo.tape"><code>docs/demo.tape</code></a></sub></p>

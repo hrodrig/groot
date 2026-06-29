@@ -9,13 +9,13 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-28 (Band **0.9.x** shipped as **v0.9.0**; Band **3** trimmed to 1.0.0 contract only)
+**Last reviewed:** 2026-06-29 (Band **0.9.x** closed at **v0.9.2**; **Band 3** active — [plan-1.0.0.md](docs/plan-1.0.0.md))
 
 ### Versioning note
 
 Public releases start at **v0.1.3** (early CLI and packaging). **`v0.3.0` was never published**; treat **[0.3.0]** changelog material as shipped from **`v0.3.1`** onward.
 
-Bands group semver minors into planning horizons — **Band 1** (shipped, 0.1.x–0.6.x), **Band 2** (shipped, 0.7.x), **Band 0.8.x** (RCA depth, shipped), **Band 0.9.x** (active, path to 1.0), **Band 3** (1.0.0 contract freeze), **Band 4** (1.1.x+ backlog). Individual items carry **global IDs** (#1–#N) stable across bands.
+Bands group semver minors into planning horizons — **Band 1** (shipped, 0.1.x–0.6.x), **Band 2** (shipped, 0.7.x), **Band 0.8.x** (RCA depth, shipped), **Band 0.9.x** (shipped, path to 1.0), **Band 3** (1.0.0 contract freeze, **active**), **Band 4** (1.1.x+ backlog). Individual items carry **global IDs** (#1–#N) stable across bands.
 
 ### Strategic direction
 
@@ -37,8 +37,8 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **Band 1** (0.1.x–0.6.x) | **Shipped** (#1–#29) | Initial CLI through BSD ports; see [plan-0.4.0](docs/plan-0.4.0.md), [plan-0.5.0](docs/plan-0.5.0.md), [plan-0.6.0](docs/plan-0.6.0.md) |
 | **Band 2** (0.7.x) | **Shipped** (#36–#38) | SFTP upload, airgapped relay, container image SBOM; see [plan-0.7.0.md](docs/plan-0.7.0.md) |
 | **Band 0.8.x** | **Shipped** (#39) | Workload requests/limits in RCA extras — **`v0.8.0`** |
-| **Band 0.9.x** | **Shipped (v0.9.0)** | Operator wins — see [plan-0.9.0.md](docs/plan-0.9.0.md) (#31, #42, #60, #64, #79–#86) |
-| **Band 3** (1.0.0) | **Planned** | Contract freeze only — see [plan-1.0.0.md](docs/plan-1.0.0.md) (#30, #34, #35, #40, #48, #87) |
+| **Band 0.9.x** | **Shipped (v0.9.2)** | Operator wins — see [plan-0.9.0.md](docs/plan-0.9.0.md) (#31, #42, #60, #64, #79–#86) |
+| **Band 3** (1.0.0) | **Active** | Contract freeze — see [plan-1.0.0.md](docs/plan-1.0.0.md) (#30, #34, #35, #40, #48, #87) |
 | **Band 4** (1.1.x+) | **Backlog** (#32–#33, #41–#78, #50–#76) | Multi-cluster, analyze, stream, addons, distribution — post-1.0 |
 
 ---
@@ -59,7 +59,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.7.1** | 2 | **`cluster_name` config**: optional archive basename cluster label; resolution chain when empty (kubeconfig → cluster-info → API server host). |
 | **0.7.2** | 2 | **Node log capture**: host logs via node proxy → `nodes/<node>.log`; kubelet log query optional; fewer spurious failures on managed clouds (e.g. AKS). |
 | **0.8.0** | 0.8 | **Workload resource RCA**: `extras/workload-resources.tsv` (per-container requests/limits + owner); **`all-pods-rca.tsv`** adds declared resource columns for OOM/capacity RCA (#39). |
-| **0.9.0** | 0.9 | **operator wins**: Helm fix, kubectl plugin, validate/inspect, --summary, run_id, exit codes, completion, profiles, README comparison (#79–#86, #64, #60, #31). See [plan-0.9.0.md](docs/plan-0.9.0.md). |
+| **0.9.0 – 0.9.2** | 0.9 | **Operator wins**: Helm fix, kubectl plugin, validate/inspect, `--summary`, `run_id`, exit codes, completion, profiles, README comparison (#79–#86, #64, #60, #31). **v0.9.1**/**v0.9.2**: Windows/OpenBSD GoReleaser build fixes. See [plan-0.9.0.md](docs/plan-0.9.0.md). |
 
 ---
 
@@ -73,9 +73,9 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 
 ---
 
-## Band 0.9.x (active) — path to 1.0
+## Band 0.9.x (shipped) — path to 1.0
 
-**Implementation plan:** [plan-0.9.0.md](docs/plan-0.9.0.md) (target **`v0.9.0`**). Merge order: **#79 → #64+#85 → #80 → #81 → #82 → #31+#83 → #42+#84 → #86 → #60**.
+**Implementation plan:** [plan-0.9.0.md](docs/plan-0.9.0.md) (closed at **`v0.9.2`**). Merge order: **#79 → #64+#85 → #80 → #81 → #82 → #31+#83 → #42+#84 → #86 → #60**.
 
 Ship **operator value** before the **1.0.0** compatibility promise. No `config_version` or `internal/` in this band.
 
@@ -104,7 +104,7 @@ Ship **operator value** before the **1.0.0** compatibility promise. No `config_v
 
 **Implementation plan:** [plan-1.0.0.md](docs/plan-1.0.0.md). Merge order: **#30 → #34 → #35 → #40 → #87 → #48**.
 
-**Blocked on:** **v0.9.0** shipped.
+**Prerequisite met:** **v0.9.2** shipped (2026-06-29).
 
 | # | Band | Item | Status |
 |---|------|------|--------|

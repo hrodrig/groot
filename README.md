@@ -16,7 +16,7 @@
 [![Article on DEV](https://img.shields.io/badge/dev.to-article-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/groot/)
 
-**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Spec:** [docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md) · **Operator:** [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [docs/ROADMAP.md](docs/ROADMAP.md) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
+**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Spec:** [SPECIFICATIONS.md](SPECIFICATIONS.md) · **Operator:** [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [ROADMAP.md](ROADMAP.md) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 
 <p align="center">
   <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes log collector CLI" width="100%" />
@@ -37,7 +37,7 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 ## Table of contents
 
 - [README badge reference](docs/badges.md)
-- [Specifications (behavior contract)](docs/SPECIFICATIONS.md)
+- [Specifications (behavior contract)](SPECIFICATIONS.md)
 - [Roadmap (planned work)](docs/ROADMAP.md)
 - [Features](#features)
 - [Requirements](#requirements)
@@ -201,7 +201,7 @@ From any machine with Go **1.26+** (installs to `$(go env GOPATH)/bin`; ensure t
 go install github.com/hrodrig/groot/cmd/groot@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.6.0`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.9.2`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
 
 ### Install as a kubectl plugin (0.9.x #64)
 
@@ -219,8 +219,9 @@ kubectl plugin list | grep groot   # → /opt/homebrew/bin/kubectl-groot
 **Local build:**
 
 ```bash
-# Plugin (requires PREFIX on PATH so kubectl discovers it):
-make install-kubectl-plugin
+# PREFIX must be a directory on $PATH (default /usr/local/bin on many systems):
+PREFIX=/usr/local/bin make install-kubectl-plugin
+kubectl plugin list | grep groot
 ```
 
 **Krew** (once the plugin is in [`kubernetes-sigs/krew-index`](https://github.com/kubernetes-sigs/krew-index)):
@@ -244,7 +245,7 @@ groot completion powershell  # powershell
 
 ### Exit codes
 
-Stable taxonomy for scripting (0.9.x #82): `0` success, `1` config validation, `2` Kubernetes API error, `3` collect aborted, `4` notify delivery failed. See [SPECIFICATIONS.md](docs/SPECIFICATIONS.md) for details.
+Stable taxonomy for scripting (0.9.x #82): `0` success, `1` config validation, `2` Kubernetes API error, `3` collect aborted, `4` notify delivery failed. See [SPECIFICATIONS.md](SPECIFICATIONS.md) for details.
 
 Plainer errors default to `1` for back-compat.
 
@@ -624,6 +625,7 @@ Workload filter behavior (`collection.targets`):
 - `0`: collect full logs (no `--tail`; use when you need the entire log stream)
 - `>0`: collect only the last N lines per pod
 - applies to both current and `--previous` pod logs
+- **With `--since` / `pod_logs_since`:** both filters apply to the same pod log request — the API returns up to the last **N** lines that also fall inside the time window. A quiet pod can still produce a **0-byte** `*.log` (see [Pod logs: last N hours](#pod-logs-last-n-hours---since)); that is normal, not a missing `--tail`.
 
 `pod_logs_since` and **`collect --since`** (pod logs only):
 
@@ -891,13 +893,13 @@ This repository ships the **CLI**, **packages**, and **`ghcr.io/hrodrig/groot`**
 | Flat CronJob YAML | [run/deploy/k8s/cronjob.yaml](https://github.com/hrodrig/groot-selfhosted/blob/main/run/deploy/k8s/cronjob.yaml) |
 | cron / systemd (Releases binary) | [run/standalone/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/standalone) |
 
-Pull the image from here:
+Pull the image from here (pin to the [version badge](#readme-top) — currently **`0.9.2`**):
 
 ```bash
-docker pull ghcr.io/hrodrig/groot:0.6.1
+docker pull ghcr.io/hrodrig/groot:0.9.2
 ```
 
-In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](docs/SPECIFICATIONS.md#8-runtime-and-kubernetes-access).
+In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](SPECIFICATIONS.md#8-runtime-and-kubernetes-access).
 
 [↑ Back to top](#readme-top)
 

@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.9.1-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.9.2-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -26,7 +26,7 @@
   <img src="docs/demo.gif" alt="groot terminal demo: help, version, validate, completion, sample config" width="92%" />
 </p>
 
-<p align="center"><sub>Terminal demo recorded with <a href="https://github.com/charmbracelet/vhs">VHS</a>. Regenerate: <code>make build && bash -c "vhs docs/demo.tape"</code> · <a href="docs/demo.tape"><code>docs/demo.tape</code></a></sub></p>
+<p align="center"><sub>Terminal demo recorded with <a href="https://github.com/charmbracelet/vhs">VHS</a>. Regenerate: <code>make install && PATH="$(go env GOPATH)/bin:$PATH" bash -c "vhs docs/demo.tape"</code> · <a href="docs/demo.tape"><code>docs/demo.tape</code></a></sub></p>
 
 GROOT is a **read-only Kubernetes log and context collector**: a single **`groot collect`** pulls **pod logs**, control-plane logs, **events**, and selected API snapshots—in parallel, from YAML—and packs them into one **`.tar.gz`**. It does **not** analyze the cluster or render a diagnosis; it **archives evidence** you can attach to tickets, hand to teammates, or retain for compliance.
 

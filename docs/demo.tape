@@ -1,8 +1,9 @@
 # groot terminal demo — run from repository root:
-#   make build && bash -c "vhs docs/demo.tape"
+#   make install && PATH="$(go env GOPATH)/bin:$PATH" bash -c "vhs docs/demo.tape"
 #
-# Uses ./bin/groot (not PATH) so Homebrew/system installs (e.g. v0.7.2) never
-# shadow the VERSION-built binary. Use bash -c (not bare vhs from zsh).
+# Prepend GOPATH/bin when invoking vhs so a stale Homebrew groot (e.g. v0.7.x)
+# does not shadow the VERSION-built binary from `make install`.
+# Use bash -c (not bare vhs from zsh).
 
 Output docs/demo.gif
 
@@ -17,33 +18,33 @@ Set Padding 20
 Enter
 Sleep 300ms
 
-# Build local binary (VERSION from Makefile)
-Type "make build"
+# Install VERSION-built binary to GOPATH/bin
+Type "make install"
 Enter
 Sleep 2s
 
 # Root help — 0.9.x subcommands (validate, inspect, completion)
-Type "./bin/groot -h"
+Type "groot -h"
 Enter
 Sleep 2s
 
 # Version / build metadata
-Type "./bin/groot --version"
+Type "groot --version"
 Enter
 Sleep 1s
 
 # Preflight subcommand (help only; no cluster required)
-Type "./bin/groot validate -h"
+Type "groot validate -h"
 Enter
 Sleep 1500ms
 
 # Shell completion snippet
-Type "./bin/groot completion bash 2>/dev/null | head -n 12"
+Type "groot completion bash 2>/dev/null | head -n 12"
 Enter
 Sleep 1500ms
 
 # Sample config (truncated for a short GIF)
-Type "./bin/groot --print-sample-config 2>&1 | head -n 22"
+Type "groot --print-sample-config 2>&1 | head -n 22"
 Enter
 Sleep 2s
 

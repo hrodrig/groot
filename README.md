@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-0.8.0-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -46,6 +46,11 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
   - [Install with Go](#install-with-go)
 - [Quick start](#quick-start)
 - [First run](#first-run)
+- [Shell completion](#shell-completion)
+- [Exit codes](#exit-codes)
+- [Validate and inspect](#validate-and-inspect)
+- [User profiles](#user-profiles)
+- [GROOT vs kubectl-gather](#groot-vs-kubectl-gather)
 - [Usage examples](#usage-examples)
 - [Config](#config)
 - [Configuration reference (all keys)](#configuration-reference-all-keys)
@@ -198,7 +203,126 @@ go install github.com/hrodrig/groot/cmd/groot@latest
 
 Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.6.0`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
 
-Useful runtime flags (global or with `collect`):
+### Install as a kubectl plugin (0.9.x #64)
+
+Every release tarball ships **two** binaries from the same `cmd/groot/main.go`: `groot` (standalone) and `kubectl-groot` (kubectl plugin). Once the `kubectl-groot` binary is on `$PATH` kubectl's plugin discovery picks it up automatically.
+
+**Homebrew (macOS / Linux, both binaries in one cask):**
+
+```bash
+brew install hrodrig/groot/groot
+# produces /opt/homebrew/bin/groot
+# and /opt/homebrew/bin/kubectl-groot (always installed alongside)
+kubectl plugin list | grep groot   # → /opt/homebrew/bin/kubectl-groot
+```
+
+**Local build:**
+
+```bash
+# Plugin (requires PREFIX on PATH so kubectl discovers it):
+make install-kubectl-plugin
+```
+
+**Krew** (once the plugin is in [`kubernetes-sigs/krew-index`](https://github.com/kubernetes-sigs/krew-index)):
+
+```bash
+kubectl krew install groot
+```
+
+After install, every subcommand is reachable as `kubectl groot <sub>` (e.g. `kubectl groot collect --config ./groot.yml`). The plugin reuses the standalone config schema verbatim, so existing `groot.yml` files work unchanged. `--version` prints the binary name (`groot` vs `kubectl-groot`) so logs tell which entry point fired.
+
+### Shell completion
+
+Generate a completion script for your shell with:
+
+```bash
+groot completion bash        # bash
+groot completion zsh         # zsh
+groot completion fish        # fish
+groot completion powershell  # powershell
+```
+
+### Exit codes
+
+Stable taxonomy for scripting (0.9.x #82): `0` success, `1` config validation, `2` Kubernetes API error, `3` collect aborted, `4` notify delivery failed. See [SPECIFICATIONS.md](docs/SPECIFICATIONS.md) for details.
+
+Plainer errors default to `1` for back-compat.
+
+### Validate and inspect
+
+```bash
+# Preflight checks before a collect run (config, API, RBAC, disk):
+groot validate
+
+# Summarise an existing archive (no cluster required):
+groot inspect /path/to/archive.tar.gz
+```
+
+Both support `--output json` for scripting.
+
+[↑ Back to top](#readme-top)
+
+## User profiles
+
+Ready-to-use configs for common scenarios live in [`examples/profiles/`](examples/profiles/):
+
+| Profile | File | Use case |
+|---------|------|----------|
+| Incident quick | `examples/profiles/incident-quick.yml` | Narrow namespaces, `--since 1h`, events + failing pods |
+| Compliance full | `examples/profiles/compliance-full.yml` | All namespaces, redaction enabled, full pod logs |
+| Bastion airgap | `examples/profiles/bastion-airgap.yml` | SFTP upload + SSH relay, no external webhooks |
+| EKS managed | `examples/profiles/eks-managed.yml` | Skip node logs (unsupported), metrics enabled |
+
+Copy a profile as a starting point:
+
+```bash
+cp examples/profiles/incident-quick.yml groot.yml
+# Edit to match your cluster and notification channels.
+```
+
+[↑ Back to top](#readme-top)
+
+## GROOT vs kubectl-gather
+
+[`kubectl-gather`](https://github.com/nirs/kubectl-gather) collects equivalent Kubernetes context, but targets a different workflow.
+
+| Dimension | GROOT | kubectl-gather |
+|-----------|-------|----------------|
+| Output | Single `.tar.gz` + `manifest.json` + RCA TSVs | YAML tree per cluster |
+| Use case | Ticket-ready bundle (incident response, compliance) | Multi-cluster diff, manual YAML inspection |
+| Notifications | Slack, Discord, Teams, PagerDuty, Telegram, email, generic webhooks | None |
+| Upload | S3, GCS, SFTP | None |
+| Supply chain | GoReleaser (`.deb`, `.rpm`, `.tar.gz`), Homebrew cask, container images, SBOMs, cosign | Manual build |
+| kubectl plugin | `kubectl groot` via `kubectl-groot` binary in tarball | Supports `kubectl-gather` raw name |
+| Config | YAML + env vars | CLI flags |
+| Redaction | Optional regex-based log redaction | None |
+| In-cluster scheduling | Helm chart + CronJob in [`groot-selfhosted`](https://github.com/hrodrig/groot-selfhosted) | Manual |
+
+**When to use GROOT:** you need a **reproducible, signed archive** you can attach to a ticket, keep for compliance, or push to object storage with a single command. The `.tar.gz` is self-contained: any team member can extract it and run `groot inspect` or `grep` through the plain-text logs without any tools.
+
+**When to use kubectl-gather:** you manage **multiple clusters** and want to diff their state in a YAML tree, or you already have a manual workflow around `kubectl get ... -o yaml` and just need an automation wrapper.
+
+Both are read-only; both support a `kubectl` plugin naming convention. Choosing one does not preclude the other — run both and keep the `.tar.gz` for compliance and the YAML tree for ad-hoc exploration.
+
+### Incident workflow example (GROOT)
+
+```bash
+# 1. Preflight — are we good to run?
+groot validate
+
+# 2. One-line collect with summary:
+groot collect --summary --since 1h \
+  --config examples/profiles/incident-quick.yml
+
+# 3. Inspect the archive before sending:
+groot inspect ./out/groot-capture-20260628-235959S-incident-quick.tar.gz
+
+# 4. Attach the .tar.gz to the ticket.
+```
+
+[↑ Back to top](#readme-top)
+
+## Usage examples
 
 - `--version` / `-v` prints `groot vX.Y.Z (commit=… branch=… built=…)`
 - `--test-connection` validates Kubernetes connectivity and exits

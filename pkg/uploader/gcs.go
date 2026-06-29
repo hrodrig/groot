@@ -27,7 +27,6 @@ func newGCSUploader(cfg config.GCSUploadCfg, timeout time.Duration) Uploader {
 func (u *gcsUploader) Provider() string { return "gcs" }
 
 func (u *gcsUploader) Upload(ctx context.Context, archivePath string, summary collector.Summary) (*Result, error) {
-	_ = summary
 	bucket := strings.TrimSpace(u.cfg.Bucket)
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -38,11 +37,6 @@ func (u *gcsUploader) Upload(ctx context.Context, archivePath string, summary co
 		return nil, fmt.Errorf("open archive: %w", err)
 	}
 	defer f.Close()
-
-	info, err := f.Stat()
-	if err != nil {
-		return nil, fmt.Errorf("stat archive: %w", err)
-	}
 
 	key := objectKey(u.cfg.KeyPrefix, archivePath)
 	ctx, cancel := context.WithTimeout(ctx, u.timeout)
@@ -55,11 +49,7 @@ func (u *gcsUploader) Upload(ctx context.Context, archivePath string, summary co
 	defer client.Close()
 
 	w := client.Bucket(bucket).Object(key).NewWriter(ctx)
-	if ct := strings.TrimSpace(u.cfg.ContentType); ct != "" {
-		w.ContentType = ct
-	} else {
-		w.ContentType = "application/gzip"
-	}
+	w.ContentType = firstNonEmpty(strings.TrimSpace(u.cfg.ContentType), "application/gzip")
 	if cc := strings.TrimSpace(u.cfg.CacheControl); cc != "" {
 		w.CacheControl = cc
 	}
@@ -69,12 +59,7 @@ func (u *gcsUploader) Upload(ctx context.Context, archivePath string, summary co
 	if acl := strings.TrimSpace(u.cfg.PredefinedACL); acl != "" {
 		w.PredefinedACL = acl
 	}
-	for k, v := range u.cfg.Metadata {
-		if w.Metadata == nil {
-			w.Metadata = map[string]string{}
-		}
-		w.Metadata[k] = v
-	}
+	w.Metadata = mergeMetadata(u.cfg.Metadata, summary.RunID)
 
 	if _, err := io.Copy(w, f); err != nil {
 		_ = w.Close()
@@ -85,6 +70,10 @@ func (u *gcsUploader) Upload(ctx context.Context, archivePath string, summary co
 	}
 
 	uri := fmt.Sprintf("gs://%s/%s", bucket, key)
+	info, err := f.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("stat archive: %w", err)
+	}
 	return &Result{Provider: "gcs", URI: uri, Key: key, Size: info.Size()}, nil
 }
 

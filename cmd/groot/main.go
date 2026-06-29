@@ -23,8 +23,5 @@ func run() error {
 }
 
 func exitCode(err error) int {
-	if err != nil {
-		return 1
-	}
-	return 0
+	return cmd.ExitCodeOf(err)
 }

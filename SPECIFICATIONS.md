@@ -66,10 +66,19 @@ This document is the source of truth for **observable behavior** and test expect
 | `--since <duration>` | Pod logs only: sets `collection.pod_logs_since` for this run (overrides config). Bare number = hours; or Go duration (`24h`, `45m`). |
 | `--list-jobs` | Print the planned collection jobs (name, output file, args, `optional`) and exit **without** writing the capture tree or `.tar.gz`, and without firing notify. Requires API reachability for dynamic jobs (nodes, pod logs). |
 
-### Exit semantics
+### Exit semantics (0.9.x #82)
 
-- **0**: collect completed; notify succeeded (if enabled and not skipped).
-- **Non-zero**: config load/validation, client init, context deadline (`collection.timeout`), archive error, or notify error.
+| Code | Meaning |
+|------|---------|
+| 0 | Success (collect completed; notify succeeded when enabled and not skipped) |
+| 1 | Config validation (YAML load, `--since`, missing config file) |
+| 2 | Kubernetes client / API error (auth, list, handshake) |
+| 3 | Collect aborted (timeout, archive failure) |
+| 4 | Notify delivery failed |
+| 5 | Reserved — partial failures ≥ threshold in opt-in `--strict` mode (`--strict` flag, default threshold 1; see [plan-0.9.0.md](docs/plan-0.9.0.md)) |
+
+\`\`\`
+Partial job failures inside collect remain **non-fatal** by default; they are counted in `Summary` and logged.
 
 ## 4. Configuration contract
 
@@ -395,3 +404,39 @@ Identity file from env: `GROOT_UPLOAD_SFTP_IDENTITY_FILE=/home/groot/.ssh/id_ed2
 | Security | `make security` (govulncheck, gocyclo, grype) before release; CodeQL on GitHub. |
 
 When behavior in this document changes, update **SPEC**, **ROADMAP** item status, and **CHANGELOG** (`(band #N)` references) in the same change set or release.
+
+## 12. `groot validate` — preflight checks (0.9.x #31, #83)
+
+```
+groot validate [--output text|json] [--config <path>] [--min-disk <bytes>] [--warn-disk <bytes>]
+```
+
+Validates the environment before a collect run. All checks are independent; failures are aggregated.
+
+**Check order:** config load → Kubernetes client init → cluster-info → RBAC matrix (`auth can-i` for `list namespaces`, `list pods`, `get pods/log`, `list events`, `list nodes`) → disk space on `output_dir`.
+
+**Disk defaults:** hard fail at <256 MiB (`collection.min_free_bytes`), warn at <1 GiB (`collection.warn_free_bytes`). Conservative overhead estimate = 8 MiB × number of namespaces.
+
+**Exit codes (see §3):** 0 on pass (warnings allowed), 1 on config/disk/RBAC failure, 2 on Kubernetes-API failure.
+
+## 13. `groot inspect <archive>` — archive analysis (0.9.x #31)
+
+```
+groot inspect <archive.tar.gz> [--output text|json]
+```
+
+Analyzes an existing `.tar.gz` produced by `groot collect`. Does **not** require cluster access. Reads `extras/manifest.json` when present, lists all files with sizes, and reports the archive size and file count.
+
+**Exit codes (see §3):** 0 success, 3 archive read failure, 1 manifest parse failure (non-fatal).
+
+## 14. Config profiles (0.9.x #86)
+
+Ready-to-use YAML files for common scenarios live in [`examples/profiles/`](../examples/profiles/):
+
+- **incident-quick.yml** — narrow namespaces, `--since 1h`, events + failing pods, no notify/upload.
+- **compliance-full.yml** — all namespaces, full logs, redaction enabled, metrics on.
+- **bastion-airgap.yml** — SFTP upload via SSH relay, no external webhooks.
+- **eks-managed.yml** — skip node logs (not supported on managed control planes), metrics enabled.
+
+Copy a profile as a starting point (`cp examples/profiles/incident-quick.yml groot.yml`) and edit to match your cluster.
+

@@ -30,7 +30,6 @@ func newS3Uploader(cfg config.S3UploadCfg, timeout time.Duration) Uploader {
 func (u *s3Uploader) Provider() string { return "s3" }
 
 func (u *s3Uploader) Upload(ctx context.Context, archivePath string, summary collector.Summary) (*Result, error) {
-	_ = summary
 	bucket := strings.TrimSpace(u.cfg.Bucket)
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -42,11 +41,6 @@ func (u *s3Uploader) Upload(ctx context.Context, archivePath string, summary col
 	}
 	defer f.Close()
 
-	info, err := f.Stat()
-	if err != nil {
-		return nil, fmt.Errorf("stat archive: %w", err)
-	}
-
 	key := objectKey(u.cfg.KeyPrefix, archivePath)
 	ctx, cancel := context.WithTimeout(ctx, u.timeout)
 	defer cancel()
@@ -56,15 +50,16 @@ func (u *s3Uploader) Upload(ctx context.Context, archivePath string, summary col
 		return nil, err
 	}
 
-	input := &s3.PutObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-		Body:   f,
+	info, err := f.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("stat archive: %w", err)
 	}
-	if ct := strings.TrimSpace(u.cfg.ContentType); ct != "" {
-		input.ContentType = aws.String(ct)
-	} else {
-		input.ContentType = aws.String("application/gzip")
+
+	input := &s3.PutObjectInput{
+		Bucket:      aws.String(bucket),
+		Key:         aws.String(key),
+		Body:        f,
+		ContentType: aws.String(firstNonEmpty(strings.TrimSpace(u.cfg.ContentType), "application/gzip")),
 	}
 	if sc := strings.TrimSpace(u.cfg.StorageClass); sc != "" {
 		input.StorageClass = types.StorageClass(sc)
@@ -78,12 +73,7 @@ func (u *s3Uploader) Upload(ctx context.Context, archivePath string, summary col
 	if acl := strings.TrimSpace(u.cfg.ACL); acl != "" {
 		input.ACL = types.ObjectCannedACL(acl)
 	}
-	for k, v := range u.cfg.Metadata {
-		if input.Metadata == nil {
-			input.Metadata = map[string]string{}
-		}
-		input.Metadata[k] = v
-	}
+	input.Metadata = mergeMetadata(u.cfg.Metadata, summary.RunID)
 
 	up := manager.NewUploader(client)
 	out, err := up.Upload(ctx, input)
@@ -124,8 +114,23 @@ func (u *s3Uploader) s3Client(ctx context.Context) (*s3.Client, error) {
 func firstNonEmpty(values ...string) string {
 	for _, v := range values {
 		if strings.TrimSpace(v) != "" {
-			return strings.TrimSpace(v)
+			return v
 		}
 	}
 	return ""
+}
+
+// mergeMetadata combines user-configured metadata with the run_id from #81.
+// User-supplied keys take priority (can override run_id if desired).
+func mergeMetadata(base map[string]string, runID string) map[string]string {
+	out := make(map[string]string, len(base)+1)
+	for k, v := range base {
+		out[k] = v
+	}
+	if runID != "" && runID != "unknown" {
+		if _, ok := out["run_id"]; !ok {
+			out["run_id"] = runID
+		}
+	}
+	return out
 }

@@ -1,0 +1,46 @@
+# compliance-full.yml — full cluster snapshot for audit/compliance
+# All namespaces, all logs, redaction enabled, no notify (archive is the artifact).
+output_dir: "./compliance-out"
+file_prefix: "compliance-full"
+notify:
+  slack:
+    enabled: false
+  discord:
+    enabled: false
+  teams:
+    enabled: false
+  telegram:
+    enabled: false
+  generic:
+    enabled: false
+  pagerduty:
+    enabled: false
+  email:
+    enabled: false
+upload:
+  s3:
+    enabled: false
+  gcs:
+    enabled: false
+  sftp:
+    enabled: false
+collection:
+  timeout: 300s
+  worker_concurrency: 8
+  namespaces:
+    - default
+    - kube-system
+    - kube-public
+    - kube-node-lease
+  include_pod_logs: true
+  include_previous_logs: true
+  pod_log_tail_lines: 0
+  pod_logs_since: ""
+  include_node_details: true
+  include_node_logs: true
+  node_log_tail_lines: 0
+  include_pod_metrics: true
+  redact_secrets: true
+  redact_patterns:
+    - "Bearer [A-Za-z0-9\\-._~+/]+"
+    - "(?i)(password|secret|token)\\s*[:=]\\s*['\"]?[A-Za-z0-9_\\-]{8,}"

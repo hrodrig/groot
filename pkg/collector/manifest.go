@@ -35,6 +35,8 @@ type manifestJobs struct {
 type captureManifest struct {
 	GrootVersion    string          `json:"groot_version"`
 	GrootCommit     string          `json:"groot_commit,omitempty"`
+	RunID           string          `json:"run_id,omitempty"`
+	ArchiveSHA256   string          `json:"archive_sha256,omitempty"`
 	CollectedAt     string          `json:"collected_at"`
 	DurationSeconds float64         `json:"duration_seconds"`
 	SessionBase     string          `json:"session_base"`
@@ -81,6 +83,8 @@ func (s *Service) writeManifest(
 	m := captureManifest{
 		GrootVersion:    ver,
 		GrootCommit:     strings.TrimSpace(s.buildInfo.Commit),
+		RunID:           s.RunID,
+		ArchiveSHA256:   s.archiveSHA256,
 		CollectedAt:     time.Now().UTC().Format(time.RFC3339),
 		DurationSeconds: summary.Duration.Seconds(),
 		SessionBase:     sessionBase,

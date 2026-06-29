@@ -1,21 +1,27 @@
-# groot terminal demo — from repository root, after installing groot on PATH:
-#   make install && bash -c "vhs docs/demo.tape"
-# Use bash -c (not bare `vhs` from zsh) so the recorder does not inherit zsh/Oh My Zsh prompts.
-# Recorded output reflects the binary built with VERSION via make install / make build.
-# After a VERSION bump or CLI UX change (0.9.x: validate, inspect, completion), regenerate docs/demo.gif.
+# groot terminal demo — run from repository root:
+#   make install && PATH="$(go env GOPATH)/bin:$PATH" bash -c "vhs docs/demo.tape"
+#
+# Prepend GOPATH/bin when invoking vhs so a stale Homebrew groot (e.g. v0.7.x)
+# does not shadow the VERSION-built binary from `make install`.
+# Use bash -c (not bare vhs from zsh).
 
 Output docs/demo.gif
 
-Require groot
+Require make
 
 Set Shell "bash"
 Set FontSize 14
 Set Width 960
-Set Height 560
+Set Height 580
 Set Padding 20
 
 Enter
 Sleep 300ms
+
+# Install VERSION-built binary to GOPATH/bin
+Type "make install"
+Enter
+Sleep 2s
 
 # Root help — 0.9.x subcommands (validate, inspect, completion)
 Type "groot -h"

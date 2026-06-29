@@ -24,8 +24,10 @@ From the repository root:
 
 ```bash
 make install
-bash -c "vhs docs/demo.tape"
+PATH="$(go env GOPATH)/bin:$PATH" bash -c "vhs docs/demo.tape"
 ```
+
+Prepend `$(go env GOPATH)/bin` when invoking VHS so an older Homebrew `groot` does not shadow the repo build.
 
 See [README.md → Install or update](../README.md#install-or-update) for prerequisites.
 

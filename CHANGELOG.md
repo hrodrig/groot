@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-06-29
+
+### Fixed
+
+- **OpenBSD release build**: `diskfree_openbsd.go` uses `F_bsize` / `F_blocks` / `F_bavail` field names; GoReleaser `GOOS=openbsd` targets compile after **v0.9.1** release failure.
+
+### Changed
+
+- **VHS demo** (`docs/demo.gif`): tape runs `make install`; regenerate with `PATH="$(go env GOPATH)/bin:$PATH" vhs docs/demo.tape` so Homebrew/system installs do not shadow the repo binary; shows **0.9.x** subcommands (`validate`, `completion`).
+
 ## [0.9.1] - 2026-06-29
 
 ### Fixed

@@ -1,4 +1,4 @@
-//go:build !windows && !openbsd
+//go:build openbsd
 
 package collector
 
@@ -11,7 +11,7 @@ import (
 )
 
 // diskFree returns available bytes and total bytes for the filesystem that
-// hosts the given path via statfs(2).
+// hosts the given path via statfs(2). OpenBSD Statfs_t uses F_* field names.
 func diskFree(path string) (free, total int64, err error) {
 	if strings.TrimSpace(path) == "" {
 		return 0, 0, errors.New("output_dir is empty")
@@ -24,7 +24,7 @@ func diskFree(path string) (free, total int64, err error) {
 	if serr := syscall.Statfs(abs, &stat); serr != nil {
 		return 0, 0, fmt.Errorf("stat %s: %w", abs, serr)
 	}
-	free = int64(stat.Bavail) * int64(stat.Bsize)
-	total = int64(stat.Blocks) * int64(stat.Bsize)
+	free = stat.F_bavail * int64(stat.F_bsize)
+	total = int64(stat.F_blocks) * int64(stat.F_bsize)
 	return free, total, nil
 }

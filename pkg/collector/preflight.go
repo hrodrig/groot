@@ -2,12 +2,9 @@ package collector
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"path/filepath"
 	"sort"
 	"strings"
-	"syscall"
 )
 
 // PreflightSeverity tags a single Preflight finding.
@@ -130,28 +127,6 @@ func rbacChecks(namespaces []string) []rbacCheck {
 		{label: "list.events", verb: "list", resource: "events", namespace: firstNS},
 		{label: "list.nodes", verb: "list", resource: "nodes"},
 	}
-}
-
-// diskFree returns available bytes and total bytes for the filesystem that
-// hosts the given path. Falls back gracefully on hosts where statvfs syscall
-// is not available (e.g. unusual Windows builds) by returning an error the
-// caller surfaces as a hard fail.
-func diskFree(path string) (free, total int64, err error) {
-	if strings.TrimSpace(path) == "" {
-		return 0, 0, errors.New("output_dir is empty")
-	}
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return 0, 0, fmt.Errorf("resolve path %q: %w", path, err)
-	}
-	var stat syscall.Statfs_t
-	if serr := syscall.Statfs(abs, &stat); serr != nil {
-		return 0, 0, fmt.Errorf("stat %s: %w", abs, serr)
-	}
-	// bavail * bsize = available non-root bytes (best approximation of "free").
-	free = int64(stat.Bavail) * int64(stat.Bsize)
-	total = int64(stat.Blocks) * int64(stat.Bsize)
-	return free, total, nil
 }
 
 func formatBytes(b int64) string {

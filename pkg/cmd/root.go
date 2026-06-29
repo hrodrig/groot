@@ -22,22 +22,25 @@ import (
 	"github.com/spf13/pflag"
 )
 
-var cfgFile string
-var printSampleConfig bool
-var verbose bool
-var quiet bool
-var noNotify bool
-var noUpload bool
-var noColor bool
-var message string
-var kubeconfigOverride string
-var buildVersion = "dev"
-var buildCommit = "unknown"
-var buildBranch = "unknown"
-var buildDate = "unknown"
-var testConnection bool
-var collectLogsSince string
-var listJobs bool
+var (
+	cfgFile string
+	printSampleConfig bool
+	verbose bool
+	quiet bool
+	noNotify bool
+	noUpload bool
+	noColor bool
+	message string
+	kubeconfigOverride string
+	buildVersion = "dev"
+	buildCommit = "unknown"
+	buildBranch = "unknown"
+	buildDate = "unknown"
+	testConnection bool
+	collectLogsSince string
+	listJobs bool
+	summaryFlag bool // ROADMAP #42 — print human-readable summary footer
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "groot",
@@ -201,10 +204,19 @@ var collectCmd = &cobra.Command{
 		}
 
 		if !quiet {
-			logger.Info("collection completed in %s", summary.Duration.Round(time.Second))
 			logger.Info("output dir: %s", summary.OutputDir)
 			logger.Info("archive: %s", summary.ArchivePath)
 			logger.Info("jobs: total=%d success=%d failed=%d", summary.Total, summary.Success, summary.Failed)
+		}
+
+		// ROADMAP #42: --summary footer. Computes unhealthy pod counts via a
+		// single list-pods walk and feeds them to the formatter.
+		if summaryFlag {
+			unhealthy, uerr := collectorSvc.CountUnhealthyPods(ctx)
+			if uerr != nil && !quiet {
+				logger.Warn("unhealthy-pod-count failed: %v", uerr)
+			}
+			collector.WriteSummary(cmd.OutOrStdout(), summary, "", unhealthy)
 		}
 
 		if summary.Failed > 0 {
@@ -264,7 +276,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&kubeconfigOverride, "kubeconfig", "", "Override kubeconfig path for the Kubernetes API client")
 	collectCmd.Flags().StringVar(&collectLogsSince, "since", "", "Pod logs only: --since duration (e.g. 24h, 45m; bare number means hours). Overrides collection.pod_logs_since in config when set")
 	collectCmd.Flags().BoolVar(&listJobs, "list-jobs", false, "Print planned collection jobs and exit without writing output")
-	rootCmd.AddCommand(collectCmd, versionCmd, newCompletionCmd())
+	collectCmd.Flags().BoolVar(&summaryFlag, "summary", false, "After a successful collect, print a one-screen human-readable summary (jobs, duration, archive, unhealthy pod counts)")
+	rootCmd.AddCommand(collectCmd, versionCmd, newCompletionCmd(), newValidateCmd(), newInspectCmd())
 }
 
 type connMeta struct {

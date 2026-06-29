@@ -43,7 +43,7 @@ DOCKER_BUILD_ARGS := \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build test cover fmt fmt-check lint-fix lint vet run clean install docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan test-e2e-kind e2e-kind snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
+.PHONY: help all build test cover fmt fmt-check lint-fix lint vet run clean install install-kubectl-plugin docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan test-e2e-kind e2e-kind snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
 
 help:
 	@echo "Available targets:"
@@ -61,6 +61,7 @@ help:
 	@echo "  make grype          Grype directory scan (excludes bin/work/dist; Docker fallback if grype missing)"
 	@echo "  make help           Show this help"
 	@echo "  make install        Install binary to GOPATH bin (user-writable)"
+	@echo "  make install-kubectl-plugin  Install the kubectl-groot plugin binary (sets up kubectl plugin discovery)"
 	@echo "  make lint           Run go vet"
 	@echo "  make lint-fix       gofmt -s -w . (simplify with gofmt -s)"
 	@echo "  make fmt-check      Fail if gofmt -s would change any file (same as CI)"
@@ -146,9 +147,29 @@ install: build
 			echo "Installed $(APP_NAME) to $(BINDIR)."; \
 			echo "Warning: $(BINDIR) is not in PATH."; \
 			echo "Add this to your shell profile:"; \
-			echo "  export PATH=\"$(BINDIR):\$$PATH\""; \
+			echo "  export PATH=\"$(BINDIR):$$PATH\""; \
 			;; \
 	esac
+
+# kubectl plugin install: same `make build` but lays the binary down as
+# `kubectl-groot` and on a directory that kubectl's plugin discovery will
+# actually find (`$(PREFIX)` when in PATH, else warn explicitly). Detect
+# a `make install PREFIX=...` that puts the binary somewhere unusual and
+# refuse rather than silently dropping a plugin nobody can run.
+install-kubectl-plugin: build
+	@case ":$$PATH:" in \
+		*":$(BINDIR):"*) \
+			;; \
+		*) \
+			echo "Error: $(BINDIR) is not in PATH."; \
+			echo "kubectl plugin discovery walks every directory in PATH and looks for executables starting with 'kubectl-'."; \
+			echo "Set PREFIX to a directory that IS in PATH (default: $(PREFIX))."; \
+			exit 1; \
+			;; \
+	esac
+	install -m 755 $(BIN_DIR)/$(APP_NAME) "$(BINDIR)/kubectl-groot"
+	@echo "Installed kubectl-groot to $(BINDIR)."
+	@echo "Verify with: kubectl plugin list | grep groot"
 
 docker-build:
 	docker build $(DOCKER_BUILD_ARGS) -t $(IMAGE) .

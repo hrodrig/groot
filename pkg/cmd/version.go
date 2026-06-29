@@ -23,11 +23,21 @@ func initVersionFlags(cmd *cobra.Command) {
 }
 
 // FormatVersion returns the short line for scripts or the Groot greeting when long is true.
+// When the binary was launched under the kubectl-groot basename (kubectl plugin
+// dispatch), the binary name in the banner switches to kubectl-groot so logs
+// can tell which entry point fired.
 func FormatVersion(long bool) string {
-	line := fmt.Sprintf("groot v%s (commit=%s branch=%s built=%s)",
-		buildVersion, buildCommit, buildBranch, buildDate)
+	binary := "groot"
+	if IsPluginInvocation() {
+		binary = "kubectl-groot"
+	}
+	line := fmt.Sprintf("%s v%s (commit=%s branch=%s built=%s)",
+		binary, buildVersion, buildCommit, buildBranch, buildDate)
 	if long {
-		return "I am Groot " + line[len("groot "):]
+		// Strip the leading "<binary> " only; keep the rest identical so the
+		// greeting still begins with "I am Groot" for both entries.
+		greet := "I am Groot " + line[len(binary)+1:]
+		return greet
 	}
 	return line
 }

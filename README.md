@@ -198,6 +198,34 @@ go install github.com/hrodrig/groot/cmd/groot@latest
 
 Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.6.0`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
 
+### Install as a kubectl plugin (0.9.x #64)
+
+Every release tarball ships **two** binaries from the same `cmd/groot/main.go`: `groot` (standalone) and `kubectl-groot` (kubectl plugin). Once the `kubectl-groot` binary is on `$PATH` kubectl's plugin discovery picks it up automatically.
+
+**Homebrew (macOS / Linux, both binaries in one cask):**
+
+```bash
+brew install hrodrig/groot/groot
+# produces /opt/homebrew/bin/groot
+# and /opt/homebrew/bin/kubectl-groot (always installed alongside)
+kubectl plugin list | grep groot   # → /opt/homebrew/bin/kubectl-groot
+```
+
+**Local build:**
+
+```bash
+# Plugin (requires PREFIX on PATH so kubectl discovers it):
+make install-kubectl-plugin
+```
+
+**Krew** (once the plugin is in [`kubernetes-sigs/krew-index`](https://github.com/kubernetes-sigs/krew-index)):
+
+```bash
+kubectl krew install groot
+```
+
+After install, every subcommand is reachable as `kubectl groot <sub>` (e.g. `kubectl groot collect --config ./groot.yml`). The plugin reuses the standalone config schema verbatim, so existing `groot.yml` files work unchanged. `--version` prints the binary name (`groot` vs `kubectl-groot`) so logs tell which entry point fired.
+
 ### Shell completion
 
 Generate a completion script for your shell with:
@@ -212,6 +240,18 @@ groot completion powershell  # powershell
 ### Exit codes
 
 Stable taxonomy for scripting (0.9.x #82): `0` success, `1` config validation, `2` Kubernetes API error, `3` collect aborted, `4` notify delivery failed. See [SPECIFICATIONS.md](docs/SPECIFICATIONS.md) for details.
+
+### Validate and inspect
+
+```bash
+# Preflight checks before a collect run (config, API, RBAC, disk):
+groot validate
+
+# Summarise an existing archive (no cluster required):
+groot inspect /path/to/archive.tar.gz
+```
+
+Both support `--output json` for scripting.
 
 Useful runtime flags (global or with `collect`):
 

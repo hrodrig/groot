@@ -1,0 +1,41 @@
+# incident-quick.yml — narrow collect for incident response
+# Only events + failing pods in specific namespaces, last 1h.
+output_dir: "./out"
+file_prefix: "incident-quick"
+notify:
+  slack:
+    enabled: false
+  discord:
+    enabled: false
+  teams:
+    enabled: false
+  telegram:
+    enabled: false
+  generic:
+    enabled: false
+  pagerduty:
+    enabled: false
+  email:
+    enabled: false
+upload:
+  s3:
+    enabled: false
+  gcs:
+    enabled: false
+  sftp:
+    enabled: false
+collection:
+  timeout: 60s
+  worker_concurrency: 4
+  namespaces:
+    - default
+    - kube-system
+  include_pod_logs: true
+  include_previous_logs: false
+  pod_log_tail_lines: 50
+  pod_logs_since: 1h
+  include_node_details: false
+  include_node_logs: false
+  node_log_tail_lines: 0
+  include_pod_metrics: false
+  redact_secrets: false

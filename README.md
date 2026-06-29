@@ -46,6 +46,11 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
   - [Install with Go](#install-with-go)
 - [Quick start](#quick-start)
 - [First run](#first-run)
+- [Shell completion](#shell-completion)
+- [Exit codes](#exit-codes)
+- [Validate and inspect](#validate-and-inspect)
+- [User profiles](#user-profiles)
+- [GROOT vs kubectl-gather](#groot-vs-kubectl-gather)
 - [Usage examples](#usage-examples)
 - [Config](#config)
 - [Configuration reference (all keys)](#configuration-reference-all-keys)
@@ -241,6 +246,8 @@ groot completion powershell  # powershell
 
 Stable taxonomy for scripting (0.9.x #82): `0` success, `1` config validation, `2` Kubernetes API error, `3` collect aborted, `4` notify delivery failed. See [SPECIFICATIONS.md](docs/SPECIFICATIONS.md) for details.
 
+Plainer errors default to `1` for back-compat.
+
 ### Validate and inspect
 
 ```bash
@@ -253,7 +260,69 @@ groot inspect /path/to/archive.tar.gz
 
 Both support `--output json` for scripting.
 
-Useful runtime flags (global or with `collect`):
+[↑ Back to top](#readme-top)
+
+## User profiles
+
+Ready-to-use configs for common scenarios live in [`examples/profiles/`](examples/profiles/):
+
+| Profile | File | Use case |
+|---------|------|----------|
+| Incident quick | `examples/profiles/incident-quick.yml` | Narrow namespaces, `--since 1h`, events + failing pods |
+| Compliance full | `examples/profiles/compliance-full.yml` | All namespaces, redaction enabled, full pod logs |
+| Bastion airgap | `examples/profiles/bastion-airgap.yml` | SFTP upload + SSH relay, no external webhooks |
+| EKS managed | `examples/profiles/eks-managed.yml` | Skip node logs (unsupported), metrics enabled |
+
+Copy a profile as a starting point:
+
+```bash
+cp examples/profiles/incident-quick.yml groot.yml
+# Edit to match your cluster and notification channels.
+```
+
+[↑ Back to top](#readme-top)
+
+## GROOT vs kubectl-gather
+
+[`kubectl-gather`](https://github.com/nirs/kubectl-gather) collects equivalent Kubernetes context, but targets a different workflow.
+
+| Dimension | GROOT | kubectl-gather |
+|-----------|-------|----------------|
+| Output | Single `.tar.gz` + `manifest.json` + RCA TSVs | YAML tree per cluster |
+| Use case | Ticket-ready bundle (incident response, compliance) | Multi-cluster diff, manual YAML inspection |
+| Notifications | Slack, Discord, Teams, PagerDuty, Telegram, email, generic webhooks | None |
+| Upload | S3, GCS, SFTP | None |
+| Supply chain | GoReleaser (`.deb`, `.rpm`, `.tar.gz`), Homebrew cask, container images, SBOMs, cosign | Manual build |
+| kubectl plugin | `kubectl groot` via `kubectl-groot` binary in tarball | Supports `kubectl-gather` raw name |
+| Config | YAML + env vars | CLI flags |
+| Redaction | Optional regex-based log redaction | None |
+| In-cluster scheduling | Helm chart + CronJob in [`groot-selfhosted`](https://github.com/hrodrig/groot-selfhosted) | Manual |
+
+**When to use GROOT:** you need a **reproducible, signed archive** you can attach to a ticket, keep for compliance, or push to object storage with a single command. The `.tar.gz` is self-contained: any team member can extract it and run `groot inspect` or `grep` through the plain-text logs without any tools.
+
+**When to use kubectl-gather:** you manage **multiple clusters** and want to diff their state in a YAML tree, or you already have a manual workflow around `kubectl get ... -o yaml` and just need an automation wrapper.
+
+Both are read-only; both support a `kubectl` plugin naming convention. Choosing one does not preclude the other — run both and keep the `.tar.gz` for compliance and the YAML tree for ad-hoc exploration.
+
+### Incident workflow example (GROOT)
+
+```bash
+# 1. Preflight — are we good to run?
+groot validate
+
+# 2. One-line collect with summary:
+groot collect --summary --since 1h \
+  --config examples/profiles/incident-quick.yml
+
+# 3. Inspect the archive before sending:
+groot inspect ./out/groot-capture-20260628-235959S-incident-quick.tar.gz
+
+# 4. Attach the .tar.gz to the ticket.
+```
+
+[↑ Back to top](#readme-top)
+
+## Usage examples
 
 - `--version` / `-v` prints `groot vX.Y.Z (commit=… branch=… built=…)`
 - `--test-connection` validates Kubernetes connectivity and exits

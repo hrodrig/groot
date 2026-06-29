@@ -1,0 +1,41 @@
+# eks-managed.yml — EKS / managed clusters
+# Skip node logs (not available on most managed control planes), enable metrics.
+output_dir: "./out"
+file_prefix: "eks-snapshot"
+notify:
+  slack:
+    enabled: false
+  discord:
+    enabled: false
+  teams:
+    enabled: false
+  telegram:
+    enabled: false
+  generic:
+    enabled: false
+  pagerduty:
+    enabled: false
+  email:
+    enabled: false
+upload:
+  s3:
+    enabled: false
+  gcs:
+    enabled: false
+  sftp:
+    enabled: false
+collection:
+  timeout: 180s
+  worker_concurrency: 6
+  namespaces:
+    - default
+    - kube-system
+  include_pod_logs: true
+  include_previous_logs: false
+  pod_log_tail_lines: 100
+  pod_logs_since: ""
+  include_node_details: true
+  include_node_logs: false
+  node_log_tail_lines: 0
+  include_pod_metrics: true
+  redact_secrets: true

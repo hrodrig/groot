@@ -1,6 +1,6 @@
 # Plan 0.9.0 — path to 1.0 (operator wins)
 
-**Status:** **planned** — not started  
+**Status:** **done** (unreleased on `develop`)  
 **Target release:** **`v0.9.0`** (one or more tags on `develop` before **1.0.0**)  
 **Roadmap band:** [ROADMAP.md](../ROADMAP.md) **Band 0.9.x** items **#31**, **#42**, **#60**, **#64**, **#79–#86**  
 **Delivery model:** one PR per item (or paired where noted). No **1.0.0** tag until [plan-1.0.0.md](plan-1.0.0.md) completes.

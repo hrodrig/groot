@@ -42,27 +42,38 @@ type job struct {
 
 // Service executes Kubernetes API collection (client-go; no kubectl binary).
 type Service struct {
-	cfg        config.Config
-	message    string
-	buildInfo  BuildInfo
-	clientset  kubernetes.Interface
-	metricsCS  *metricsversioned.Clientset
-	restConfig *rest.Config
-	k8sRunner  *k8srunner.Runner
-	onStart    func(name string, args []string)
-	onDone     func(name string)
-	onFailed   func(name string, err error)
-	hooksMu    sync.Mutex // serializes hook callbacks; workers invoke hooks concurrently otherwise
+	cfg             config.Config
+	message         string
+	buildInfo       BuildInfo
+	highSignalFirst bool
+	RunID           string // ROADMAP #81 — stable per-run id, set on Run
+	archiveSHA256   string // ROADMAP #81 — populated after archive writer returns
+	clientset       kubernetes.Interface
+	metricsCS       *metricsversioned.Clientset
+	restConfig      *rest.Config
+	k8sRunner       *k8srunner.Runner
+	onStart         func(name string, args []string)
+	onDone          func(name string)
+	onFailed        func(name string, err error)
+	hooksMu         sync.Mutex // serializes hook callbacks; workers invoke hooks concurrently otherwise
 }
 
-// New returns a collector service.
+// New returns a collector service. Signal-first ordering (ROADMAP #84) is
+// enabled by default — pass SetHighSignalFirst(false) to disable.
 func New(cfg config.Config) *Service {
-	return &Service{cfg: cfg}
+	return &Service{cfg: cfg, highSignalFirst: true}
 }
 
 // SetMessage adds a custom suffix for output names.
 func (s *Service) SetMessage(message string) {
 	s.message = message
+}
+
+// SetHighSignalFirst (ROADMAP #84 — 0.9.x) reorders the buildJobs output so
+// that "signal" jobs (Warning+ events, etc.) run before bulk namespace logs.
+// Default is on; pass false to restore the historical order for repro tests.
+func (s *Service) SetHighSignalFirst(enabled bool) {
+	s.highSignalFirst = enabled
 }
 
 // SetHooks attaches command execution hooks. Callbacks run under an internal
@@ -106,6 +117,12 @@ func (s *Service) invokeOnFailed(name string, err error) {
 // Run executes the collection workflow.
 func (s *Service) Run(ctx context.Context) (Summary, error) {
 	start := time.Now()
+
+	// ROADMAP #81: a stable per-run id is generated once at the start of Run
+	// and threaded through every downstream artifact (manifest, notify
+	// metadata, upload metadata). Format is YYYYMMDDTHHMMSSZ-<short> where
+	// <short> is base32(crypto/rand first 4 bytes).
+	s.RunID = newRunID()
 
 	timestamp := time.Now().Format("20060102-150405")
 	sessionBase := captureSessionBase(s.cfg.FilePrefix, timestamp, s.cfg.Collection.PodLogsSince)
@@ -159,6 +176,18 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		summary.ArchivePath = archivePath
 		return summary, fmt.Errorf("archive logs: %w", err)
 	}
+	// Compute the SHA-256 over the freshly built archive so operators can
+	// pin the exact bytes if they keep the archive around (ROADMAP #81).
+	if sha, shaErr := fileSHA256(archivePath); shaErr == nil {
+		s.archiveSHA256 = sha
+		// Re-emit the manifest so it carries the checksum. Best-effort;
+		// the archive itself is the source of truth.
+		if mErr := s.writeManifest(ctx, captureDir, sessionBase, archiveName, summary); mErr != nil {
+			s.invokeOnFailed("manifest-with-sha", mErr)
+		}
+	} else {
+		s.invokeOnFailed("archive-sha256", shaErr)
+	}
 	if err := os.RemoveAll(captureDir); err != nil {
 		return Summary{}, fmt.Errorf("cleanup capture dir %s: %w", captureDir, err)
 	}
@@ -190,7 +219,40 @@ func (s *Service) buildJobs(ctx context.Context) ([]job, error) {
 	}
 
 	jobs = s.appendControlPlanePodLogJobs(ctx, jobs)
+	if s.highSignalFirst {
+		jobs = prioritizeSignalJobs(jobs)
+	}
 	return jobs, nil
+}
+
+// prioritizeSignalJobs reorders jobs so that "signal" jobs (Warning+ events,
+// unhealthy pod listings, cluster metadata) run before bulk namespace and pod
+// log jobs. The relative order among signal jobs and among bulk jobs is
+// preserved.
+//
+// ROADMAP #84 (0.9.x). The intent is operator-experience: surface actionable
+// signal in seconds even when pod log collection takes minutes.
+func prioritizeSignalJobs(in []job) []job {
+	signalNames := map[string]struct{}{
+		"events-warning": {},
+		"events-all":     {}, // all-cluster events are high-signal enough to lead
+		"cluster-info":   {},
+		"nodes-wide":     {},
+		"pods-all":       {},
+	}
+	signal := make([]job, 0, len(signalNames))
+	bulk := make([]job, 0, len(in))
+	for _, j := range in {
+		if _, ok := signalNames[j.Name]; ok {
+			signal = append(signal, j)
+			continue
+		}
+		bulk = append(bulk, j)
+	}
+	out := make([]job, 0, len(in))
+	out = append(out, signal...)
+	out = append(out, bulk...)
+	return out
 }
 
 func (s *Service) baseKubectlJobs() []job {
@@ -198,6 +260,9 @@ func (s *Service) baseKubectlJobs() []job {
 		{Name: "cluster-info", Args: []string{"cluster-info"}, FileName: filepath.Join("extras", "cluster-info.txt")},
 		{Name: "nodes-wide", Args: []string{"get", "nodes", "-o", "wide"}, FileName: filepath.Join("extras", "nodes-wide.txt")},
 		{Name: "events-all", Args: []string{"get", "events", "-A", "--sort-by=.lastTimestamp"}, FileName: filepath.Join("extras", "all-cluster-events.log")},
+		// Signal-first slice (ROADMAP #84). Cheap to run, surfaces operator
+		// signal in seconds even on large clusters.
+		{Name: "events-warning", Optional: true, Args: []string{"get", "events", "-A", "--field-selector", "type=Warning", "--sort-by=.lastTimestamp"}, FileName: filepath.Join("extras", "warning-events.log")},
 		{Name: "pods-all", Args: []string{"get", "pods", "-A", "-o", "wide"}, FileName: filepath.Join("extras", "all-pods-wide.txt")},
 	}
 	if s.cfg.Collection.IncludePodMetrics {
@@ -833,9 +898,12 @@ func matchesTargetsByLabels(labels map[string]string, targets config.NamespaceTa
 	jobName := strings.TrimSpace(labels["job-name"])
 	appLabel := strings.TrimSpace(labels["app"])
 
-	// Helm releases only ever match by instance.
-	if contains(targets.HelmReleases, instanceLabel) {
-		return true
+	// Helm releases: match by Helm-canonical labels, and reject non-Helm owners
+	// that copy app.kubernetes.io/* without being a Helm-managed workload.
+	if len(targets.HelmReleases) > 0 {
+		if helmMatches(labels, targets.HelmReleases) {
+			return true
+		}
 	}
 
 	// Standard and Jobs/CronJob label sets.
@@ -847,6 +915,40 @@ func matchesTargetsByLabels(labels map[string]string, targets config.NamespaceTa
 			return true
 		}
 	}
+	return false
+}
+
+// helmMatches reports whether labels belong to any of the listed Helm releases.
+//
+// Helm-canonical labels are app.kubernetes.io/instance + app.kubernetes.io/name,
+// usually paired with app.kubernetes.io/managed-by=Helm. Legacy Helm 2 used
+// heritage=Tiller + chart=NAME. We honour the modern labels first and fall back
+// to the legacy pair, while refusing to match non-Helm workloads that happen to
+// carry app.kubernetes.io/instance (e.g. Kustomize, Operators): if a managed-by
+// label is present and identifies a non-Helm owner, the pod is excluded even
+// when instance or name match the target list.
+func helmMatches(labels map[string]string, releases []string) bool {
+	instance := strings.TrimSpace(labels["app.kubernetes.io/instance"])
+	name := strings.TrimSpace(labels["app.kubernetes.io/name"])
+	managedBy := strings.TrimSpace(labels["app.kubernetes.io/managed-by"])
+	heritage := strings.TrimSpace(labels["heritage"])
+	legacyRelease := strings.TrimSpace(labels["release"])
+
+	// Explicit non-Helm owner rejects the match — even if other labels coincide.
+	if managedBy != "" && !strings.EqualFold(managedBy, "Helm") {
+		return false
+	}
+
+	// Modern labels: instance and name must hit the target list (either suffices).
+	if contains(releases, instance) || contains(releases, name) {
+		return true
+	}
+
+	// Legacy Helm 2 (Tiller-managed): heritage=Tiller + release=<target>.
+	if strings.EqualFold(heritage, "Tiller") && contains(releases, legacyRelease) {
+		return true
+	}
+
 	return false
 }
 

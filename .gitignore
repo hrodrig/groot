@@ -28,6 +28,8 @@
 !go.sum
 !configs/
 !configs/**
+!examples/
+!examples/**
 
 !testing/
 !testing/**

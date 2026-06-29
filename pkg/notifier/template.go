@@ -50,6 +50,7 @@ func applyTemplate(tmpl string, ctx messageContext) string {
 		"{{duration}}":     ctx.Summary.Duration.Round(time.Second).String(),
 		"{{output_dir}}":   ctx.Summary.OutputDir,
 		"{{archive_path}}": ctx.Summary.ArchivePath,
+		"{{run_id}}":       ctx.Summary.RunID,
 	}
 	out := tmpl
 	for k, v := range repl {

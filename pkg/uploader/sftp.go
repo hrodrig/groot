@@ -31,7 +31,6 @@ func newSFTPUploader(cfg config.SFTPUploadCfg, timeout time.Duration) Uploader {
 func (u *sftpUploader) Provider() string { return "sftp" }
 
 func (u *sftpUploader) Upload(ctx context.Context, archivePath string, summary collector.Summary) (*Result, error) {
-	_ = summary
 	host := strings.TrimSpace(u.cfg.Host)
 	if host == "" {
 		return nil, fmt.Errorf("host is required")
@@ -41,6 +40,12 @@ func (u *sftpUploader) Upload(ctx context.Context, archivePath string, summary c
 	remotePath := archiveName
 	if dir := strings.TrimSpace(u.cfg.RemoteDir); dir != "" {
 		remotePath = strings.TrimRight(dir, "/") + "/" + archiveName
+	}
+	// ROADMAP #81: embed run_id in the filename for traceability.
+	if summary.RunID != "" && summary.RunID != "unknown" {
+		ext := filepath.Ext(remotePath)
+		base := strings.TrimSuffix(remotePath, ext)
+		remotePath = base + "." + summary.RunID + ext
 	}
 
 	f, err := os.Open(archivePath)

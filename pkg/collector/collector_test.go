@@ -149,6 +149,135 @@ func TestMatchesTargetsByLabels(t *testing.T) {
 	}
 }
 
+func TestHelmMatches(t *testing.T) {
+	releases := []string{"myrel"}
+
+	cases := []struct {
+		name   string
+		labels map[string]string
+		want   bool
+		why    string
+	}{
+		{
+			name:   "modern instance only",
+			labels: map[string]string{"app.kubernetes.io/instance": "myrel"},
+			want:   true,
+			why:    "standard Helm 3 label",
+		},
+		{
+			name: "modern instance + name + managed-by",
+			labels: map[string]string{
+				"app.kubernetes.io/instance":   "myrel",
+				"app.kubernetes.io/name":       "myrel-chart",
+				"app.kubernetes.io/managed-by": "Helm",
+			},
+			want: true,
+			why:  "Helm 3 canonical triple",
+		},
+		{
+			name: "modern name only (no instance)",
+			labels: map[string]string{
+				"app.kubernetes.io/name":       "myrel",
+				"app.kubernetes.io/managed-by": "helm",
+			},
+			want: true,
+			why:  "name match with managed-by=Helm (case-insensitive)",
+		},
+		{
+			name: "legacy helm2 tiller + release",
+			labels: map[string]string{
+				"heritage": "Tiller",
+				"release":  "myrel",
+				"chart":    "myrel-chart",
+			},
+			want: true,
+			why:  "Helm 2 Tiller-managed pod",
+		},
+		{
+			name:   "non-helm owner rejected even with matching instance",
+			labels: map[string]string{"app.kubernetes.io/instance": "myrel", "app.kubernetes.io/managed-by": "Kustomize"},
+			want:   false,
+			why:    "Kustomize sets the same labels but is not Helm",
+		},
+		{
+			name:   "non-helm owner rejected even with matching name",
+			labels: map[string]string{"app.kubernetes.io/name": "myrel", "app.kubernetes.io/managed-by": "operator-sdk"},
+			want:   false,
+			why:    "operator labels must not match helm_releases",
+		},
+		{
+			name:   "instance set but not in target list",
+			labels: map[string]string{"app.kubernetes.io/instance": "other-rel"},
+			want:   false,
+			why:    "different release name",
+		},
+		{
+			name:   "no helm labels at all",
+			labels: map[string]string{"app": "worker", "tier": "backend"},
+			want:   false,
+			why:    "non-Helm pod without canonical labels",
+		},
+		{
+			name: "legacy tiller but release name differs",
+			labels: map[string]string{
+				"heritage": "Tiller",
+				"release":  "other-rel",
+			},
+			want: false,
+			why:  "legacy release name not in target list",
+		},
+		{
+			name: "modern instance matches even when managed-by is absent",
+			labels: map[string]string{
+				"app.kubernetes.io/instance": "myrel",
+				"app.kubernetes.io/name":     "myrel-chart",
+			},
+			want: true,
+			why:  "managed-by is optional; charts may omit it",
+		},
+		{
+			name: "managed-by=Helm but neither instance nor name match target list",
+			labels: map[string]string{
+				"app.kubernetes.io/managed-by": "Helm",
+				"app.kubernetes.io/instance":   "other-rel",
+				"app.kubernetes.io/name":       "other-chart",
+			},
+			want: false,
+			why:  "Helm owner but different release",
+		},
+		{
+			name: "non-helm heritage (Flux) does not match as legacy",
+			labels: map[string]string{
+				"heritage": "Flux",
+				"release":  "myrel",
+			},
+			want: false,
+			why:  "Flux reuses some Helm-style labels; reject",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := helmMatches(tc.labels, releases)
+			if got != tc.want {
+				t.Fatalf("%s: got=%v want=%v — %s", tc.name, got, tc.want, tc.why)
+			}
+		})
+	}
+
+	// Belt-and-braces: matchesTargetsByLabels must use helmMatches when
+	// helm_releases is populated, so the rejection behaviour above flows
+	// through end-to-end. A Kustomize-owned pod with a matching instance must
+	// NOT be considered a Helm target by the umbrella helper.
+	nonHelm := map[string]string{
+		"app.kubernetes.io/instance":   "myrel",
+		"app.kubernetes.io/managed-by": "Kustomize",
+	}
+	if matchesTargetsByLabels(nonHelm, config.NamespaceTargets{HelmReleases: releases}) {
+		t.Fatal("matchesTargetsByLabels must not treat non-Helm owners as Helm releases")
+	}
+}
+
 func TestWorkloadPodLogArgs(t *testing.T) {
 	args := workloadPodLogArgs("ns", "pod", false, 0, "")
 	if len(args) < 4 {

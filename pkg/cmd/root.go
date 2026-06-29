@@ -22,22 +22,27 @@ import (
 	"github.com/spf13/pflag"
 )
 
-var cfgFile string
-var printSampleConfig bool
-var verbose bool
-var quiet bool
-var noNotify bool
-var noUpload bool
-var noColor bool
-var message string
-var kubeconfigOverride string
-var buildVersion = "dev"
-var buildCommit = "unknown"
-var buildBranch = "unknown"
-var buildDate = "unknown"
-var testConnection bool
-var collectLogsSince string
-var listJobs bool
+var (
+	cfgFile            string
+	printSampleConfig  bool
+	verbose            bool
+	quiet              bool
+	noNotify           bool
+	noUpload           bool
+	noColor            bool
+	message            string
+	kubeconfigOverride string
+	buildVersion       = "dev"
+	buildCommit        = "unknown"
+	buildBranch        = "unknown"
+	buildDate          = "unknown"
+	testConnection     bool
+	collectLogsSince   string
+	listJobs           bool
+	summaryFlag        bool // ROADMAP #42 — print human-readable summary footer
+	strictMode         bool // ROADMAP #82 — exit 5 on partial failures
+	strictThreshold    = 1
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "groot",
@@ -52,14 +57,16 @@ var rootCmd = &cobra.Command{
 		if testConnection {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
-				return fmt.Errorf("load config: %w", err)
+				return NewExitError(ExitConfigError, fmt.Errorf("load config: %w", err))
 			}
 			if kubeconfigOverride != "" {
 				cfg.Kubeconfig = kubeconfigOverride
 			}
 			meta, err := runConnectionTest(cmd.Context(), cfg)
 			if err != nil {
-				return err
+				// runConnectionTest wraps kubernetes.NewForConfig / list-namespaces;
+				// surface it as Kubernetes code so scripts can react differently.
+				return NewExitError(ExitKubernetesError, err)
 			}
 			if !quiet {
 				fmt.Fprintf(
@@ -90,12 +97,12 @@ var collectCmd = &cobra.Command{
 
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("load config: %w", err)
+			return NewExitError(ExitConfigError, fmt.Errorf("load config: %w", err))
 		}
 		if cmd.Flags().Lookup("since").Changed {
 			norm, normErr := config.NormalizePodLogsSince(collectLogsSince)
 			if normErr != nil {
-				return fmt.Errorf("invalid --since: %w", normErr)
+				return NewExitError(ExitConfigError, fmt.Errorf("invalid --since: %w", normErr))
 			}
 			cfg.Collection.PodLogsSince = norm
 		}
@@ -106,7 +113,7 @@ var collectCmd = &cobra.Command{
 			meta, err := runConnectionTest(cmd.Context(), cfg)
 			if err != nil {
 				logger.Error("kubernetes connection test failed: %v", err)
-				return err
+				return NewExitError(ExitKubernetesError, err)
 			}
 			if !quiet {
 				logger.Info(
@@ -128,7 +135,7 @@ var collectCmd = &cobra.Command{
 			defer cancel()
 			plans, err := collectorSvc.ListJobs(ctx)
 			if err != nil {
-				return fmt.Errorf("list jobs: %w", err)
+				return NewExitError(ExitKubernetesError, fmt.Errorf("list jobs: %w", err))
 			}
 			for _, p := range plans {
 				opt := ""
@@ -163,22 +170,26 @@ var collectCmd = &cobra.Command{
 				notifierSvc := notifier.NewFanOut(cfg)
 				if notifyErr := notifierSvc.NotifyFailure(ctx, summary, err.Error()); notifyErr != nil {
 					logger.Error("failure notification failed: %v", notifyErr)
-					return fmt.Errorf("send failure notifications: %w", notifyErr)
+					// Notify on abort failed *after* the collect itself aborted.
+					// Surface the original collect error so scripts see the real
+					// cause; the notify failure is logged but does not override
+					// the exit category — the user-facing failure is the collect.
+					return NewExitError(ExitCollectAborted, fmt.Errorf("collect logs: %w", err))
 				}
 			}
-			return fmt.Errorf("collect logs: %w", err)
+			return NewExitError(ExitCollectAborted, fmt.Errorf("collect logs: %w", err))
 		}
 
 		if !skipNotifications() {
 			notifierSvc := notifier.NewFanOut(cfg)
 			if notifyErr := notifierSvc.Notify(ctx, summary); notifyErr != nil {
 				logger.Error("notification failed: %v", notifyErr)
-				return fmt.Errorf("send notifications: %w", notifyErr)
+				return NewExitError(ExitNotifyFailed, fmt.Errorf("send notifications: %w", notifyErr))
 			}
 			if notifier.ShouldNotifyPartialFailure(cfg, summary) {
 				if notifyErr := notifierSvc.NotifyFailure(ctx, summary, ""); notifyErr != nil {
 					logger.Error("failure notification failed: %v", notifyErr)
-					return fmt.Errorf("send failure notifications: %w", notifyErr)
+					return NewExitError(ExitNotifyFailed, fmt.Errorf("send failure notifications: %w", notifyErr))
 				}
 			}
 		}
@@ -195,16 +206,29 @@ var collectCmd = &cobra.Command{
 		}
 
 		if !quiet {
-			logger.Info("collection completed in %s", summary.Duration.Round(time.Second))
 			logger.Info("output dir: %s", summary.OutputDir)
 			logger.Info("archive: %s", summary.ArchivePath)
 			logger.Info("jobs: total=%d success=%d failed=%d", summary.Total, summary.Success, summary.Failed)
+		}
+
+		// ROADMAP #42: --summary footer. Computes unhealthy pod counts via a
+		// single list-pods walk and feeds them to the formatter.
+		if summaryFlag {
+			unhealthy, uerr := collectorSvc.CountUnhealthyPods(ctx)
+			if uerr != nil && !quiet {
+				logger.Warn("unhealthy-pod-count failed: %v", uerr)
+			}
+			collector.WriteSummary(cmd.OutOrStdout(), summary, "", unhealthy)
 		}
 
 		if summary.Failed > 0 {
 			for _, failure := range summary.Failures {
 				logger.Warn("job failure: %s", failure)
 			}
+		}
+		// ROADMAP #82: --strict mode — exit 5 when partial failures >= threshold.
+		if strictMode && summary.Failed >= strictThreshold {
+			return NewExitErrorf(ExitPartialFailed, "partial failures (failed=%d) >= threshold (%d)", summary.Failed, strictThreshold)
 		}
 		return nil
 	},
@@ -258,7 +282,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&kubeconfigOverride, "kubeconfig", "", "Override kubeconfig path for the Kubernetes API client")
 	collectCmd.Flags().StringVar(&collectLogsSince, "since", "", "Pod logs only: --since duration (e.g. 24h, 45m; bare number means hours). Overrides collection.pod_logs_since in config when set")
 	collectCmd.Flags().BoolVar(&listJobs, "list-jobs", false, "Print planned collection jobs and exit without writing output")
-	rootCmd.AddCommand(collectCmd, versionCmd)
+	collectCmd.Flags().BoolVar(&summaryFlag, "summary", false, "After a successful collect, print a one-screen human-readable summary (jobs, duration, archive, unhealthy pod counts)")
+	collectCmd.Flags().BoolVar(&strictMode, "strict", false, "Exit with code 5 when partial job failures >= threshold (default 1; see --strict-threshold)")
+	collectCmd.Flags().IntVar(&strictThreshold, "strict-threshold", 1, "Minimum failed job count to trigger exit 5 when --strict is set")
+	rootCmd.AddCommand(collectCmd, versionCmd, newCompletionCmd(), newValidateCmd(), newInspectCmd())
 }
 
 type connMeta struct {

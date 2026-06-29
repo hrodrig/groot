@@ -34,11 +34,47 @@ builds:
       - -X main.commit={{.ShortCommit}}
       - -X main.branch={{.Branch}}
       - -X main.buildDate={{.Date}}
+  # kubectl-groot: same entry, second basename. kubectl plugin discovery
+  # picks any `kubectl-<name>` on PATH and forwards argv[2:] to it after
+  # stripping `kubectl <name>`. We do not actually expect kubectl to launch
+  # this directly via plugin dispatch in the simple case — instead users
+  # install the binary, and `kubectl` resolves it on `kubectl groot …`
+  # because of the basename convention. See `pkg/cmd/plugin.MaybeInject`
+  # for the argv-rewriting shim that ALSO makes the standalone binary
+  # accept "groot …" as if it were already a plugin invocation (useful
+  # when invoked from an MCP/agent that mimics kubectl CLI shape).
+  - id: kubectl-groot
+    main: ./cmd/groot
+    binary: kubectl-groot
+    flags:
+      - -trimpath
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+      - freebsd
+      - openbsd
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s
+      - -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.branch={{.Branch}}
+      - -X main.buildDate={{.Date}}
 
 archives:
   - id: groot-dist
     ids:
       - groot
+      - kubectl-groot
     formats: [tar.gz]
     format_overrides:
       - goos: windows
@@ -61,12 +97,14 @@ nfpms:
     file_name_template: "groot_{{ .Tag }}_{{ .Arch }}"
     ids:
       - groot
+      - kubectl-groot
     vendor: hrodrig
     homepage: https://github.com/hrodrig/groot
     maintainer: hrodrig
     description: |-
       GROOT is a Go CLI that collects Kubernetes diagnostics (resources, events,
-      pod logs, node details, and optional notifications).
+      pod logs, node details, and optional notifications). Also shipped as the
+      `kubectl-groot` plugin binary so users can invoke it as `kubectl groot …`.
     license: MIT
     scripts:
       preremove: contrib/deb/prerm.sh
@@ -144,6 +182,7 @@ dockers_v2:
     sbom: true
     ids:
       - groot
+      - kubectl-groot
     extra_files:
       - configs/groot.yml.sample
     images:
@@ -180,6 +219,7 @@ homebrew_casks:
       - groot-dist
     binaries:
       - groot
+      - kubectl-groot
     repository:
       owner: hrodrig
       name: homebrew-groot
@@ -187,7 +227,7 @@ homebrew_casks:
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     directory: Casks
     homepage: https://github.com/hrodrig/groot
-    description: "Read-only log and context collector for Kubernetes"
+    description: "Read-only log and context collector for Kubernetes (also ships the kubectl-groot plugin)"
     license: MIT
     # Generate the URL from the released .tar.gz artifact matching
     # the v-prefixed tag pattern (post 0.6.x).

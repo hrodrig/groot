@@ -1,0 +1,86 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: groot
+spec:
+  version: "{{ .Tag }}"
+  homepage: https://github.com/hrodrig/groot
+  platforms:
+    - selector:
+        matchLabels:
+          os: linux
+          arch: amd64
+      uri: https://github.com/hrodrig/groot/releases/download/{{ .Tag }}/groot_{{ .Tag }}_linux_amd64.tar.gz
+      sha256: "{{ .Sha256LinuxAmd64 }}"
+      bin: kubectl-groot
+      files:
+        - from: groot
+          to: .
+        - from: groot.yml.sample
+          to: .
+    - selector:
+        matchLabels:
+          os: linux
+          arch: arm64
+      uri: https://github.com/hrodrig/groot/releases/download/{{ .Tag }}/groot_{{ .Tag }}_linux_arm64.tar.gz
+      sha256: "{{ .Sha256LinuxArm64 }}"
+      bin: kubectl-groot
+      files:
+        - from: groot
+          to: .
+        - from: groot.yml.sample
+          to: .
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: amd64
+      uri: https://github.com/hrodrig/groot/releases/download/{{ .Tag }}/groot_{{ .Tag }}_darwin_amd64.tar.gz
+      sha256: "{{ .Sha256DarwinAmd64 }}"
+      bin: kubectl-groot
+      files:
+        - from: groot
+          to: .
+        - from: groot.yml.sample
+          to: .
+    - selector:
+        matchLabels:
+          os: darwin
+          arch: arm64
+      uri: https://github.com/hrodrig/groot/releases/download/{{ .Tag }}/groot_{{ .Tag }}_darwin_arm64.tar.gz
+      sha256: "{{ .Sha256DarwinArm64 }}"
+      bin: kubectl-groot
+      files:
+        - from: groot
+          to: .
+        - from: groot.yml.sample
+          to: .
+    - selector:
+        matchLabels:
+          os: windows
+          arch: amd64
+      uri: https://github.com/hrodrig/groot/releases/download/{{ .Tag }}/groot_{{ .Tag }}_windows_amd64.zip
+      sha256: "{{ .Sha256WindowsAmd64 }}"
+      bin: kubectl-groot.exe
+      files:
+        - from: groot.exe
+          to: .
+        - from: groot.yml.sample
+          to: .
+  shortDescription: Collect Kubernetes logs and context into a single `.tar.gz`
+  longDescription: |
+    Groot is a read-only Kubernetes log and context collector. With one
+    `kubectl groot collect`, it pulls pod logs, control-plane logs, events,
+    and selected API snapshots (nodes, namespaces, workload resources, RBAC)
+    into a single timestamped `.tar.gz` archive. Useful as evidence for
+    incident response, troubleshooting, and root cause analysis (RCA).
+
+    The plugin binary is a thin shim over `groot`, so all flags behave
+    identically to the standalone CLI. Configuration YAMLs are compatible
+    with the standalone binary.
+
+  caveats: |
+    The kubectl-groot plugin is built into the same archive as the standalone
+    `groot` binary. Krew installs only `kubectl-groot`, but you can also
+    install the standalone binary from the release page if you want both.
+  homebrew:
+    name: groot

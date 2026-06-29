@@ -39,6 +39,8 @@ type CollectionCfg struct {
 	IncludePodMetrics   bool                        `mapstructure:"include_pod_metrics"`
 	RedactSecrets       bool                        `mapstructure:"redact_secrets"`
 	RedactPatterns      []string                    `mapstructure:"redact_patterns"`
+	MinFreeBytes        int64                       `mapstructure:"min_free_bytes"`
+	WarnFreeBytes       int64                       `mapstructure:"warn_free_bytes"`
 }
 
 type NamespaceTargets struct {

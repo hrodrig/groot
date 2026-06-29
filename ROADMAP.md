@@ -27,11 +27,8 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 
 **Honest gaps today:**
 
-- **`helm_releases` target matching** may miss or mis-select pods (#79).
 - **No `config_version`** or formal migration path (#30 — blocks **1.0.0** only).
-- **No second command** (`validate` / `inspect`) (#31 — **0.9.x**).
 - **No structured output** (`--output json`) (#40 — **1.0.0**).
-- **Exit codes** are binary (0 vs non-zero); no taxonomy for automation (#82 — **0.9.x**).
 
 **Current focus (planned work):**
 
@@ -62,6 +59,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.7.1** | 2 | **`cluster_name` config**: optional archive basename cluster label; resolution chain when empty (kubeconfig → cluster-info → API server host). |
 | **0.7.2** | 2 | **Node log capture**: host logs via node proxy → `nodes/<node>.log`; kubelet log query optional; fewer spurious failures on managed clouds (e.g. AKS). |
 | **0.8.0** | 0.8 | **Workload resource RCA**: `extras/workload-resources.tsv` (per-container requests/limits + owner); **`all-pods-rca.tsv`** adds declared resource columns for OOM/capacity RCA (#39). |
+| **0.9.0** | 0.9 | **operator wins**: Helm fix, kubectl plugin, validate/inspect, --summary, run_id, exit codes, completion, profiles, README comparison (#79–#86, #64, #60, #31). See [plan-0.9.0.md](docs/plan-0.9.0.md). |
 
 ---
 

@@ -12,8 +12,8 @@ import (
 //	2  Kubernetes client / API error (auth, list, handshake)
 //	3  collect aborted (timeout, archive failure, mandatory job failed)
 //	4  notify delivery failed (after a successful collect)
-//	5  partial job failures ≥ configured threshold — reserved, only honoured
-//	   with explicit `--strict` opt-in (not implemented yet; see plan-0.9.0)
+//	5  partial job failures ≥ configured threshold, triggered by `--strict` flag
+//	   (default threshold 1, configurable via `--strict-threshold`; see plan-0.9.0)
 //
 // The contract is: any zero return from `groot` means the archive exists on
 // disk and notify succeeded. Non-zero tells scripts which subsystem failed
@@ -24,9 +24,8 @@ const (
 	ExitKubernetesError = 2
 	ExitCollectAborted  = 3
 	ExitNotifyFailed    = 4
-	// ExitPartialFailed (5) intentionally not wired today — see plan-0.9.0
-	// "Partial job failures ≥ threshold". Keeping the constant reserved prevents
-	// drift if we add the gate later.
+	// ExitPartialFailed (5) — triggered by `--strict` flag when partial
+	// failures >= strictThreshold (default 1). Wired in pkg/cmd/root.go.
 	ExitPartialFailed = 5
 )
 

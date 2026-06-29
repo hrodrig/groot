@@ -198,6 +198,21 @@ go install github.com/hrodrig/groot/cmd/groot@latest
 
 Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v0.6.0`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot).
 
+### Shell completion
+
+Generate a completion script for your shell with:
+
+```bash
+groot completion bash        # bash
+groot completion zsh         # zsh
+groot completion fish        # fish
+groot completion powershell  # powershell
+```
+
+### Exit codes
+
+Stable taxonomy for scripting (0.9.x #82): `0` success, `1` config validation, `2` Kubernetes API error, `3` collect aborted, `4` notify delivery failed. See [SPECIFICATIONS.md](docs/SPECIFICATIONS.md) for details.
+
 Useful runtime flags (global or with `collect`):
 
 - `--version` / `-v` prints `groot vX.Y.Z (commit=… branch=… built=…)`

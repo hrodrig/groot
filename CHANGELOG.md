@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Shell completion (0.9.x #80)**: new `groot completion <bash|zsh|fish|powershell>` subcommand wraps Cobra's generators with strict arg validation. Defaults to writing the script to **stdout** so it installs with a redirect (e.g. `groot completion zsh > "${fpath[1]}/_groot"`, `groot completion bash | sudo install -m 0644 /dev/stdin /etc/bash_completion.d/groot`); errors and unsupported-shell messages go to **stderr**. Listed in root `--help`. 8 unit tests in `pkg/cmd/completion_test.go`.
+- **Exit code taxonomy (0.9.x #82)**: stable codes for scripting — `0` success, `1` config validation (YAML / `--since` / missing config file), `2` Kubernetes client or API error, `3` collect aborted (timeout / archive failure), `4` notify delivery failed; `5` reserved for partial-job-failure `--strict` opt-in (not wired yet — see [plan-0.9.0.md](docs/plan-0.9.0.md)). New `pkg/cmd/exitcode.go` defines `ExitError`, `ExitCodeOf`, and the five `Exit*` constants; `pkg/cmd/root.go` RunE funnels every error through `NewExitError` so the code is preserved across `%w` wrappers. `cmd/groot/main.go:exitCode` now delegates to `cmd.ExitCodeOf` (was binary 0/1). SPEC §3 documents the contract. 9 unit tests in `pkg/cmd/exitcode_test.go` + 3 end-to-end tests in `pkg/cmd/exitcode_cli_test.go`.
+
 ## [0.8.0] - 2026-06-17
 
 ### Added

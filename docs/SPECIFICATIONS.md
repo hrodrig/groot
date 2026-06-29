@@ -66,10 +66,19 @@ This document is the source of truth for **observable behavior** and test expect
 | `--since <duration>` | Pod logs only: sets `collection.pod_logs_since` for this run (overrides config). Bare number = hours; or Go duration (`24h`, `45m`). |
 | `--list-jobs` | Print the planned collection jobs (name, output file, args, `optional`) and exit **without** writing the capture tree or `.tar.gz`, and without firing notify. Requires API reachability for dynamic jobs (nodes, pod logs). |
 
-### Exit semantics
+### Exit semantics (0.9.x #82)
 
-- **0**: collect completed; notify succeeded (if enabled and not skipped).
-- **Non-zero**: config load/validation, client init, context deadline (`collection.timeout`), archive error, or notify error.
+| Code | Meaning |
+|------|---------|
+| 0 | Success (collect completed; notify succeeded when enabled and not skipped) |
+| 1 | Config validation (YAML load, `--since`, missing config file) |
+| 2 | Kubernetes client / API error (auth, list, handshake) |
+| 3 | Collect aborted (timeout, archive failure) |
+| 4 | Notify delivery failed |
+| 5 | Reserved — partial failures ≥ threshold in opt-in `--strict` mode (not wired today; see [plan-0.9.0.md](docs/plan-0.9.0.md)) |
+
+\`\`\`
+Partial job failures inside collect remain **non-fatal** by default; they are counted in `Summary` and logged.
 
 ## 4. Configuration contract
 

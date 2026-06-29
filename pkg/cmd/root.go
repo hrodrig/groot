@@ -52,14 +52,16 @@ var rootCmd = &cobra.Command{
 		if testConnection {
 			cfg, err := config.Load(cfgFile)
 			if err != nil {
-				return fmt.Errorf("load config: %w", err)
+				return NewExitError(ExitConfigError, fmt.Errorf("load config: %w", err))
 			}
 			if kubeconfigOverride != "" {
 				cfg.Kubeconfig = kubeconfigOverride
 			}
 			meta, err := runConnectionTest(cmd.Context(), cfg)
 			if err != nil {
-				return err
+				// runConnectionTest wraps kubernetes.NewForConfig / list-namespaces;
+				// surface it as Kubernetes code so scripts can react differently.
+				return NewExitError(ExitKubernetesError, err)
 			}
 			if !quiet {
 				fmt.Fprintf(
@@ -90,12 +92,12 @@ var collectCmd = &cobra.Command{
 
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("load config: %w", err)
+			return NewExitError(ExitConfigError, fmt.Errorf("load config: %w", err))
 		}
 		if cmd.Flags().Lookup("since").Changed {
 			norm, normErr := config.NormalizePodLogsSince(collectLogsSince)
 			if normErr != nil {
-				return fmt.Errorf("invalid --since: %w", normErr)
+				return NewExitError(ExitConfigError, fmt.Errorf("invalid --since: %w", normErr))
 			}
 			cfg.Collection.PodLogsSince = norm
 		}
@@ -106,7 +108,7 @@ var collectCmd = &cobra.Command{
 			meta, err := runConnectionTest(cmd.Context(), cfg)
 			if err != nil {
 				logger.Error("kubernetes connection test failed: %v", err)
-				return err
+				return NewExitError(ExitKubernetesError, err)
 			}
 			if !quiet {
 				logger.Info(
@@ -128,7 +130,7 @@ var collectCmd = &cobra.Command{
 			defer cancel()
 			plans, err := collectorSvc.ListJobs(ctx)
 			if err != nil {
-				return fmt.Errorf("list jobs: %w", err)
+				return NewExitError(ExitKubernetesError, fmt.Errorf("list jobs: %w", err))
 			}
 			for _, p := range plans {
 				opt := ""
@@ -163,22 +165,26 @@ var collectCmd = &cobra.Command{
 				notifierSvc := notifier.NewFanOut(cfg)
 				if notifyErr := notifierSvc.NotifyFailure(ctx, summary, err.Error()); notifyErr != nil {
 					logger.Error("failure notification failed: %v", notifyErr)
-					return fmt.Errorf("send failure notifications: %w", notifyErr)
+					// Notify on abort failed *after* the collect itself aborted.
+					// Surface the original collect error so scripts see the real
+					// cause; the notify failure is logged but does not override
+					// the exit category — the user-facing failure is the collect.
+					return NewExitError(ExitCollectAborted, fmt.Errorf("collect logs: %w", err))
 				}
 			}
-			return fmt.Errorf("collect logs: %w", err)
+			return NewExitError(ExitCollectAborted, fmt.Errorf("collect logs: %w", err))
 		}
 
 		if !skipNotifications() {
 			notifierSvc := notifier.NewFanOut(cfg)
 			if notifyErr := notifierSvc.Notify(ctx, summary); notifyErr != nil {
 				logger.Error("notification failed: %v", notifyErr)
-				return fmt.Errorf("send notifications: %w", notifyErr)
+				return NewExitError(ExitNotifyFailed, fmt.Errorf("send notifications: %w", notifyErr))
 			}
 			if notifier.ShouldNotifyPartialFailure(cfg, summary) {
 				if notifyErr := notifierSvc.NotifyFailure(ctx, summary, ""); notifyErr != nil {
 					logger.Error("failure notification failed: %v", notifyErr)
-					return fmt.Errorf("send failure notifications: %w", notifyErr)
+					return NewExitError(ExitNotifyFailed, fmt.Errorf("send failure notifications: %w", notifyErr))
 				}
 			}
 		}
@@ -258,7 +264,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&kubeconfigOverride, "kubeconfig", "", "Override kubeconfig path for the Kubernetes API client")
 	collectCmd.Flags().StringVar(&collectLogsSince, "since", "", "Pod logs only: --since duration (e.g. 24h, 45m; bare number means hours). Overrides collection.pod_logs_since in config when set")
 	collectCmd.Flags().BoolVar(&listJobs, "list-jobs", false, "Print planned collection jobs and exit without writing output")
-	rootCmd.AddCommand(collectCmd, versionCmd)
+	rootCmd.AddCommand(collectCmd, versionCmd, newCompletionCmd())
 }
 
 type connMeta struct {

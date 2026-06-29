@@ -23,25 +23,25 @@ import (
 )
 
 var (
-	cfgFile string
-	printSampleConfig bool
-	verbose bool
-	quiet bool
-	noNotify bool
-	noUpload bool
-	noColor bool
-	message string
+	cfgFile            string
+	printSampleConfig  bool
+	verbose            bool
+	quiet              bool
+	noNotify           bool
+	noUpload           bool
+	noColor            bool
+	message            string
 	kubeconfigOverride string
-	buildVersion = "dev"
-	buildCommit = "unknown"
-	buildBranch = "unknown"
-	buildDate = "unknown"
-	testConnection bool
-	collectLogsSince string
-	listJobs bool
-	summaryFlag bool // ROADMAP #42 — print human-readable summary footer
-	strictMode  bool // ROADMAP #82 — exit 5 on partial failures
-	strictThreshold = 1
+	buildVersion       = "dev"
+	buildCommit        = "unknown"
+	buildBranch        = "unknown"
+	buildDate          = "unknown"
+	testConnection     bool
+	collectLogsSince   string
+	listJobs           bool
+	summaryFlag        bool // ROADMAP #42 — print human-readable summary footer
+	strictMode         bool // ROADMAP #82 — exit 5 on partial failures
+	strictThreshold    = 1
 )
 
 var rootCmd = &cobra.Command{

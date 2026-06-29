@@ -40,6 +40,8 @@ var (
 	collectLogsSince string
 	listJobs bool
 	summaryFlag bool // ROADMAP #42 — print human-readable summary footer
+	strictMode  bool // ROADMAP #82 — exit 5 on partial failures
+	strictThreshold = 1
 )
 
 var rootCmd = &cobra.Command{
@@ -224,6 +226,10 @@ var collectCmd = &cobra.Command{
 				logger.Warn("job failure: %s", failure)
 			}
 		}
+		// ROADMAP #82: --strict mode — exit 5 when partial failures >= threshold.
+		if strictMode && summary.Failed >= strictThreshold {
+			return NewExitErrorf(ExitPartialFailed, "partial failures (failed=%d) >= threshold (%d)", summary.Failed, strictThreshold)
+		}
 		return nil
 	},
 }
@@ -277,6 +283,8 @@ func init() {
 	collectCmd.Flags().StringVar(&collectLogsSince, "since", "", "Pod logs only: --since duration (e.g. 24h, 45m; bare number means hours). Overrides collection.pod_logs_since in config when set")
 	collectCmd.Flags().BoolVar(&listJobs, "list-jobs", false, "Print planned collection jobs and exit without writing output")
 	collectCmd.Flags().BoolVar(&summaryFlag, "summary", false, "After a successful collect, print a one-screen human-readable summary (jobs, duration, archive, unhealthy pod counts)")
+	collectCmd.Flags().BoolVar(&strictMode, "strict", false, "Exit with code 5 when partial job failures >= threshold (default 1; see --strict-threshold)")
+	collectCmd.Flags().IntVar(&strictThreshold, "strict-threshold", 1, "Minimum failed job count to trigger exit 5 when --strict is set")
 	rootCmd.AddCommand(collectCmd, versionCmd, newCompletionCmd(), newValidateCmd(), newInspectCmd())
 }
 

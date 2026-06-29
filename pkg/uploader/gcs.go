@@ -27,7 +27,6 @@ func newGCSUploader(cfg config.GCSUploadCfg, timeout time.Duration) Uploader {
 func (u *gcsUploader) Provider() string { return "gcs" }
 
 func (u *gcsUploader) Upload(ctx context.Context, archivePath string, summary collector.Summary) (*Result, error) {
-	_ = summary
 	bucket := strings.TrimSpace(u.cfg.Bucket)
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -74,6 +73,15 @@ func (u *gcsUploader) Upload(ctx context.Context, archivePath string, summary co
 			w.Metadata = map[string]string{}
 		}
 		w.Metadata[k] = v
+	}
+	// ROADMAP #81: apply run_id if the caller provided one.
+	if summary.RunID != "" && summary.RunID != "unknown" {
+		if w.Metadata == nil {
+			w.Metadata = map[string]string{}
+		}
+		if _, ok := w.Metadata["run_id"]; !ok {
+			w.Metadata["run_id"] = summary.RunID
+		}
 	}
 
 	if _, err := io.Copy(w, f); err != nil {

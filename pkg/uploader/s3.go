@@ -30,7 +30,6 @@ func newS3Uploader(cfg config.S3UploadCfg, timeout time.Duration) Uploader {
 func (u *s3Uploader) Provider() string { return "s3" }
 
 func (u *s3Uploader) Upload(ctx context.Context, archivePath string, summary collector.Summary) (*Result, error) {
-	_ = summary
 	bucket := strings.TrimSpace(u.cfg.Bucket)
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -83,6 +82,15 @@ func (u *s3Uploader) Upload(ctx context.Context, archivePath string, summary col
 			input.Metadata = map[string]string{}
 		}
 		input.Metadata[k] = v
+	}
+	// ROADMAP #81: tag every upload with the run_id when available.
+	if summary.RunID != "" && summary.RunID != "unknown" {
+		if input.Metadata == nil {
+			input.Metadata = map[string]string{}
+		}
+		if _, ok := input.Metadata["run_id"]; !ok {
+			input.Metadata["run_id"] = summary.RunID
+		}
 	}
 
 	up := manager.NewUploader(client)

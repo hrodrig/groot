@@ -31,6 +31,7 @@ type Summary struct {
 	Success     int
 	Failed      int
 	Failures    []string
+	RunID       string // ROADMAP #81 — stable per-collect id (set in Run)
 }
 
 type job struct {
@@ -151,6 +152,11 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	summary := s.runJobs(ctx, captureDir, jobs)
 	summary.OutputDir = captureDir
 	summary.Duration = time.Since(start)
+
+	summary.RunID = s.RunID
+	if summary.RunID == "" {
+		summary.RunID = "unknown"
+	}
 
 	if s.cfg.Collection.RedactSecrets {
 		s.runRedactPass(captureDir)

@@ -93,53 +93,13 @@ func (s *Service) Preflight(ctx context.Context) PreflightResult {
 	// SelfSubjectAccessReview against the first namespace the user listed
 	// (or "" for cluster-scoped verbs). Failures show the user which verb
 	// is missing.
-	rbac := rbacChecks(s.cfg.Collection.Namespaces)
-	for _, c := range rbac {
-		verb, resource := c.verb, c.resource
-		ns := c.namespace
-		argv := []string{"auth", "can-i", verb, resource}
-		if ns != "" {
-			argv = append(argv, "--namespace", ns)
-		}
-		out, err := s.k8sRunner.Run(ctx, argv)
-		switch {
-		case err != nil:
-			add(PreflightError, "rbac."+c.label, err.Error())
-		case strings.TrimSpace(string(out)) == "yes":
-			add(PreflightOK, "rbac."+c.label, fmt.Sprintf("can-i %s %s (ns=%q)", verb, resource, ns))
-		default:
-			add(PreflightError, "rbac."+c.label, fmt.Sprintf("missing permission: %s %s (ns=%q)", verb, resource, ns))
-		}
+	tasks := rbacChecks(s.cfg.Collection.Namespaces)
+	for _, c := range tasks {
+		s.preflightRBAC(ctx, &res, c)
 	}
 
 	// 5. Disk preflight (#83). Never writes; only statvfs or fallback.
-	free, total, derr := diskFree(s.cfg.OutputDir)
-	if derr != nil {
-		add(PreflightError, "disk.stat", derr.Error())
-	} else {
-		minBytes := s.cfg.Collection.MinFreeBytes
-		if minBytes <= 0 {
-			minBytes = defaultMinFreeBytes
-		}
-		warnBytes := s.cfg.Collection.WarnFreeBytes
-		if warnBytes <= 0 {
-			warnBytes = defaultWarnFreeBytes
-		}
-		estimate := defaultEstimatedJobBytes * int64(max(len(s.cfg.Collection.Namespaces), 1))
-		switch {
-		case free < minBytes:
-			add(PreflightError, "disk.free",
-				fmt.Sprintf("output_dir %s has %s free; need at least %s (estimated collect footprint %s)",
-					s.cfg.OutputDir, formatBytes(free), formatBytes(minBytes), formatBytes(estimate)))
-		case free < warnBytes:
-			add(PreflightWarn, "disk.free",
-				fmt.Sprintf("output_dir %s has %s free; warn threshold %s — collect may fill the volume",
-					s.cfg.OutputDir, formatBytes(free), formatBytes(warnBytes)))
-		default:
-			add(PreflightOK, "disk.free",
-				fmt.Sprintf("output_dir %s free=%s of %s", s.cfg.OutputDir, formatBytes(free), formatBytes(total)))
-		}
-	}
+	s.preflightDisk(&res)
 
 	// Stable order for tests + logs.
 	sort.SliceStable(res.Findings, func(i, j int) bool {
@@ -234,4 +194,66 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// preflightRBAC runs a single SelfSubjectAccessReview and records the finding.
+func (s *Service) preflightRBAC(ctx context.Context, res *PreflightResult, c rbacCheck) {
+	add := func(sev PreflightSeverity, check, msg string) {
+		res.Findings = append(res.Findings, PreflightFinding{Severity: sev, Check: check, Message: msg})
+		if sev == PreflightError {
+			res.OK = false
+		}
+	}
+	verb, resource := c.verb, c.resource
+	ns := c.namespace
+	argv := []string{"auth", "can-i", verb, resource}
+	if ns != "" {
+		argv = append(argv, "--namespace", ns)
+	}
+	out, err := s.k8sRunner.Run(ctx, argv)
+	switch {
+	case err != nil:
+		add(PreflightError, "rbac."+c.label, err.Error())
+	case strings.TrimSpace(string(out)) == "yes":
+		add(PreflightOK, "rbac."+c.label, fmt.Sprintf("can-i %s %s (ns=%q)", verb, resource, ns))
+	default:
+		add(PreflightError, "rbac."+c.label, fmt.Sprintf("missing permission: %s %s (ns=%q)", verb, resource, ns))
+	}
+}
+
+// preflightDisk runs a one-step statvfs check and records the finding.
+func (s *Service) preflightDisk(res *PreflightResult) {
+	add := func(sev PreflightSeverity, check, msg string) {
+		res.Findings = append(res.Findings, PreflightFinding{Severity: sev, Check: check, Message: msg})
+		if sev == PreflightError {
+			res.OK = false
+		}
+	}
+	free, total, derr := diskFree(s.cfg.OutputDir)
+	if derr != nil {
+		add(PreflightError, "disk.stat", derr.Error())
+		return
+	}
+	minBytes := s.cfg.Collection.MinFreeBytes
+	if minBytes <= 0 {
+		minBytes = defaultMinFreeBytes
+	}
+	warnBytes := s.cfg.Collection.WarnFreeBytes
+	if warnBytes <= 0 {
+		warnBytes = defaultWarnFreeBytes
+	}
+	estimate := defaultEstimatedJobBytes * int64(max(len(s.cfg.Collection.Namespaces), 1))
+	switch {
+	case free < minBytes:
+		add(PreflightError, "disk.free",
+			fmt.Sprintf("output_dir %s has %s free; need at least %s (estimated collect footprint %s)",
+				s.cfg.OutputDir, formatBytes(free), formatBytes(minBytes), formatBytes(estimate)))
+	case free < warnBytes:
+		add(PreflightWarn, "disk.free",
+			fmt.Sprintf("output_dir %s has %s free; warn threshold %s — collect may fill the volume",
+				s.cfg.OutputDir, formatBytes(free), formatBytes(warnBytes)))
+	default:
+		add(PreflightOK, "disk.free",
+			fmt.Sprintf("output_dir %s free=%s of %s", s.cfg.OutputDir, formatBytes(free), formatBytes(total)))
+	}
 }

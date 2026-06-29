@@ -9,7 +9,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-28 (Band **0.9.x** active; Band **3** trimmed to 1.0.0 contract only)
+**Last reviewed:** 2026-06-28 (Band **0.9.x** shipped as **v0.9.0**; Band **3** trimmed to 1.0.0 contract only)
 
 ### Versioning note
 
@@ -40,7 +40,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **Band 1** (0.1.x–0.6.x) | **Shipped** (#1–#29) | Initial CLI through BSD ports; see [plan-0.4.0](docs/plan-0.4.0.md), [plan-0.5.0](docs/plan-0.5.0.md), [plan-0.6.0](docs/plan-0.6.0.md) |
 | **Band 2** (0.7.x) | **Shipped** (#36–#38) | SFTP upload, airgapped relay, container image SBOM; see [plan-0.7.0.md](docs/plan-0.7.0.md) |
 | **Band 0.8.x** | **Shipped** (#39) | Workload requests/limits in RCA extras — **`v0.8.0`** |
-| **Band 0.9.x** | **Active** | Operator wins — see [plan-0.9.0.md](docs/plan-0.9.0.md) (#31, #42, #60, #64, #79–#86) |
+| **Band 0.9.x** | **Shipped (v0.9.0)** | Operator wins — see [plan-0.9.0.md](docs/plan-0.9.0.md) (#31, #42, #60, #64, #79–#86) |
 | **Band 3** (1.0.0) | **Planned** | Contract freeze only — see [plan-1.0.0.md](docs/plan-1.0.0.md) (#30, #34, #35, #40, #48, #87) |
 | **Band 4** (1.1.x+) | **Backlog** (#32–#33, #41–#78, #50–#76) | Multi-cluster, analyze, stream, addons, distribution — post-1.0 |
 
@@ -83,18 +83,18 @@ Ship **operator value** before the **1.0.0** compatibility promise. No `config_v
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 79 | 0.9 | **Fix Helm `helm_releases` target matching** + unit tests for `matchesTargetsByLabels` / `resolvePodsForLogs`. | **Done (unreleased)** |
-| 64 | 0.9 | **kubectl plugin**: ship **`kubectl-groot`** binary; `kubectl groot collect` via plugin discovery. | **Done (unreleased)** |
-| 85 | 0.9 | **Krew + Makefile**: `make install-kubectl-plugin`; document Krew index submission. | **Done (unreleased)** |
-| 80 | 0.9 | **Shell completion**: `groot completion bash\|zsh\|fish\|powershell` (and `kubectl groot completion`). | **Done (unreleased)** |
-| 81 | 0.9 | **`run_id` + `archive_sha256`**: in `manifest.json`, notify text, upload metadata. | **Done (unreleased)** |
-| 82 | 0.9 | **Exit code taxonomy**: documented codes for config, API, abort, notify (see plan-0.9.0). | **Done (unreleased)** |
-| 31 | 0.9 | **`groot validate`** (config, API, RBAC, disk) and **`groot inspect <archive>`** (manifest + file tree minimum). | **Done (unreleased)** |
-| 83 | 0.9 | **Disk space preflight** (part of validate): fail/warn when `output_dir` lacks space. | **Done (unreleased)** |
-| 42 | 0.9 | **`groot collect --summary`**: one-screen result for operators. | **Done (unreleased)** |
-| 84 | 0.9 | **Signal-first job ordering**: events Warning+ and unhealthy pods before bulk logs. | **Done (unreleased)** |
-| 86 | 0.9 | **Config profiles** in `examples/profiles/` (incident-quick, bastion-airgap, eks-managed, compliance-full). | **Done (unreleased)** |
-| 60 | 0.9 | **README comparison** vs kubectl-gather / alternatives; incident workflow example. | **Done (unreleased)** |
+| 79 | 0.9 | **Fix Helm `helm_releases` target matching** + unit tests for `matchesTargetsByLabels` / `resolvePodsForLogs`. | **Done (v0.9.0)** |
+| 64 | 0.9 | **kubectl plugin**: ship **`kubectl-groot`** binary; `kubectl groot collect` via plugin discovery. | **Done (v0.9.0)** |
+| 85 | 0.9 | **Krew + Makefile**: `make install-kubectl-plugin`; document Krew index submission. | **Done (v0.9.0)** |
+| 80 | 0.9 | **Shell completion**: `groot completion bash\|zsh\|fish\|powershell` (and `kubectl groot completion`). | **Done (v0.9.0)** |
+| 81 | 0.9 | **`run_id` + `archive_sha256`**: in `manifest.json`, notify text, upload metadata. | **Done (v0.9.0)** |
+| 82 | 0.9 | **Exit code taxonomy**: documented codes for config, API, abort, notify (see plan-0.9.0). | **Done (v0.9.0)** |
+| 31 | 0.9 | **`groot validate`** (config, API, RBAC, disk) and **`groot inspect <archive>`** (manifest + file tree minimum). | **Done (v0.9.0)** |
+| 83 | 0.9 | **Disk space preflight** (part of validate): fail/warn when `output_dir` lacks space. | **Done (v0.9.0)** |
+| 42 | 0.9 | **`groot collect --summary`**: one-screen result for operators. | **Done (v0.9.0)** |
+| 84 | 0.9 | **Signal-first job ordering**: events Warning+ and unhealthy pods before bulk logs. | **Done (v0.9.0)** |
+| 86 | 0.9 | **Config profiles** in `examples/profiles/` (incident-quick, bastion-airgap, eks-managed, compliance-full). | **Done (v0.9.0)** |
+| 60 | 0.9 | **README comparison** vs kubectl-gather / alternatives; incident workflow example. | **Done (v0.9.0)** |
 
 **Out of scope for 0.9.x:** `config_version`, `internal/` refactor, multi-cluster, stream, analyze, progress bar, smart rules, web dashboard.
 

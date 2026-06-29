@@ -177,17 +177,23 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		s.invokeOnFailed("manifest", err)
 	}
 
+	archivePath, finalErr := s.finalizeArchive(ctx, captureDir, sessionBase, archiveName, summary)
+	if finalErr != nil {
+		summary.ArchivePath = archivePath
+		return summary, finalErr
+	}
+	summary.ArchivePath = archivePath
+
+	return summary, nil
+}
+
+func (s *Service) finalizeArchive(ctx context.Context, captureDir, sessionBase, archiveName string, summary Summary) (string, error) {
 	archivePath := filepath.Join(s.cfg.OutputDir, archiveName+".tar.gz")
 	if err := archive.DirToTarGz(captureDir, archivePath); err != nil {
-		summary.ArchivePath = archivePath
-		return summary, fmt.Errorf("archive logs: %w", err)
+		return archivePath, fmt.Errorf("archive logs: %w", err)
 	}
-	// Compute the SHA-256 over the freshly built archive so operators can
-	// pin the exact bytes if they keep the archive around (ROADMAP #81).
 	if sha, shaErr := fileSHA256(archivePath); shaErr == nil {
 		s.archiveSHA256 = sha
-		// Re-emit the manifest so it carries the checksum. Best-effort;
-		// the archive itself is the source of truth.
 		if mErr := s.writeManifest(ctx, captureDir, sessionBase, archiveName, summary); mErr != nil {
 			s.invokeOnFailed("manifest-with-sha", mErr)
 		}
@@ -195,11 +201,9 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 		s.invokeOnFailed("archive-sha256", shaErr)
 	}
 	if err := os.RemoveAll(captureDir); err != nil {
-		return Summary{}, fmt.Errorf("cleanup capture dir %s: %w", captureDir, err)
+		return archivePath, fmt.Errorf("cleanup capture dir %s: %w", captureDir, err)
 	}
-	summary.ArchivePath = archivePath
-
-	return summary, nil
+	return archivePath, nil
 }
 
 func (s *Service) buildJobs(ctx context.Context) ([]job, error) {

@@ -3,40 +3,46 @@
 This file is the **in-repo** source of truth for **planned** work and known gaps. It complements:
 
 - **[SPECIFICATIONS.md](SPECIFICATIONS.md)** — behavior contract, config shape, and what **`groot collect`** does **today**
-- **[CHANGELOG.md](../CHANGELOG.md)** — what shipped in each release
+- **[CHANGELOG.md](CHANGELOG.md)** — what shipped in each release
 
-User-facing overview: **[README.md](../README.md)** and **[configs/groot.yml.sample](../configs/groot.yml.sample)**.
+User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample](configs/groot.yml.sample)**.
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-17 (Band **0.8.0** — workload resource RCA extras; Band 3 next)
+**Last reviewed:** 2026-06-28 (Band **0.9.x** active; Band **3** trimmed to 1.0.0 contract only)
 
 ### Versioning note
 
 Public releases start at **v0.1.3** (early CLI and packaging). **`v0.3.0` was never published**; treat **[0.3.0]** changelog material as shipped from **`v0.3.1`** onward.
 
-Bands group semver minors into planning horizons — **Band 1** (shipped, 0.1.x–0.6.x), **Band 2** (shipped, 0.7.x), **Band 0.8.x** (RCA depth), **Band 3** (future, 1.0.0). Individual items carry **global IDs** (#1–#39) stable across bands.
+Bands group semver minors into planning horizons — **Band 1** (shipped, 0.1.x–0.6.x), **Band 2** (shipped, 0.7.x), **Band 0.8.x** (RCA depth, shipped), **Band 0.9.x** (active, path to 1.0), **Band 3** (1.0.0 contract freeze), **Band 4** (1.1.x+ backlog). Individual items carry **global IDs** (#1–#N) stable across bands.
 
 ### Strategic direction
 
 GROOT is a **read-only log and context collector**: one **`groot collect`** produces a **timestamped `.tar.gz`** for incident response and RCA. The runtime path is **client-go** end-to-end (no `kubectl` binary). Configuration is **YAML + env**; optional **notify** fan-out fires after a **successful** collect and, when configured, on **abort** or **partial job failure** (#19).
 
-**Target architecture:** deepen **collector fidelity** (more resources, clearer archive layout) while keeping the **single-command** UX. **In-cluster scheduling** via Helm/CronJob (#22). **Notifications** and optional **S3/GCS upload** (#19–#24, #28). **Distribution** spans Linux packages, container, **Homebrew** cask, BSD ports, SBOM, and Cosign (#25–#29). **Band 2** adds **SFTP post-collect upload** (SCP-compatible relay pattern) for bastion / airgapped clusters (#36–#37) and **container image SBOM** (#38). **Band 3 (1.0.0):** stable config contract, multi-cluster, inspect/validate commands.
+**Product positioning:** groot = **ticket-ready bundle** (`.tar.gz` + manifest + RCA TSVs + notify/upload). Tools like [kubectl-gather](https://github.com/nirs/kubectl-gather) optimize for **multi-cluster YAML trees and manual diff** — complementary, not identical (#60).
+
+**Target architecture:** **0.9.x** ships operator wins (validate, inspect, kubectl plugin, summary, collector fixes). **1.0.0** freezes **config + archive layout** and moves code to **`internal/`**. **1.1.x+** adds multi-cluster, analyze, streaming, and addons — only after the contract is stable.
 
 **Honest gaps today:**
 
-- **`k8srunner`** `extra_kubectl` is intentionally narrow (`get`/`describe`/`top` subsets; no `explain`/`wait`).
-- **No `config_version`** or formal migration path (#30).
-- **No second command** (`validate` / `inspect`) (#31).
+- **`helm_releases` target matching** may miss or mis-select pods (#79).
+- **No `config_version`** or formal migration path (#30 — blocks **1.0.0** only).
+- **No second command** (`validate` / `inspect`) (#31 — **0.9.x**).
+- **No structured output** (`--output json`) (#40 — **1.0.0**).
+- **Exit codes** are binary (0 vs non-zero); no taxonomy for automation (#82 — **0.9.x**).
 
 **Current focus (planned work):**
 
 | Band | Status | Items |
 |------|--------|-------|
-| **Band 1** (0.1.x–0.6.x) | **Shipped** (#1–#29) | Initial CLI through BSD ports; see [plan-0.4.0](plan-0.4.0.md), [plan-0.5.0](plan-0.5.0.md), [plan-0.6.0](plan-0.6.0.md) |
-| **Band 2** (0.7.x) | **Shipped** (#36–#38) | SFTP upload (SCP-compatible relay), airgapped relay playbook, container image SBOM; see [plan-0.7.0.md](plan-0.7.0.md) |
-| **Band 0.8.x** | **Ready** (#39) | Workload requests/limits in RCA extras — **`v0.8.0`** on `develop` |
-| **Band 3** (1.0.0) | **Future** (#30–#35) | Config schema stability, multi-cluster, inspect/validate, CI matrix, `pkg/` → `internal/` |
+| **Band 1** (0.1.x–0.6.x) | **Shipped** (#1–#29) | Initial CLI through BSD ports; see [plan-0.4.0](docs/plan-0.4.0.md), [plan-0.5.0](docs/plan-0.5.0.md), [plan-0.6.0](docs/plan-0.6.0.md) |
+| **Band 2** (0.7.x) | **Shipped** (#36–#38) | SFTP upload, airgapped relay, container image SBOM; see [plan-0.7.0.md](docs/plan-0.7.0.md) |
+| **Band 0.8.x** | **Shipped** (#39) | Workload requests/limits in RCA extras — **`v0.8.0`** |
+| **Band 0.9.x** | **Active** | Operator wins — see [plan-0.9.0.md](docs/plan-0.9.0.md) (#31, #42, #60, #64, #79–#86) |
+| **Band 3** (1.0.0) | **Planned** | Contract freeze only — see [plan-1.0.0.md](docs/plan-1.0.0.md) (#30, #34, #35, #40, #48, #87) |
+| **Band 4** (1.1.x+) | **Backlog** (#32–#33, #41–#78, #50–#76) | Multi-cluster, analyze, stream, addons, distribution — post-1.0 |
 
 ---
 
@@ -45,7 +51,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | Release | Band | Highlights |
 |---------|------|------------|
 | **0.1.3 – 0.2.1** | 1 | Early **groot collect**, YAML config, parallel collection, archive output, Slack/Teams/webhook notify, rootless container, GoReleaser **.deb/.rpm/.tar.gz**, CI and security scans. |
-| **0.3.1** | 1 | **Client-go** collector (no `kubectl` binary); **`k8srunner`** allowlist; **`kubetest`** fake API; per-namespace **JSON `resources.txt`**; **RCA TSV** extras; **`extra_kubectl`** validation; kind **E2E** harness (`make test-e2e-kind`); README/VHS demo; config sample load fix. Ships unpublished **0.3.0** work—see [CHANGELOG](../CHANGELOG.md). |
+| **0.3.1** | 1 | **Client-go** collector (no `kubectl` binary); **`k8srunner`** allowlist; **`kubetest`** fake API; per-namespace **JSON `resources.txt`**; **RCA TSV** extras; **`extra_kubectl`** validation; kind **E2E** harness (`make test-e2e-kind`); README/VHS demo; config sample load fix. Ships unpublished **0.3.0** work—see [CHANGELOG](CHANGELOG.md). |
 | **0.3.2** | 1 | **GO-2026-5026** / **CVE-2026-39821** (`golang.org/x/net` → v0.55.0); Go **1.26.4**. |
 | **0.4.0** | 1 | **Archive manifest** `extras/manifest.json` with version, cluster, jobs, paths. **`file_prefix`** now drives capture dir and archive basename. **`groot collect --list-jobs`** prints planned jobs without writing output. **`extra_kubectl` `get`/`describe`** supports `configmap`/`cm`, `pvc`, `service`/`svc`, `ingress`/`ing`, `deployment`/`rs`/`sts`/`ds` and aliases. **`collection.targets`** accepts `jobs` / `cronjobs` lists matched by `job-name` and standard labels. **Kind E2E in CI** (`make test-e2e-kind`) running with `continue-on-error: true`. Docs hygiene: `pkg/config/sample.go` and `configs/groot.yml.sample` in sync, references to `kubectl` removed. |
 | **0.4.1** | 1 | **`Dockerfile`** builder **Go 1.26.4** (Security Grype image build); README download examples for **v0.4.1**. |
@@ -69,116 +75,117 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 
 ---
 
-## Band 1 (shipped) — 0.1.x through 0.6.x
+## Band 0.9.x (active) — path to 1.0
 
-### 0.3.x — client-go collector and RCA (complete in v0.3.2)
+**Implementation plan:** [plan-0.9.0.md](docs/plan-0.9.0.md) (target **`v0.9.0`**). Merge order: **#79 → #64+#85 → #80 → #81 → #82 → #31+#83 → #42+#84 → #86 → #60**.
 
-Replace fork/exec **kubectl** with **client-go** / metrics APIs; strengthen tests and release hygiene.
+Ship **operator value** before the **1.0.0** compatibility promise. No `config_version` or `internal/` in this band.
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 1 | 1 | **Client-go collector**: nodes, events, pod logs, control-plane logs, metrics, namespace resources—no `kubectl` at runtime. | **Done** (0.3.1) |
-| 2 | 1 | **`pkg/k8srunner`**: allowlisted read-only argv (`get`, `describe`, `top`, `logs`, `api-resources`, `cluster-info`, `config view`, `auth can-i`, …). | **Done** (0.3.1) |
-| 3 | 1 | **`pkg/kubetest`**: minimal fake Kubernetes API HTTP server for unit tests. | **Done** (0.3.1) |
-| 4 | 1 | Per-namespace **`resources.txt`** as JSON sections (pods, services, Deployments, RS, STS, DS). | **Done** (0.3.1) |
-| 5 | 1 | **RCA extras**: `all-pod-node-placement.tsv`, `all-pods-rca.tsv` (placement + metrics + log path). | **Done** (0.3.1) |
-| 6 | 1 | **`extra_kubectl` validation** aligned with implementation allowlist. | **Done** (0.3.1) |
-| 7 | 1 | **Kind E2E** harness (`testing/`, `docs/e2e-kind.md`, `make test-e2e-kind`). | **Done** (0.3.1) |
-| 8 | 1 | Security: **GO-2026-4918** / **GHSA-6v2p-p543-phr9** dependency bumps. | **Done** (0.3.1) |
-| 9 | 1 | Fix **`config view`** argv handling in `k8srunner`. | **Done** (0.3.1) |
-| 10 | 1 | Remove unused **`pkg/kubemock`**. | **Done** (0.3.1) |
-| 11 | 1 | Security: **GO-2026-5026** / **CVE-2026-39821** (`golang.org/x/net` → v0.55.0); Go **1.26.4**. | **Done** (0.3.2) |
+| 79 | 0.9 | **Fix Helm `helm_releases` target matching** + unit tests for `matchesTargetsByLabels` / `resolvePodsForLogs`. | **Done (unreleased)** |
+| 64 | 0.9 | **kubectl plugin**: ship **`kubectl-groot`** binary; `kubectl groot collect` via plugin discovery. | **Done (unreleased)** |
+| 85 | 0.9 | **Krew + Makefile**: `make install-kubectl-plugin`; document Krew index submission. | **Done (unreleased)** |
+| 80 | 0.9 | **Shell completion**: `groot completion bash\|zsh\|fish\|powershell` (and `kubectl groot completion`). | **Done (unreleased)** |
+| 81 | 0.9 | **`run_id` + `archive_sha256`**: in `manifest.json`, notify text, upload metadata. | **Done (unreleased)** |
+| 82 | 0.9 | **Exit code taxonomy**: documented codes for config, API, abort, notify (see plan-0.9.0). | **Done (unreleased)** |
+| 31 | 0.9 | **`groot validate`** (config, API, RBAC, disk) and **`groot inspect <archive>`** (manifest + file tree minimum). | **Done (unreleased)** |
+| 83 | 0.9 | **Disk space preflight** (part of validate): fail/warn when `output_dir` lacks space. | **Done (unreleased)** |
+| 42 | 0.9 | **`groot collect --summary`**: one-screen result for operators. | **Done (unreleased)** |
+| 84 | 0.9 | **Signal-first job ordering**: events Warning+ and unhealthy pods before bulk logs. | **Done (unreleased)** |
+| 86 | 0.9 | **Config profiles** in `examples/profiles/` (incident-quick, bastion-airgap, eks-managed, compliance-full). | **Done (unreleased)** |
+| 60 | 0.9 | **README comparison** vs kubectl-gather / alternatives; incident workflow example. | **Done (unreleased)** |
 
-**Out of scope for 0.3.x:** Helm chart, email notify, arbitrary webhook templates, multi-cluster bundles.
+**Out of scope for 0.9.x:** `config_version`, `internal/` refactor, multi-cluster, stream, analyze, progress bar, smart rules, web dashboard.
 
 ---
 
-### 0.4.x — collector depth, docs, and CI E2E
+## Band 3 (1.0.0) — stable contract only
 
-**Implementation plan:** [plan-0.4.0.md](plan-0.4.0.md) (target **`v0.4.0`**). Merge order: **#15 → #16 → #12 → #18 → #13 → #17 → #14**.
+**Target:** **v1.0.0**. Major when config shape, archive layout, and module layout are stable.
 
-Improve diagnostic coverage and operator trust without new top-level commands.
+**Implementation plan:** [plan-1.0.0.md](docs/plan-1.0.0.md). Merge order: **#30 → #34 → #35 → #40 → #87 → #48**.
+
+**Blocked on:** **v0.9.0** shipped.
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 12 | 1 | **`file_prefix`**: use config value in capture directory and `.tar.gz` naming (today only `<timestamp>-<cluster>` + `--message` / `since-*`). | **Done (v0.4.0)** |
-| 13 | 1 | **Extend `k8srunner` `extra_kubectl`**: broader `get`/`describe` kinds (e.g. Ingress, PVC, ConfigMap, CRD instances where safe); document unsupported verbs (`explain`, `wait`) in README. | **Done (v0.4.0)** |
-| 14 | 1 | **Log targets**: optional **Job** / **CronJob** selectors in `collection.targets` (label-based, same as Deployments/STS/DS). | **Done (v0.4.0)** |
-| 15 | 1 | **Archive manifest**: `extras/manifest.json` (or `README.txt` inside tar) listing paths, groot version, cluster context, collect duration—speeds ticket handoff. | **Done (v0.4.0)** |
-| 16 | 1 | **Docs hygiene**: sync `configs/groot.yml.sample` and comments that still say "kubectl" with client-go reality; link **ROADMAP** from README. | **Done (v0.4.0)** |
-| 17 | 1 | **Kind E2E in CI**: optional GitHub Actions job (`make test-e2e-kind`), flake policy and runtime budget (pattern: [pgwd](https://github.com/hrodrig/pgwd) `test-e2e-kube`). | **Done (v0.4.0)** |
-| 18 | 1 | **`groot collect --dry-run` or `--list-jobs`**: print planned API calls / output paths without mutating disk (operator preview). | **Done (v0.4.0)** |
+| 30 | 3 | **`config_version`** in YAML with documented migration notes. | Pending |
+| 34 | 3 | **`archive_layout_version`** in `extras/manifest.json` for downstream RCA tooling. | Pending |
+| 35 | 3 | **`pkg/` → `internal/` layout** (kzero/pgwd parity); no user-facing CLI change. | Pending |
+| 40 | 3 | **`--output json` / `yaml`**: Summary for collect; checks for validate; manifest tree for inspect. | Pending |
+| 87 | 3 | **Golden archive fixtures** for inspect (and future analyze) regression tests. | Pending |
+| 48 | 3 | **CODEOWNERS** and GitHub issue/PR templates. | Pending |
 
-**Out of scope for 0.4.x:** mutating cluster operations, storing archives in cloud by default.
+**Explicitly deferred past 1.0.0:** multi-cluster (#32), CI matrix (#33), stream (#41), analyze (#69), progress bar (#44), smart rules (#71), addon system (#65), embedded dashboard (#74). See **Band 4**.
 
 ---
 
-### 0.5.x — notifications and Kubernetes-native operations
+## Band 4 (1.1.x+) — backlog (post-1.0)
 
-Make GROOT easier to run on a schedule inside the cluster and more honest when collects fail.
+Items from community review **not** blocking **1.0.0**. Prioritize after [plan-1.0.0.md](docs/plan-1.0.0.md) ships.
 
-| # | Band | Item | Status |
-|---|------|------|--------|
-| 19 | 1 | **Notify on failure**: optional alert when collect aborts or partial failures exceed a threshold (config + `--no-notify` respect). | **Done (v0.5.0)** |
-| 20 | 1 | **Rich generic webhooks**: optional JSON body template, extra fixed fields, HMAC signing header. | **Done (v0.5.0)** |
-| 21 | 1 | **Email / SMTP** channel (or document recommended proxy pattern if descoped). | **Done (v0.5.0)** |
-| 22 | 1 | **In-cluster deploy**: Helm chart or documented **CronJob** + RBAC Role/ServiceAccount + ConfigMap sample (GHCR image, volume for `out/`). | **Done (v0.5.0)** |
-| 23 | 1 | **Optional secret redaction** pass on collected log files (regex / known key names; off by default). | **Done (v0.5.0)** |
-| 24 | 1 | **Retry/backoff** for notify HTTP clients on transient 5xx / network errors. | **Done (v0.5.0)** |
-
-**Out of scope for 0.5.x:** write access to cluster resources, continuous monitoring agent.
-
----
-
-### 0.6.x — distribution, supply chain, and upload
+### Platform depth (high value post-1.0)
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 25 | 1 | **Homebrew cask tap** ([homebrew-groot](https://github.com/hrodrig/homebrew-groot)): `homebrew_casks` in GoReleaser (same pattern as [pgwd](https://github.com/hrodrig/homebrew-pgwd)), `HOMEBREW_TAP_TOKEN` in CI, release **`.tar.gz`** basenames aligned to `groot_vX.Y.Z_*` (`{{ .Tag }}` like pgwd/kzero). | **Done (v0.6.0)** |
-| 26 | 1 | **SBOM** generation in GoReleaser (Syft or equivalent). | **Done (v0.6.0)** |
-| 27 | 1 | **Cosign** image/binary signing in release pipeline. | **Done (v0.6.0)** |
-| 28 | 1 | **Optional post-collect upload**: S3/GCS-compatible push of `.tar.gz` (credentials via env; no long-lived keys in config). | **Done (v0.6.0)** |
-| 29 | 1 | **FreeBSD port** or documented community packaging (if demand). | **Done (v0.6.0)** |
+| 32 | 4 | **Multi-cluster collect** into one archive (multiple contexts, prefixed paths). | Pending |
+| 33 | 4 | **CI matrix**: kind E2E against more than one Kubernetes minor; documented minimum cluster version. | Pending |
+| 41 | 4 | **`groot stream`**: live pod log tailing with `collection.targets` filters. | Pending |
+| 43 | 4 | **Auto-detect kubeconfig / `--context`**: multi-path `KUBECONFIG`, context selection. | Pending |
+| 69 | 4 | **`groot analyze <archive>`**: heuristics (OOM, CrashLoop, trends) + executive `.md` summary. | Pending |
+| 56 | 4 | **`groot diff`**: compare two archives from the same cluster. | Pending |
+| 70 | 4 | **Dry-run size estimation**: extend `--list-jobs` with storage footprint estimate. | Pending |
+| 71 | 4 | **Smart collect rules**: conditional `collection.rules` in YAML. | Pending |
+| 72 | 4 | **Incremental collection**: `--incremental` with state in `~/.groot/state/`. | Pending |
 
----
-
-## Band 2 (active) — 0.7.x airgapped upload and supply-chain follow-up
-
-**Implementation plan:** [plan-0.7.0.md](plan-0.7.0.md) (target **`v0.7.0`**). Merge order: **#36 → #37 → #38**.
-
-Post-collect delivery for clusters **without outbound internet**: groot runs on a **bastion** with kubeconfig to the API; the bastion is the only hop allowed to SSH a **relay host** (e.g. one external IP); the relay syncs archives to cloud storage (OneDrive via **rclone** on Linux — **out of groot scope**, documented in **#37**).
+### Collector and UX polish
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 36 | 2 | **SFTP post-collect upload** (`upload.sftp`): push `.tar.gz` to a remote Linux host over SSH (public-key auth via env `GROOT_UPLOAD_SFTP_IDENTITY_FILE`; `known_hosts` file; `BatchMode` — no password prompts). Same failure semantics as S3/GCS (`continue_on_error`, `--no-upload`). Operators say "SCP to relay" — this is the SFTP implementation of that pattern. | **Done (v0.7.0)** |
-| 37 | 2 | **Airgapped relay playbook**: **[groot-selfhosted → airgapped-relay](https://github.com/hrodrig/groot-selfhosted/blob/main/run/examples/airgapped-relay/README.md)** — topology bastion → SSH relay → **rclone** OneDrive. `groot-bastion.yml`, `systemd.path`+`.service` watcher, SSH hardening. No groot code. | **Done (v0.7.0)** |
-| 38 | 2 | **Container image SBOM**: OCI SBOM attestation enabled on `dockers_v2` (`sbom: true`) — release workflow already uses buildx `docker-container` driver via `docker/setup-buildx-action@v3`. | **Done (v0.7.0)** |
+| 44 | 4 | **Progress bar / spinner** during collect. | Pending |
+| 45 | 4 | **Secret redaction enhancements**: JWT/AWS patterns, `--dry-run-redact`, extend to `.txt`/`.tsv`. | Pending |
+| 66 | 4 | **Label selector flag (`-l` / `--selector`)**. | Pending |
+| 67 | 4 | **Dynamic API rate limiting** (429 backoff). | Pending |
+| 68 | 4 | **Per-log `LimitBytes`**. | Pending |
+| 77 | 4 | **`--target` CLI flag** for ad-hoc filtering. | Pending |
+| 78 | 4 | **`collection.events_min_type`** (Warning+ filter). | Pending |
+| 54 | 4 | **TUI mode** (`groot tui`). | Pending |
+| 55 | 4 | **Continuous watcher** (`groot watch`). | Pending |
+| 57 | 4 | **`--compress-level`**, `--quick` lite mode. | Pending |
+| 58 | 4 | **Edge/K3s/MicroK8s** adjustments. | Pending |
 
-**Out of scope for Band 2:** native OneDrive / Microsoft Graph upload inside groot; password-based SSH; groot running inside AKS pods with egress to relay (bastion is the supported runtime for this topology).
-
----
-
-## Band 3 (future) — 1.0.0 stable contract and platform depth
-
-Major when config shape, archive layout, and CLI surface are stable enough for long-term compatibility promises.
+### Distribution, extensibility, and community
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 30 | 3 | **`config_version`** (or equivalent) in YAML with documented migration notes. | Pending |
-| 31 | 3 | **Second command** family: e.g. **`groot validate`** (API + RBAC preflight) or **`groot inspect <archive>`** (summarize existing bundle without cluster). | Pending |
-| 32 | 3 | **Multi-cluster collect** into one archive (multiple kubecontexts, prefixed paths). | Pending |
-| 33 | 3 | **CI matrix**: kind E2E against more than one Kubernetes minor; documented minimum supported cluster version in README. | Pending |
-| 34 | 3 | **Stable archive layout version** field for downstream RCA tooling. | Pending |
-| 35 | 3 | **`pkg/` → `internal/` layout** (kzero/pgwd parity): `pkg/cmd`→`internal/cli`, `pkg/config`→`internal/config`, `pkg/collector`→`internal/collector`, `pkg/notifier`→`internal/notifier`, `pkg/uploader`→`internal/uploader`, `pkg/k8srunner`→`internal/k8srunner`, `pkg/kubeloader`→`internal/kubeloader`, `pkg/kubetest`→`internal/kubetest`, `pkg/archive`→`internal/archive`, `pkg/logx`→`internal/log`; update imports + SPEC/docs; no user-facing CLI change. Do **before** promising stable library surface—groot is a CLI, not a public SDK. | Pending (1.0.x) |
+| 50 | 4 | **Additional package managers**: Scoop, Nix, Chocolatey, Snap. | Pending |
+| 51 | 4 | **Grafana / self-hosted dashboard** (groot-selfhosted). | Pending |
+| 52 | 4 | **Post-collect YAML hooks**. | Pending |
+| 53 | 4 | **Observability export** (Prometheus, Loki/Promtail detection). | Pending |
+| 65 | 4 | **Addon system** (kubectl-gather-style; after multi-cluster). | Pending |
+| 46 | 4 | **Generic `examples/`** beyond profiles (#86). | Pending |
+| 47 | 4 | **CONTRIBUTING.md** collector guide. | Pending |
+| 49 | 4 | **Promote kind E2E** from `continue-on-error` to required/nightly. | Pending |
+| 59 | 4 | **E2E matrix expansion** (minikube, OpenShift local). | Pending |
+| 61 | 4 | **Ticketing integration** (Jira/GitHub Issues drafts). | Pending |
+| 62 | 4 | **Post-collect analysis hooks** (Popeye, kubectl-debug). | Pending |
+| 63 | 4 | **Community growth** (Reddit, CNCF Slack, articles). | Pending |
+| 73 | 4 | **Archive encryption/signing** (`--encrypt`, `--sign`). | Pending |
+| 74 | 4 | **Embedded web dashboard** (`groot serve`) — prefer groot-selfhosted + Grafana (#51). | Pending |
+| 75 | 4 | **Alternate formats** (SQLite, Parquet export). | Pending |
+| 76 | 4 | **`groot cleanup`** retention policy for `output_dir`. | Pending |
+
+**Out of scope (long-term):** mutating cluster operations; full OpenTelemetry agent; managed SaaS; native Windows GUI.
 
 ---
 
 ## Maintenance notes
 
-- **Release cadence:** security patches (e.g. **v0.3.2**) ship promptly; feature bands should earn changelog entries, README/demo refresh, and `make release-check` before tag.
+- **Release cadence:** security patches ship promptly; feature bands should earn changelog entries, README/demo refresh, and `make release-check` before tag.
 - **Triad sync:** on each release—**ROADMAP** (Done + Shipped), **CHANGELOG** (`(band #N)` references), **VERSION** / README badges.
 - **Large bands:** when a band spans multiple PRs, add **`docs/plan-X.Y.Z.md`** (merge order, success criteria, release checklist)—see [kzero plan-0.6.0](https://github.com/hrodrig/kzero/blob/develop/docs/plan-0.6.0.md) as reference.
 - **Security:** run **`make security`** before tag; keep `govulncheck` / **grype** green; triage CodeQL on the Security tab.
 - **Coverage:** merged statement gate **80%** (`COVER_MIN`); `coverage.out` is gitignored—do not commit.
 - **client-go / k8s.io pin:** bump `k8s.io/*` modules together; document tested cluster minor in README when matrix lands (#33).
-- **E2E:** local kind test remains optional for contributors; CI job (#17) should use `continue-on-error` or a nightly workflow until flake budget is agreed.
+- **E2E:** local kind test remains optional for contributors; CI job (#17) uses `continue-on-error` until flake budget stabilizes (#49 in Band 4 backlog).

@@ -1,0 +1,75 @@
+package archive
+
+import (
+	"archive/tar"
+	"compress/gzip"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+// DirToTarGz creates a tar.gz file from sourceDir.
+func DirToTarGz(sourceDir, archivePath string) error {
+	dst, err := os.Create(archivePath)
+	if err != nil {
+		return fmt.Errorf("create archive file: %w", err)
+	}
+	defer dst.Close()
+
+	gzWriter := gzip.NewWriter(dst)
+	defer gzWriter.Close()
+
+	tarWriter := tar.NewWriter(gzWriter)
+	defer tarWriter.Close()
+
+	// Prefix every member with the capture folder name so extraction creates
+	// "<timestamp>/…" instead of dumping kube-system/, extras/, etc. at the tar root.
+	rootPrefix := strings.Trim(filepath.ToSlash(filepath.Base(sourceDir)), "/")
+
+	return filepath.Walk(sourceDir, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if path == sourceDir {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(sourceDir, path)
+		if err != nil {
+			return fmt.Errorf("relative path: %w", err)
+		}
+
+		header, err := tar.FileInfoHeader(info, "")
+		if err != nil {
+			return fmt.Errorf("header: %w", err)
+		}
+		if rootPrefix == "" {
+			header.Name = filepath.ToSlash(relPath)
+		} else {
+			header.Name = rootPrefix + "/" + filepath.ToSlash(relPath)
+		}
+
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return fmt.Errorf("write header: %w", err)
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		src, err := os.Open(path)
+		if err != nil {
+			return fmt.Errorf("open %s: %w", path, err)
+		}
+		if _, err := io.Copy(tarWriter, src); err != nil {
+			src.Close()
+			return fmt.Errorf("copy %s: %w", path, err)
+		}
+		if err := src.Close(); err != nil {
+			return fmt.Errorf("close %s: %w", path, err)
+		}
+		return nil
+	})
+}

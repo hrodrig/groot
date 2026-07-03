@@ -9,7 +9,7 @@ This repository is the **GROOT product**: CLI, collector engine, behavior contra
 
 ## Scope
 
-- **`cmd/`**, **`pkg/`**, **`docs/SPECIFICATIONS.md`**, **`configs/groot.yml.sample`**, **`contrib/`** (packaging), **`testing/`** (product E2E).
+- **`cmd/`**, **`internal/`**, **`docs/SPECIFICATIONS.md`**, **`configs/groot.yml.sample`**, **`contrib/`** (packaging), **`testing/`** (product E2E).
 - Do **not** add Helm charts, bastion runbooks, or cron wrappers here — those belong in **groot-selfhosted**.
 
 ## Operator deployment

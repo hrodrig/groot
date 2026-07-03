@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/hrodrig/groot/pkg/cmd"
-	"github.com/hrodrig/groot/pkg/kubetest"
+	"github.com/hrodrig/groot/internal/cmd"
+	"github.com/hrodrig/groot/internal/kubetest"
 )
 
 func TestExitCode(t *testing.T) {

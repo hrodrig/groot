@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`config_version`** in YAML with loader validation (1.0.0 #30).
+- **`archive_layout_version`** in `extras/manifest.json` (1.0.0 #34).
+- **`groot collect --output json`** emits `Summary` JSON on success (1.0.0 #40).
+- **Golden inspect fixture test** for archive regression without a cluster (1.0.0 #87).
+
+### Changed
+
+- **`pkg/` → `internal/`** module layout; no CLI flag changes (1.0.0 #35).
+
+### Fixed
+
+- **Notifier HTTP client**: per-instance retry config (no global mutable state).
+- **SFTP upload**: require `known_hosts_file` unless `allow_insecure_host_key: true` (fail-closed).
+- **Archive tar walk**: close file descriptors per file (no FD leak on large trees).
+- **Control-plane pod list**: log API failures instead of silent omission.
+- **Manifest paths**: cache directory walk between pre/post-archive manifest writes.
+- **SIGINT/SIGTERM**: graceful context cancellation from `main`.
+- **SFTP config**: validate `user` at load time.
+
 ## [0.9.2] - 2026-06-29
 
 ### Fixed

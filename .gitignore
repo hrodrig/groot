@@ -43,8 +43,9 @@
 # Source and documentation
 !cmd/
 !cmd/**
-!pkg/
-!pkg/**
+!internal/
+!internal/**
+internal/cmd/out/
 !docs/
 !docs/**
 

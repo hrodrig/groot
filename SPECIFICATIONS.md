@@ -27,7 +27,7 @@ This document is the source of truth for **observable behavior** and test expect
 
 ### Design principles
 
-- **Read-only collection only**—`collection.extra_kubectl` is allowlisted at config load and implemented via **`pkg/k8srunner`** (argv slices, no shell).
+- **Read-only collection only**—`collection.extra_kubectl` is allowlisted at config load and implemented via **`internal/k8srunner`** (argv slices, no shell).
 - **Fail the CLI** on config errors, Kubernetes client init failure, archive failure, or **notify delivery failure** after collect.
 - **Partial job failures** inside collect are counted in `Summary` but do **not** fail the command; failures are logged (and included in notify summary text).
 - **Honest config**: reserved or partial fields are documented; behavior matches code and this spec.
@@ -65,6 +65,8 @@ This document is the source of truth for **observable behavior** and test expect
 |------|--------|
 | `--since <duration>` | Pod logs only: sets `collection.pod_logs_since` for this run (overrides config). Bare number = hours; or Go duration (`24h`, `45m`). |
 | `--list-jobs` | Print the planned collection jobs (name, output file, args, `optional`) and exit **without** writing the capture tree or `.tar.gz`, and without firing notify. Requires API reachability for dynamic jobs (nodes, pod logs). |
+| `--output <text\|json>` | After a successful collect, emit `Summary` as JSON to stdout (`json`) or suppress structured output (`text`, default). |
+| `--summary` | After success, print a one-screen human-readable footer (jobs, duration, archive, unhealthy pod counts). |
 
 ### Exit semantics (0.9.x #82)
 
@@ -96,6 +98,7 @@ Partial job failures inside collect remain **non-fatal** by default; they are co
 
 | Key | Type | Default (if omitted) | Notes |
 |-----|------|----------------------|-------|
+| `config_version` | int | `0` (legacy) | **1.0.0+:** use `1` for new configs. Absent or `0` = legacy pre-1.0 behavior. Loader rejects unknown future versions. |
 | `kubeconfig` | string | `""` | Empty → client-go default rules + in-cluster when applicable. |
 | `cluster_name` | string | `""` | Optional archive basename cluster label. When empty, resolved from kubeconfig → `kube-public/cluster-info` → API server host. |
 | `output_dir` | string | `./out` | Supports `~` and `${VAR}` expansion. |
@@ -180,6 +183,8 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
 {
   "groot_version": "0.5.0",
   "groot_commit": "…",
+  "config_version": 1,
+  "archive_layout_version": 1,
   "collected_at": "2026-06-05T12:00:00Z",
   "duration_seconds": 42.5,
   "session_base": "groot-capture-20260605-120000",
@@ -259,7 +264,7 @@ Argv is split on whitespace in config—**no shell quoting** for pipelines or re
 
 ## 8. Kubernetes access
 
-- **`pkg/kubeloader`**: kubeconfig path or in-cluster config → `rest.Config`.
+- **`internal/kubeloader`**: kubeconfig path or in-cluster config → `rest.Config`.
 - **RBAC**: read/list/get/watch logs as required by selected jobs; metrics API when `include_pod_metrics` or RCA metrics columns used.
 - **In-cluster scheduling**: CronJob + ClusterRole + ConfigMap + optional PVC for `/out`; image `ghcr.io/hrodrig/groot`. Helm chart and flat manifests: **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** `run/deploy/`.
 - **Tested client modules:** `k8s.io/*` v0.32.5 (see `go.mod`).
@@ -357,11 +362,12 @@ Optional upload of the finished **`.tar.gz`** after notify on the success path.
 | `upload.sftp.port` | int | `22` | SSH port; env `GROOT_UPLOAD_SFTP_PORT`. |
 | `upload.sftp.user` | string | — | SSH user; env `GROOT_UPLOAD_SFTP_USER`. |
 | `upload.sftp.remote_dir` | string | — | Remote target directory; env `GROOT_UPLOAD_SFTP_REMOTE_DIR`. |
-| `upload.sftp.known_hosts_file` | string | — | Path to `known_hosts`; env `GROOT_UPLOAD_SFTP_KNOWN_HOSTS`. |
+| `upload.sftp.known_hosts_file` | string | — | Path to `known_hosts`; env `GROOT_UPLOAD_SFTP_KNOWN_HOSTS`. **Required** when SFTP is enabled unless `allow_insecure_host_key: true`. |
+| `upload.sftp.allow_insecure_host_key` | bool | `false` | Testing only — skips host key verification (MITM risk). |
 | `upload.sftp.identity_file` | string | — | **Env only** (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`); never in YAML. |
 
 - Credentials: **AWS** via standard `AWS_*` env vars; **GCS** via `GOOGLE_APPLICATION_CREDENTIALS` (or workload identity in-cluster); **SFTP** via SSH key (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`).
-- SFTP auth: **public-key only** (BatchMode — password/keyboard-interactive rejected). Host key verified against `known_hosts_file`; fails closed on mismatch.
+- SFTP auth: **public-key only** (BatchMode — password/keyboard-interactive rejected). Host key verified against `known_hosts_file`; **required** unless `allow_insecure_host_key: true` (testing only).
 - Object key: `<key_prefix>/<archive-basename>` (prefix optional). SFTP remote path: `<remote_dir>/<archive-basename>`.
 - Runs **after** archive write and success notify; **upload errors do not fail** the collect command (logged at ERROR).
 - **`--no-upload`** / `GROOT_NO_UPLOAD=1` skips upload entirely.
@@ -398,7 +404,7 @@ Identity file from env: `GROOT_UPLOAD_SFTP_IDENTITY_FILE=/home/groot/.ssh/id_ed2
 
 | Layer | Expectation |
 |-------|-------------|
-| Unit | `go test -race ./...`; fake API via **`pkg/kubetest`**; table-driven **`k8srunner`** tests. |
+| Unit | `go test -race ./...`; fake API via **`internal/kubetest`**; table-driven **`k8srunner`** tests. |
 | Coverage | Merged statement coverage ≥ **80%** (`COVER_MIN`, `make cover`). |
 | E2E | **`make test-e2e-kind`** (kind + Docker); **not** part of default `make ci` (ROADMAP **0.4.x #17**). |
 | Security | `make security` (govulncheck, gocyclo, grype) before release; CodeQL on GitHub. |

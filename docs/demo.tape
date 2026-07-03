@@ -23,7 +23,7 @@ Type "make install"
 Enter
 Sleep 2s
 
-# Root help — 0.9.x subcommands (validate, inspect, completion)
+# Root help — 1.0.x subcommands (validate, inspect, completion, collect --output json)
 Type "groot -h"
 Enter
 Sleep 2s

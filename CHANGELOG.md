@@ -7,26 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-03
+
+Stable contract release (Band 3 — [plan-1.0.0.md](docs/plan-1.0.0.md)).
+
 ### Added
 
-- **`config_version`** in YAML with loader validation (1.0.0 #30).
-- **`archive_layout_version`** in `extras/manifest.json` (1.0.0 #34).
-- **`groot collect --output json`** emits `Summary` JSON on success (1.0.0 #40).
+- **`config_version`** in YAML with loader validation; `1` is supported, absent/`0` = legacy pre-1.0 configs (1.0.0 #30).
+- **`archive_layout_version`** in `extras/manifest.json` on every new collect (1.0.0 #34).
+- **`groot collect --output json`** emits `Summary` JSON on success; `validate` / `inspect` already supported `--output json` from 0.9.x (1.0.0 #40).
 - **Golden inspect fixture test** for archive regression without a cluster (1.0.0 #87).
+- **Governance**: `.github/CODEOWNERS`, issue templates, PR template (1.0.0 #48).
 
 ### Changed
 
-- **`pkg/` → `internal/`** module layout; no CLI flag changes (1.0.0 #35).
+- **`pkg/` → `internal/`** module layout; groot is a CLI, not a public Go SDK — no CLI flag changes (1.0.0 #35).
+- **SFTP upload**: `known_hosts_file` is **required** when SFTP is enabled unless `allow_insecure_host_key: true` (testing only). Previously defaulted to insecure host key verification.
+- **VHS demo** (`docs/demo.gif`): regenerated at **v1.0.0** (`groot --version`, validate, completion, sample config).
+- **README hero** (`docs/assets/groot-readme-hero.png`): refreshed for **v1.0** (stable contract, structured output, inspect).
 
 ### Fixed
 
 - **Notifier HTTP client**: per-instance retry config (no global mutable state).
-- **SFTP upload**: require `known_hosts_file` unless `allow_insecure_host_key: true` (fail-closed).
 - **Archive tar walk**: close file descriptors per file (no FD leak on large trees).
 - **Control-plane pod list**: log API failures instead of silent omission.
 - **Manifest paths**: cache directory walk between pre/post-archive manifest writes.
 - **SIGINT/SIGTERM**: graceful context cancellation from `main`.
 - **SFTP config**: validate `user` at load time.
+
+### Migration
+
+- New configs: set `config_version: 1` at the top of `groot.yml`.
+- Legacy configs without `config_version` continue to load unchanged.
+- New archives include `archive_layout_version: 1` in `extras/manifest.json`.
+- SFTP operators: set `upload.sftp.known_hosts_file` (or `GROOT_UPLOAD_SFTP_KNOWN_HOSTS`) before upgrading if you relied on implicit insecure host keys.
 
 ## [0.9.2] - 2026-06-29
 

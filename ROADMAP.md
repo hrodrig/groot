@@ -9,7 +9,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-06-29 (Band **0.9.x** closed at **v0.9.2**; **Band 3** active — [plan-1.0.0.md](docs/plan-1.0.0.md))
+**Last reviewed:** 2026-07-03 (Band **3** closed at **v1.0.0**; **Band 4** active — post-1.0 backlog)
 
 ### Versioning note
 
@@ -27,8 +27,8 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 
 **Honest gaps today:**
 
-- **No `config_version`** or formal migration path (#30 — blocks **1.0.0** only).
-- **No structured output** (`--output json`) (#40 — **1.0.0**).
+- **`--output yaml`** for collect not implemented (#40 partial; JSON shipped).
+- **Multi-cluster**, **analyze**, **stream**, **progress bar** — Band 4 only.
 
 **Current focus (planned work):**
 
@@ -38,8 +38,8 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **Band 2** (0.7.x) | **Shipped** (#36–#38) | SFTP upload, airgapped relay, container image SBOM; see [plan-0.7.0.md](docs/plan-0.7.0.md) |
 | **Band 0.8.x** | **Shipped** (#39) | Workload requests/limits in RCA extras — **`v0.8.0`** |
 | **Band 0.9.x** | **Shipped (v0.9.2)** | Operator wins — see [plan-0.9.0.md](docs/plan-0.9.0.md) (#31, #42, #60, #64, #79–#86) |
-| **Band 3** (1.0.0) | **Active** | Contract freeze — see [plan-1.0.0.md](docs/plan-1.0.0.md) (#30, #34, #35, #40, #48, #87) |
-| **Band 4** (1.1.x+) | **Backlog** (#32–#33, #41–#78, #50–#76) | Multi-cluster, analyze, stream, addons, distribution — post-1.0 |
+| **Band 3** (1.0.0) | **Shipped (v1.0.0)** | Contract freeze — see [plan-1.0.0.md](docs/plan-1.0.0.md) (#30, #34, #35, #40, #48, #87) |
+| **Band 4** (1.1.x+) | **Active** | Multi-cluster, analyze, stream, addons — post-1.0 |
 
 ---
 
@@ -60,6 +60,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.7.2** | 2 | **Node log capture**: host logs via node proxy → `nodes/<node>.log`; kubelet log query optional; fewer spurious failures on managed clouds (e.g. AKS). |
 | **0.8.0** | 0.8 | **Workload resource RCA**: `extras/workload-resources.tsv` (per-container requests/limits + owner); **`all-pods-rca.tsv`** adds declared resource columns for OOM/capacity RCA (#39). |
 | **0.9.0 – 0.9.2** | 0.9 | **Operator wins**: Helm fix, kubectl plugin, validate/inspect, `--summary`, `run_id`, exit codes, completion, profiles, README comparison (#79–#86, #64, #60, #31). **v0.9.1**/**v0.9.2**: Windows/OpenBSD GoReleaser build fixes. See [plan-0.9.0.md](docs/plan-0.9.0.md). |
+| **1.0.0** | 3 | **Stable contract**: `config_version`, `archive_layout_version`, `internal/` layout, `collect --output json`, golden inspect test, governance templates (#30, #34, #35, #40, #48, #87). Pre-1.0 hygiene (notifier, SFTP fail-closed, SIGTERM). See [plan-1.0.0.md](docs/plan-1.0.0.md). |
 
 ---
 
@@ -108,12 +109,12 @@ Ship **operator value** before the **1.0.0** compatibility promise. No `config_v
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 30 | 3 | **`config_version`** in YAML with documented migration notes. | Pending |
-| 34 | 3 | **`archive_layout_version`** in `extras/manifest.json` for downstream RCA tooling. | Pending |
-| 35 | 3 | **`pkg/` → `internal/` layout** (kzero/pgwd parity); no user-facing CLI change. | Pending |
-| 40 | 3 | **`--output json` / `yaml`**: Summary for collect; checks for validate; manifest tree for inspect. | Pending |
-| 87 | 3 | **Golden archive fixtures** for inspect (and future analyze) regression tests. | Pending |
-| 48 | 3 | **CODEOWNERS** and GitHub issue/PR templates. | Pending |
+| 30 | 3 | **`config_version`** in YAML with documented migration notes. | **Done (v1.0.0)** |
+| 34 | 3 | **`archive_layout_version`** in `extras/manifest.json` for downstream RCA tooling. | **Done (v1.0.0)** |
+| 35 | 3 | **`pkg/` → `internal/` layout** (kzero/pgwd parity); no user-facing CLI change. | **Done (v1.0.0)** |
+| 40 | 3 | **`--output json`**: Summary for collect; checks for validate; manifest tree for inspect (`yaml` deferred). | **Done (v1.0.0)** |
+| 87 | 3 | **Golden archive fixtures** for inspect (and future analyze) regression tests. | **Done (v1.0.0)** |
+| 48 | 3 | **CODEOWNERS** and GitHub issue/PR templates. | **Done (v1.0.0)** |
 
 **Explicitly deferred past 1.0.0:** multi-cluster (#32), CI matrix (#33), stream (#41), analyze (#69), progress bar (#44), smart rules (#71), addon system (#65), embedded dashboard (#74). See **Band 4**.
 

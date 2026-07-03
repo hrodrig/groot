@@ -1,6 +1,9 @@
 # GROOT sample configuration (see README → Config and SPECIFICATIONS.md).
 # Boolean env overrides use GROOT_* (e.g. GROOT_COLLECTION_INCLUDE_POD_LOGS).
 
+# Config schema version (1.0.0+). Omit for legacy pre-1.0 configs; use 1 for new files.
+# config_version: 1
+
 # Path to kubeconfig. Empty = use process KUBECONFIG or client-go default rules
 # (CLI flag --kubeconfig still overrides when passed).
 kubeconfig: ""

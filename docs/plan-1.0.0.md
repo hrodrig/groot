@@ -1,7 +1,7 @@
 # Plan 1.0.0 — stable contract
 
-**Status:** **active** — prerequisite **v0.9.2** shipped ([plan-0.9.0.md](plan-0.9.0.md))  
-**Target release:** **`v1.0.0`**  
+**Status:** **shipped** — **`v1.0.0`** tagged on `develop` (2026-07-03); merge to `main` + annotated tag pending maintainer  
+**Target release:** **`v1.0.0`** ✓  
 **Roadmap band:** [ROADMAP.md](../ROADMAP.md) **Band 3 (1.0.0)** items **#30**, **#34**, **#35**, **#40**, **#48**, **#87**  
 **Delivery model:** one PR per item on `develop`. Tag **only** when this checklist passes.
 

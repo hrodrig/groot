@@ -12,7 +12,6 @@
 [![CI](https://github.com/hrodrig/groot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hrodrig/groot/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/gh/hrodrig/groot/branch/main/graph/badge.svg)](https://codecov.io/gh/hrodrig/groot)
 [![gghstats clones](https://gghstats.hermesrodriguez.com/api/v1/badge/hrodrig/groot?metric=clones)](https://gghstats.hermesrodriguez.com/hrodrig/groot)
-[![Go Report Card](https://goreportcard.com/badge/github.com/hrodrig/groot)](https://goreportcard.com/report/github.com/hrodrig/groot)
 [![Article on DEV](https://img.shields.io/badge/dev.to-article-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/groot/)
 

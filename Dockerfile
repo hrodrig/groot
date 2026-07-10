@@ -3,7 +3,7 @@
 # Release images: GoReleaser builds static binaries, then Dockerfile.release packages them.
 # Multi-arch: docker buildx build --platform linux/amd64,linux/arm64 -t groot:local .
 # Makefile passes APP_VERSION, GIT_COMMIT, GIT_BRANCH, BUILD_DATE from VERSION, git, and date.
-FROM --platform=$BUILDPLATFORM golang:1.26.4-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.5-alpine AS builder
 WORKDIR /src
 COPY go.mod go.sum* ./
 RUN go mod download

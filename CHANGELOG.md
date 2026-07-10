@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-10
+
+Security patch — Go toolchain **1.26.5** (no CLI or config contract changes).
+
+### Security
+
+- **Go 1.26.4 → 1.26.5** in `go.mod` and **`Dockerfile`** builder image: **CVE-2026-39822** (`os` root escape via symlink + trailing slash) and **CVE-2026-42505** (`crypto/tls` ECH privacy leak).
+
+### Changed
+
+- **README**: version badge and container pull pin updated to **v1.0.1**.
+- **VHS demo** (`docs/demo.gif`): refreshed at **v1.0.1**.
+- **BSD ports**: `PORTVERSION` / `DISTNAME` synced to **1.0.1**.
+
 ## [1.0.0] - 2026-07-03
 
 Stable contract release (Band 3 — [plan-1.0.0.md](docs/plan-1.0.0.md)).

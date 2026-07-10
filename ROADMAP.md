@@ -9,7 +9,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-07-03 (Band **3** closed at **v1.0.0**; **Band 4** active — post-1.0 backlog)
+**Last reviewed:** 2026-07-10 (security patch **v1.0.1** — Go **1.26.5**; **Band 4** active)
 
 ### Versioning note
 
@@ -61,6 +61,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **0.8.0** | 0.8 | **Workload resource RCA**: `extras/workload-resources.tsv` (per-container requests/limits + owner); **`all-pods-rca.tsv`** adds declared resource columns for OOM/capacity RCA (#39). |
 | **0.9.0 – 0.9.2** | 0.9 | **Operator wins**: Helm fix, kubectl plugin, validate/inspect, `--summary`, `run_id`, exit codes, completion, profiles, README comparison (#79–#86, #64, #60, #31). **v0.9.1**/**v0.9.2**: Windows/OpenBSD GoReleaser build fixes. See [plan-0.9.0.md](docs/plan-0.9.0.md). |
 | **1.0.0** | 3 | **Stable contract**: `config_version`, `archive_layout_version`, `internal/` layout, `collect --output json`, golden inspect test, governance templates (#30, #34, #35, #40, #48, #87). Pre-1.0 hygiene (notifier, SFTP fail-closed, SIGTERM). See [plan-1.0.0.md](docs/plan-1.0.0.md). |
+| **1.0.1** | 3 | **Security patch**: Go **1.26.5** — **CVE-2026-39822**, **CVE-2026-42505**; `Dockerfile` builder image aligned with `go.mod`. |
 
 ---
 

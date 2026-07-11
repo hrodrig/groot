@@ -15,7 +15,7 @@ This document is the source of truth for **observable behavior** and test expect
 - Parallel collection jobs against the Kubernetes API via **client-go** and **metrics** clients—**no `kubectl` binary** at runtime.
 - Timestamped capture directory, then **`.tar.gz`** archive beside `output_dir`; ephemeral capture folder removed after archiving.
 - Optional outbound **notify** channels after a **completed** collect (HTTP webhooks, Telegram, PagerDuty Events v2, email/SMTP).
-- Rootless container image (distroless nonroot) for manual or cron-style runs.
+- Rootless container image (`gcr.io/distroless/static-debian13:nonroot`) for manual or cron-style runs.
 - Optional **Helm chart** and flat **CronJob** manifests for scheduled in-cluster collection (maintained in **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** `run/deploy/`).
 
 ### Out of scope (v1)

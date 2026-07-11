@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-1.0.1-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -200,7 +200,7 @@ From any machine with Go **1.26+** (installs to `$(go env GOPATH)/bin`; ensure t
 go install github.com/hrodrig/groot/cmd/groot@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v1.0.1`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot) (CLI binary; library code is **`internal/`** since **1.0.0**).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v1.0.2`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot) (CLI binary; library code is **`internal/`** since **1.0.0**).
 
 ### Install as a kubectl plugin (0.9.x #64)
 
@@ -892,10 +892,10 @@ This repository ships the **CLI**, **packages**, and **`ghcr.io/hrodrig/groot`**
 | Flat CronJob YAML | [run/deploy/k8s/cronjob.yaml](https://github.com/hrodrig/groot-selfhosted/blob/main/run/deploy/k8s/cronjob.yaml) |
 | cron / systemd (Releases binary) | [run/standalone/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/standalone) |
 
-Pull the image from here (pin to the [version badge](#readme-top) — currently **`1.0.1`**):
+Pull the image from here (pin to the [version badge](#readme-top) — currently **`1.0.2`**):
 
 ```bash
-docker pull ghcr.io/hrodrig/groot:1.0.1
+docker pull ghcr.io/hrodrig/groot:1.0.2
 ```
 
 In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](SPECIFICATIONS.md#8-runtime-and-kubernetes-access).

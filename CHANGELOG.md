@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-07-11
+
+Maintenance patch — distroless **Debian 13** runtime base (no CLI or config contract changes).
+
 ### Changed
 
 - **Container runtime base**: `gcr.io/distroless/static-debian12:nonroot` → **`static-debian13:nonroot`** in `Dockerfile` and `Dockerfile.release` (Debian 12 EOL; distroless defaults to trixie).
+- **README**: version badge and container pull pin updated to **v1.0.2**.
+- **BSD ports**: `PORTVERSION` / `DISTNAME` synced to **1.0.2**.
 
 ## [1.0.1] - 2026-07-10
 

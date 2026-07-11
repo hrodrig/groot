@@ -3,7 +3,7 @@
 # linux/<arch>/<binary> in the build context (see https://goreleaser.com/customization/package/dockers_v2/).
 # Local multi-stage compile: use Dockerfile (make docker-build / docker compose).
 ARG TARGETPLATFORM
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian13:nonroot
 ARG TARGETPLATFORM
 WORKDIR /app
 LABEL org.opencontainers.image.title="groot"

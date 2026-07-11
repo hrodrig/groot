@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Container runtime base**: `gcr.io/distroless/static-debian12:nonroot` → **`static-debian13:nonroot`** in `Dockerfile` and `Dockerfile.release` (Debian 12 EOL; distroless defaults to trixie).
+
 ## [1.0.1] - 2026-07-10
 
 Security patch — Go toolchain **1.26.5** (no CLI or config contract changes).

@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath \
 	-ldflags="-s -w -X main.version=${APP_VERSION} -X main.commit=${GIT_COMMIT} -X main.branch=${GIT_BRANCH} -X main.buildDate=${BUILD_DATE}" \
 	-o /out/groot ./cmd/groot
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian13:nonroot
 WORKDIR /app
 COPY --from=builder /out/groot /app/groot
 COPY configs/groot.yml.sample /app/groot.yml.sample

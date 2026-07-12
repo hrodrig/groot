@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dependencies:** bump `golang.org/x/crypto` to **v0.54.0** (and transitive `golang.org/x/net`, `golang.org/x/sys`, `golang.org/x/text`) — grype GO-2026-5932 hygiene; govulncheck reports no vulnerable call paths. `(1.0.3 #94)`
 
+### Changed
+
+- **Tests:** `internal/cmd` `TestMain` removes stale `out/groot-capture-*` dirs after package tests (gitignored artifacts from local cmd runs). `(1.0.3 #91)`
+
 ## [1.0.2] - 2026-07-11
 
 Maintenance patch — distroless **Debian 13** runtime base (no CLI or config contract changes).

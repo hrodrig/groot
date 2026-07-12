@@ -462,5 +462,5 @@ Loads `notify.*` from config and posts a **synthetic** `collector.Summary` to ev
 
 **Exit codes (see §3):** 0 on delivery success; **1** when config is invalid, no channel is enabled, or `--event` is unknown; **4** when any enabled channel returns a delivery error.
 
-**Operator use:** verify Slack/Teams/webhooks, Mailgun SMTP (`GROOT_NOTIFY_EMAIL_*`), PagerDuty routing keys, etc., before scheduling cron/Helm collects.
+**Operator use:** verify Slack/Teams/webhooks, Mailgun SMTP (`GROOT_NOTIFY_EMAIL_*`), PagerDuty routing keys, etc., before scheduling cron/Helm collects. Step-by-step Mailgun/SMTP runbook: [docs/notify-smoke-test.md](docs/notify-smoke-test.md); sample config: [examples/notify/mailgun-smoke.yml](examples/notify/mailgun-smoke.yml).
 

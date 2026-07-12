@@ -813,6 +813,17 @@ notify:
 
 Env: `GROOT_NOTIFY_EMAIL_HOST`, `GROOT_NOTIFY_EMAIL_USERNAME`, `GROOT_NOTIFY_EMAIL_PASSWORD`, `GROOT_NOTIFY_EMAIL_FROM`, `GROOT_NOTIFY_EMAIL_TO`.
 
+**Validate before cron/Helm:** `groot notify test` sends a synthetic summary to every enabled channel without collect or cluster access. See **[Notify smoke test (SMTP / Mailgun)](docs/notify-smoke-test.md)** and [examples/notify/mailgun-smoke.yml](examples/notify/mailgun-smoke.yml).
+
+```bash
+export GROOT_NOTIFY_EMAIL_HOST=smtp.mailgun.org
+export GROOT_NOTIFY_EMAIL_USERNAME='postmaster@mg.example.com'
+export GROOT_NOTIFY_EMAIL_PASSWORD='…'
+export GROOT_NOTIFY_EMAIL_FROM='groot@mg.example.com'
+export GROOT_NOTIFY_EMAIL_TO='ops@example.com'
+./bin/groot notify test --config examples/notify/mailgun-smoke.yml
+```
+
 ### Notify on failure and retry
 
 ```yaml

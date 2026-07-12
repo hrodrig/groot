@@ -1,0 +1,29 @@
+# Email-only smoke config for `groot notify test` (Mailgun or any SMTP).
+# Secrets: export GROOT_NOTIFY_EMAIL_HOST, _USERNAME, _PASSWORD, _FROM, _TO
+# Runbook: docs/notify-smoke-test.md
+
+config_version: 1
+kubeconfig: ~/.kube/config
+output_dir: ./out
+collection:
+  worker_concurrency: 1
+  namespaces: [kube-system]
+  include_pod_logs: false
+  include_node_details: false
+  include_node_logs: false
+  include_pod_metrics: false
+notify:
+  slack: { enabled: false }
+  discord: { enabled: false }
+  teams: { enabled: false }
+  telegram: { enabled: false }
+  generic: { enabled: false }
+  pagerduty: { enabled: false }
+  email:
+    enabled: true
+    port: 587
+    use_tls: false
+  on_failure:
+    enabled: true
+    on_abort: true
+    min_failed_jobs: 1

@@ -59,3 +59,15 @@ Legacy: `KIND_CLUSTER_NAME` is still honored if you run **`./scripts/e2e-kind.sh
 - Override binary with **`GROOT_BIN=/path/to/groot`**; otherwise the script builds **`./bin/groot`** if missing.
 
 More detail: [docs/e2e-kind.md](../docs/e2e-kind.md).
+
+## Notify smoke test (SMTP / Mailgun)
+
+Validate **`notify.email`** (or any enabled channel) **without** kind or collect:
+
+```bash
+make build   # or go build -o ./bin/groot ./cmd/groot
+# export GROOT_NOTIFY_EMAIL_* — see docs/notify-smoke-test.md
+./bin/groot notify test --config examples/notify/mailgun-smoke.yml
+```
+
+Full runbook (Mailgun panel, env vars, troubleshooting, port 465): **[docs/notify-smoke-test.md](../docs/notify-smoke-test.md)**.

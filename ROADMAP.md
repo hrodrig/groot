@@ -131,7 +131,7 @@ Source: Hermes audit **2026-07-12** (validated); full merge order in [plan-1.0.3
 |---|------|------|--------|
 | 88 | 3 | **Docker default CMD `--help`** — stop auto-running collect against `groot.yml.sample`. | **Done (v1.0.3)** |
 | 89 | 3 | **Email notifier tests** — fake SMTP in CI; optional Mailgun integration (`-tags=integration`). | **Done (v1.0.3)** |
-| 90 | 3 | **GCS upload tests** — emulator/fake server in CI; optional real bucket integration. | Pending |
+| 90 | 3 | **GCS upload tests** — emulator/fake server in CI; optional real bucket integration. | **Done (v1.0.3)** |
 | 91 | 3 | **Cleanup `internal/cmd/out/`** capture artifacts in cmd tests. | **Done (v1.0.3)** |
 | 92 | 3 | **`--version` exit path** — remove `os.Exit(0)` from `versionPreRun`; use `ErrVersionPrinted`. | **Done (v1.0.3)** |
 | 93 | 3 | **Document QPS/Burst** (50/100) vs `worker_concurrency`; configurable rate limit → **#67**. | **Done (v1.0.3)** |

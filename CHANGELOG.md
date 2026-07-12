@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Tests:** fake SMTP server coverage for email notifier (plain, STARTTLS, implicit TLS, AUTH PLAIN, FanOut integration). `(1.0.3 #89)`
+- **Tests:** GCS upload via `fake-gcs-server` + `STORAGE_EMULATOR_HOST`; covers `gcsClientOptions`, success path, cancel, missing archive. `(1.0.3 #90)`
 - **`groot notify test`** — send a synthetic summary to all enabled notify channels without running collect or contacting the cluster; `--event notify.test|success|failure`; exit **4** on delivery failure. `(1.0.3 #95)`
 - **Docs:** Mailgun/SMTP notify smoke runbook ([`docs/notify-smoke-test.md`](docs/notify-smoke-test.md)) and [`examples/notify/mailgun-smoke.yml`](examples/notify/mailgun-smoke.yml). `(1.0.3 #95)`
 

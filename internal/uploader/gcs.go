@@ -78,8 +78,12 @@ func (u *gcsUploader) Upload(ctx context.Context, archivePath string, summary co
 }
 
 func gcsClientOptions() []option.ClientOption {
-	if ep := os.Getenv("STORAGE_EMULATOR_HOST"); ep != "" {
-		return []option.ClientOption{option.WithEndpoint("http://" + strings.TrimPrefix(ep, "http://"))}
+	if ep := strings.TrimSpace(os.Getenv("STORAGE_EMULATOR_HOST")); ep != "" {
+		ep = strings.TrimPrefix(strings.TrimPrefix(ep, "https://"), "http://")
+		return []option.ClientOption{
+			option.WithEndpoint("http://" + ep),
+			option.WithoutAuthentication(),
+		}
 	}
 	return nil
 }

@@ -338,127 +338,160 @@ func (s *fakeSMTPServer) handleConn(conn net.Conn) {
 }
 
 func (s *fakeSMTPServer) serveSMTP(conn net.Conn) error {
-	br := bufio.NewReader(conn)
-	write := func(line string) error {
-		_, err := conn.Write([]byte(line + "\r\n"))
+	sess := &smtpSession{server: s, conn: conn, br: bufio.NewReader(conn)}
+	sess.write = sess.writeLine
+	if err := sess.writeLine("220 fake.local ESMTP"); err != nil {
 		return err
 	}
-	if err := write("220 fake.local ESMTP"); err != nil {
-		return err
-	}
-
-	var (
-		authed  bool
-		inData  bool
-		dataBuf strings.Builder
-	)
-
-	for {
-		line, err := br.ReadString('\n')
+	for !sess.done {
+		line, err := sess.readLine()
 		if err != nil {
 			return err
 		}
-		line = strings.TrimRight(line, "\r\n")
-		upper := strings.ToUpper(line)
-
-		if inData {
-			if line == "." {
-				s.mu.Lock()
-				s.msgs = append(s.msgs, []byte(dataBuf.String()))
-				s.mu.Unlock()
-				inData = false
-				dataBuf.Reset()
-				if err := write("250 OK"); err != nil {
-					return err
-				}
-				continue
+		if sess.inData {
+			if err := sess.onDataLine(line); err != nil {
+				return err
 			}
-			if strings.HasPrefix(line, "..") {
-				line = line[1:]
-			}
-			dataBuf.WriteString(line)
-			dataBuf.WriteString("\r\n")
 			continue
 		}
-
-		switch {
-		case strings.HasPrefix(upper, "EHLO") || strings.HasPrefix(upper, "HELO"):
-			if err := write("250-fake.local"); err != nil {
-				return err
-			}
-			if s.opts.startTLS {
-				if err := write("250-STARTTLS"); err != nil {
-					return err
-				}
-			}
-			if s.opts.requireAuth {
-				if err := write("250-AUTH PLAIN"); err != nil {
-					return err
-				}
-			}
-			if err := write("250 OK"); err != nil {
-				return err
-			}
-		case upper == "STARTTLS":
-			if !s.opts.startTLS {
-				_ = write("502 not implemented")
-				continue
-			}
-			if err := write("220 Ready to start TLS"); err != nil {
-				return err
-			}
-			tlsConn := tls.Server(conn, &tls.Config{Certificates: []tls.Certificate{s.opts.tlsCert}})
-			if err := tlsConn.Handshake(); err != nil {
-				return err
-			}
-			conn = tlsConn
-			br = bufio.NewReader(conn)
-			write = func(line string) error {
-				_, err := conn.Write([]byte(line + "\r\n"))
-				return err
-			}
-		case strings.HasPrefix(upper, "AUTH PLAIN"):
-			if !s.opts.requireAuth {
-				_ = write("502 not implemented")
-				continue
-			}
-			if !checkPlainAuth(line, s.opts.authUser, s.opts.authPass) {
-				_ = write("535 auth failed")
-				authed = false
-				continue
-			}
-			authed = true
-			if err := write("235 OK"); err != nil {
-				return err
-			}
-		case strings.HasPrefix(upper, "MAIL FROM"):
-			if s.opts.requireAuth && !authed {
-				_ = write("530 auth required")
-				continue
-			}
-			if err := write("250 OK"); err != nil {
-				return err
-			}
-		case strings.HasPrefix(upper, "RCPT TO"):
-			if err := write("250 OK"); err != nil {
-				return err
-			}
-		case upper == "DATA":
-			if err := write("354 End data with <CR><LF>.<CR><LF>"); err != nil {
-				return err
-			}
-			inData = true
-		case upper == "QUIT":
-			_ = write("221 Bye")
-			return nil
-		case upper == "RSET":
-			inData = false
-			dataBuf.Reset()
-			_ = write("250 OK")
-		default:
-			_ = write("502 not implemented")
+		if err := sess.onCommand(line); err != nil {
+			return err
 		}
 	}
+	return nil
+}
+
+type smtpSession struct {
+	server *fakeSMTPServer
+	conn   net.Conn
+	br     *bufio.Reader
+	write  func(string) error
+
+	authed  bool
+	inData  bool
+	done    bool
+	dataBuf strings.Builder
+}
+
+func (sess *smtpSession) readLine() (string, error) {
+	line, err := sess.br.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimRight(line, "\r\n"), nil
+}
+
+func (sess *smtpSession) writeLine(line string) error {
+	_, err := sess.conn.Write([]byte(line + "\r\n"))
+	return err
+}
+
+func (sess *smtpSession) onDataLine(line string) error {
+	if line == "." {
+		sess.server.mu.Lock()
+		sess.server.msgs = append(sess.server.msgs, []byte(sess.dataBuf.String()))
+		sess.server.mu.Unlock()
+		sess.inData = false
+		sess.dataBuf.Reset()
+		return sess.writeLine("250 OK")
+	}
+	if strings.HasPrefix(line, "..") {
+		line = line[1:]
+	}
+	sess.dataBuf.WriteString(line)
+	sess.dataBuf.WriteString("\r\n")
+	return nil
+}
+
+func (sess *smtpSession) onCommand(line string) error {
+	upper := strings.ToUpper(line)
+	switch {
+	case strings.HasPrefix(upper, "EHLO"), strings.HasPrefix(upper, "HELO"):
+		return sess.onHelo()
+	case upper == "STARTTLS":
+		return sess.onStartTLS()
+	case strings.HasPrefix(upper, "AUTH PLAIN"):
+		return sess.onAuthPlain(line)
+	case strings.HasPrefix(upper, "MAIL FROM"):
+		return sess.onMailFrom()
+	case strings.HasPrefix(upper, "RCPT TO"):
+		return sess.writeLine("250 OK")
+	case upper == "DATA":
+		if err := sess.writeLine("354 End data with <CR><LF>.<CR><LF>"); err != nil {
+			return err
+		}
+		sess.inData = true
+		return nil
+	case upper == "QUIT":
+		_ = sess.writeLine("221 Bye")
+		sess.done = true
+		return nil
+	case upper == "RSET":
+		sess.inData = false
+		sess.dataBuf.Reset()
+		_ = sess.writeLine("250 OK")
+		return nil
+	default:
+		_ = sess.writeLine("502 not implemented")
+		return nil
+	}
+}
+
+func (sess *smtpSession) onHelo() error {
+	if err := sess.writeLine("250-fake.local"); err != nil {
+		return err
+	}
+	if sess.server.opts.startTLS {
+		if err := sess.writeLine("250-STARTTLS"); err != nil {
+			return err
+		}
+	}
+	if sess.server.opts.requireAuth {
+		if err := sess.writeLine("250-AUTH PLAIN"); err != nil {
+			return err
+		}
+	}
+	return sess.writeLine("250 OK")
+}
+
+func (sess *smtpSession) onStartTLS() error {
+	if !sess.server.opts.startTLS {
+		_ = sess.writeLine("502 not implemented")
+		return nil
+	}
+	if err := sess.writeLine("220 Ready to start TLS"); err != nil {
+		return err
+	}
+	tlsConn := tls.Server(sess.conn, &tls.Config{Certificates: []tls.Certificate{sess.server.opts.tlsCert}})
+	if err := tlsConn.Handshake(); err != nil {
+		return err
+	}
+	sess.conn = tlsConn
+	sess.br = bufio.NewReader(tlsConn)
+	sess.write = sess.writeLine
+	return nil
+}
+
+func (sess *smtpSession) onAuthPlain(line string) error {
+	if !sess.server.opts.requireAuth {
+		_ = sess.writeLine("502 not implemented")
+		return nil
+	}
+	if !checkPlainAuth(line, sess.server.opts.authUser, sess.server.opts.authPass) {
+		_ = sess.writeLine("535 auth failed")
+		sess.authed = false
+		return nil
+	}
+	sess.authed = true
+	return sess.writeLine("235 OK")
+}
+
+func (sess *smtpSession) onMailFrom() error {
+	if sess.server.opts.requireAuth && !sess.authed {
+		_ = sess.writeLine("530 auth required")
+		return nil
+	}
+	return sess.writeLine("250 OK")
 }
 
 func checkPlainAuth(line, wantUser, wantPass string) bool {

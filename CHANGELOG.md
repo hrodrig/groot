@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-07-12
+
+Maintenance patch — post-audit hygiene (#88–#95); **`groot notify test`** adds one CLI subcommand (no config schema change).
+
 ### Fixed
 
 - **Container image default CMD** prints `--help` instead of running `collect` against the bundled sample config (`groot.yml.sample` remains in the image for copy/reference). `(1.0.3 #88)`
@@ -20,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tests:** `internal/cmd` `TestMain` removes stale `out/groot-capture-*` dirs after package tests (gitignored artifacts from local cmd runs). `(1.0.3 #91)`
 - **`--version` / `-v`:** always returns through `ErrVersionPrinted` and `ExecuteContext` (no `os.Exit(0)` in library code). `(1.0.3 #92)`
 - **Docs:** Kubernetes client **QPS 50 / burst 100** vs `collection.worker_concurrency`; YAML-tunable rate limit remains roadmap **#67**. `(1.0.3 #93)`
+- **README**: version badge and container pull pin updated to **v1.0.3**.
+- **BSD ports**: `PORTVERSION` / `DISTNAME` synced to **1.0.3**.
+- **VHS demo** (`docs/demo.gif`): refreshed at **v1.0.3** (`groot notify test` in tape).
 
 ### Added
 

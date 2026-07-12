@@ -23,7 +23,7 @@ Type "make install"
 Enter
 Sleep 2s
 
-# Root help — 1.0.x subcommands (validate, inspect, completion, collect --output json)
+# Root help — 1.0.x subcommands (validate, inspect, notify test, collect --output json)
 Type "groot -h"
 Enter
 Sleep 2s
@@ -38,8 +38,8 @@ Type "groot validate -h"
 Enter
 Sleep 1500ms
 
-# Shell completion snippet
-Type "groot completion bash 2>/dev/null | head -n 12"
+# Notify smoke subcommand (1.0.3 — no cluster required)
+Type "groot notify test -h"
 Enter
 Sleep 1500ms
 

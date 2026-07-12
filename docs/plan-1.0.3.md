@@ -1,6 +1,6 @@
 # Plan 1.0.3 — post-audit hygiene (review 2026-07-12)
 
-**Status:** **planned** — work on `develop`; tag **`v1.0.3`** when checklist passes  
+**Status:** **shipped on `develop`** — merge `develop` → `main` and tag **`v1.0.3`** when release gates pass  
 **Target release:** **`v1.0.3`** (maintenance / test-hygiene patch; **no CLI or config contract change**)  
 **Source reviews:** [.no-va-al-repo/20260712-hermes-deepseek/deepseek-review-20260712.md](../.no-va-al-repo/20260712-hermes-deepseek/deepseek-review-20260712.md) (validated 2026-07-12); cross-ref [review 2026-07-02](../.no-va-al-repo/deep-seek-review-20260702.md) (notifier races **already fixed** in v1.0.0)  
 **Roadmap band:** **Band 3 maintenance** items **#88–#95** — see [ROADMAP.md](../ROADMAP.md)  

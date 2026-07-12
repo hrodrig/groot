@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Container image default CMD** prints `--help` instead of running `collect` against the bundled sample config (`groot.yml.sample` remains in the image for copy/reference). `(1.0.3 #88)`
+
 ## [1.0.2] - 2026-07-11
 
 Maintenance patch — distroless **Debian 13** runtime base (no CLI or config contract changes).

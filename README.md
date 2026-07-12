@@ -933,7 +933,7 @@ authorization: [REDACTED]
 
 Published image: **`ghcr.io/hrodrig/groot`** (distroless **nonroot**). Build locally with `make docker-build` when hacking on this repo.
 
-For **`docker run`** / Podman with kubeconfig mounts, cron, Helm, and in-cluster manifests, see **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**.
+Bare **`docker run ghcr.io/hrodrig/groot`** prints **`--help`** (the image ships **`/app/groot.yml.sample`** as a reference only — pass **`collect --config …`** explicitly). For kubeconfig mounts, cron, Helm, and in-cluster manifests, see **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**.
 
 [↑ Back to top](#readme-top)
 

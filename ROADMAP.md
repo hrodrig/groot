@@ -9,7 +9,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-07-11 (maintenance patch **v1.0.2** — distroless **Debian 13**; **Band 4** active)
+**Last reviewed:** 2026-07-12 (maintenance band **v1.0.3** planned — audit hygiene; **Band 4** active)
 
 ### Versioning note
 
@@ -39,6 +39,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **Band 0.8.x** | **Shipped** (#39) | Workload requests/limits in RCA extras — **`v0.8.0`** |
 | **Band 0.9.x** | **Shipped (v0.9.2)** | Operator wins — see [plan-0.9.0.md](docs/plan-0.9.0.md) (#31, #42, #60, #64, #79–#86) |
 | **Band 3** (1.0.0) | **Shipped (v1.0.0)** | Contract freeze — see [plan-1.0.0.md](docs/plan-1.0.0.md) (#30, #34, #35, #40, #48, #87) |
+| **Band 3 maint.** (1.0.3) | **Planned** | Post-audit hygiene — see [plan-1.0.3.md](docs/plan-1.0.3.md) (#88–#94) |
 | **Band 4** (1.1.x+) | **Active** | Multi-cluster, analyze, stream, addons — post-1.0 |
 
 ---
@@ -119,6 +120,22 @@ Ship **operator value** before the **1.0.0** compatibility promise. No `config_v
 | 48 | 3 | **CODEOWNERS** and GitHub issue/PR templates. | **Done (v1.0.0)** |
 
 **Explicitly deferred past 1.0.0:** multi-cluster (#32), CI matrix (#33), stream (#41), analyze (#69), progress bar (#44), smart rules (#71), addon system (#65), embedded dashboard (#74). See **Band 4**.
+
+---
+
+## Band 3 maintenance (1.0.3) — post-audit hygiene
+
+Source: Hermes audit **2026-07-12** (validated); full merge order in [plan-1.0.3.md](docs/plan-1.0.3.md). **No CLI/config contract change.**
+
+| # | Band | Item | Status |
+|---|------|------|--------|
+| 88 | 3 | **Docker default CMD `--help`** — stop auto-running collect against `groot.yml.sample`. | Pending |
+| 89 | 3 | **Email notifier tests** — fake SMTP in CI; optional Mailgun integration (`-tags=integration`). | Pending |
+| 90 | 3 | **GCS upload tests** — emulator/fake server in CI; optional real bucket integration. | Pending |
+| 91 | 3 | **Cleanup `internal/cmd/out/`** capture artifacts in cmd tests. | Pending |
+| 92 | 3 | **`--version` exit path** — remove `os.Exit(0)` from `versionPreRun`; use `ErrVersionPrinted`. | Pending |
+| 93 | 3 | **Document QPS/Burst** (50/100) vs `worker_concurrency`; configurable rate limit → **#67**. | Pending |
+| 94 | 3 | **Bump `golang.org/x/crypto`** to v0.54.0+ (grype GO-2026-5932 hygiene; govulncheck clean). | Pending |
 
 ---
 

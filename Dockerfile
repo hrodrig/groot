@@ -24,4 +24,4 @@ COPY --from=builder /out/groot /app/groot
 COPY configs/groot.yml.sample /app/groot.yml.sample
 USER nonroot:nonroot
 ENTRYPOINT ["/app/groot"]
-CMD ["collect", "--config", "/app/groot.yml.sample"]
+CMD ["--help"]

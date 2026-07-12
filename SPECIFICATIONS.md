@@ -44,6 +44,7 @@ This document is the source of truth for **observable behavior** and test expect
 | `groot version` | Same output as `--version`. |
 | `groot --print-sample-config` | Writes sample YAML to **stdout** and exits (root or `collect`). |
 | `groot --test-connection` | Loads config, lists one namespace via API, prints connection OK (root or `collect`). |
+| `groot notify test` | Sends a synthetic summary to all enabled notify channels (see §15). Does **not** run collect or contact the cluster. |
 
 ### Persistent flags (root + collect)
 
@@ -445,4 +446,21 @@ Ready-to-use YAML files for common scenarios live in [`examples/profiles/`](../e
 - **eks-managed.yml** — skip node logs (not supported on managed control planes), metrics enabled.
 
 Copy a profile as a starting point (`cp examples/profiles/incident-quick.yml groot.yml`) and edit to match your cluster.
+
+## 15. `groot notify test` — channel smoke test (1.0.3 #95)
+
+```
+groot notify test [--config <path>] [--event notify.test|success|failure]
+```
+
+Loads `notify.*` from config and posts a **synthetic** `collector.Summary` to every enabled channel. Does **not** run collect, write an archive, or contact the Kubernetes API. Ignores `--no-notify` / `GROOT_NO_NOTIFY` (the command exists solely to exercise notify).
+
+| Flag | Default | Effect |
+|------|---------|--------|
+| `--config <path>` | (search order §4) | YAML with at least one enabled notify destination. |
+| `--event <name>` | `notify.test` | Payload style: `notify.test` (dedicated test line), `success` (post-collect success text), `failure` (failure alert with simulated reason). |
+
+**Exit codes (see §3):** 0 on delivery success; **1** when config is invalid, no channel is enabled, or `--event` is unknown; **4** when any enabled channel returns a delivery error.
+
+**Operator use:** verify Slack/Teams/webhooks, Mailgun SMTP (`GROOT_NOTIFY_EMAIL_*`), PagerDuty routing keys, etc., before scheduling cron/Helm collects.
 

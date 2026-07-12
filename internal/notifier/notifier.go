@@ -71,6 +71,11 @@ func NewFanOut(cfg config.Config) *FanOut {
 	}
 }
 
+// Destinations returns the number of configured notify targets (senders + PagerDuty routes).
+func (f *FanOut) Destinations() int {
+	return len(f.senders) + len(f.pagerDuty)
+}
+
 // ShouldNotifyPartialFailure reports whether a completed collect should emit a failure alert.
 func ShouldNotifyPartialFailure(cfg config.Config, summary collector.Summary) bool {
 	of := cfg.Notify.OnFailure

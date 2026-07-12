@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Tests:** fake SMTP server coverage for email notifier (plain, STARTTLS, implicit TLS, AUTH PLAIN, FanOut integration). `(1.0.3 #89)`
+- **`groot notify test`** — send a synthetic summary to all enabled notify channels without running collect or contacting the cluster; `--event notify.test|success|failure`; exit **4** on delivery failure. `(1.0.3 #95)`
 
 ## [1.0.2] - 2026-07-11
 

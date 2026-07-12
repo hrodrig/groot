@@ -3,8 +3,10 @@
 **Status:** **planned** — work on `develop`; tag **`v1.0.3`** when checklist passes  
 **Target release:** **`v1.0.3`** (maintenance / test-hygiene patch; **no CLI or config contract change**)  
 **Source reviews:** [.no-va-al-repo/20260712-hermes-deepseek/deepseek-review-20260712.md](../.no-va-al-repo/20260712-hermes-deepseek/deepseek-review-20260712.md) (validated 2026-07-12); cross-ref [review 2026-07-02](../.no-va-al-repo/deep-seek-review-20260702.md) (notifier races **already fixed** in v1.0.0)  
-**Roadmap band:** **Band 3 maintenance** items **#88–#94** — see [ROADMAP.md](../ROADMAP.md)  
+**Roadmap band:** **Band 3 maintenance** items **#88–#95** — see [ROADMAP.md](../ROADMAP.md)  
 **Delivery model:** one PR per item (or pair small items); **`make release-check`** before tag.
+
+**Note:** **#95** adds `groot notify test` (CLI only; no YAML schema change). Original plan text “no CLI contract change” applied to **#88–#94** hygiene items.
 
 ---
 
@@ -30,7 +32,7 @@ This band closes hygiene debt **without** Band 4 features (analyze, multi-cluste
 
 ## Agreed implementation order
 
-`#88 → #94 → #91 → #89 → #90 → #92 → #93`
+`#88 → #94 → #91 → #89 → #95 → #90 → #92 → #93`
 
 Optional local-only (not required for tag): integration tests documented below under **Operator test infra**.
 
@@ -122,6 +124,26 @@ Optional local-only (not required for tag): integration tests documented below u
 **PR title:** `test(notifier): email SMTP unit tests (1.0.3 #89)`
 
 **Effort:** M (unit); +S for integration scaffold
+
+---
+
+### #95 — `groot notify test` (operator smoke; kzero parity)
+
+**Problem:** Notify only fires after a full collect; operators cannot smoke-test Mailgun/SMTP, Slack, PagerDuty, etc., without cluster access and archive I/O.
+
+**Resolves:** One command to validate `notify.*` wiring before cron/Helm deploy; complements fake SMTP unit tests (#89).
+
+**Deliverables:**
+
+- `groot notify test [--config …] [--event notify.test|success|failure]`
+- Synthetic `collector.Summary`; fan-out to all enabled channels; **no** Kubernetes API
+- Exit **1** (config / no channels / bad event); **4** (delivery failure) — same taxonomy as post-collect notify
+- Ignores `--no-notify` (explicit notify exercise)
+- SPEC §15; cmd + notifier tests (httptest slack + failure path)
+
+**PR title:** `feat(cmd): groot notify test for channel smoke (1.0.3 #95)`
+
+**Effort:** M
 
 ---
 

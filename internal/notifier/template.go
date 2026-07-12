@@ -19,6 +19,11 @@ type messageContext struct {
 func buildSummaryLine(event string, sum collector.Summary, reason string) string {
 	duration := sum.Duration.Round(time.Second)
 	switch event {
+	case EventTest:
+		return fmt.Sprintf(
+			"GROOT notify test. total=%d success=%d failed=%d duration=%s output=%s archive=%s run_id=%s",
+			sum.Total, sum.Success, sum.Failed, duration, sum.OutputDir, sum.ArchivePath, sum.RunID,
+		)
 	case eventFailure:
 		if strings.TrimSpace(reason) != "" {
 			return fmt.Sprintf(

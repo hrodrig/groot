@@ -261,7 +261,7 @@ func ExecuteContext(ctx context.Context) error {
 	return err
 }
 
-// ResetPersistentCLI restores root and collect-command flags to defaults (for tests calling Execute from main package).
+// ResetPersistentCLI restores root and subcommand flags to defaults (for tests calling Execute from main package).
 func ResetPersistentCLI() {
 	resetFlags := func(cmd *cobra.Command) {
 		cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
@@ -273,8 +273,14 @@ func ResetPersistentCLI() {
 			f.Changed = false
 		})
 	}
-	resetFlags(rootCmd)
-	resetFlags(collectCmd)
+	var walk func(*cobra.Command)
+	walk = func(cmd *cobra.Command) {
+		resetFlags(cmd)
+		for _, sub := range cmd.Commands() {
+			walk(sub)
+		}
+	}
+	walk(rootCmd)
 }
 
 // SetBuildInfo injects build metadata used by --version.
@@ -304,7 +310,7 @@ func init() {
 	collectCmd.Flags().StringVar(&collectOutputForm, "output", "text", "Output format after collect: text or json")
 	collectCmd.Flags().BoolVar(&strictMode, "strict", false, "Exit with code 5 when partial job failures >= threshold (default 1; see --strict-threshold)")
 	collectCmd.Flags().IntVar(&strictThreshold, "strict-threshold", 1, "Minimum failed job count to trigger exit 5 when --strict is set")
-	rootCmd.AddCommand(collectCmd, versionCmd, newCompletionCmd(), newValidateCmd(), newInspectCmd())
+	rootCmd.AddCommand(collectCmd, versionCmd, newCompletionCmd(), newValidateCmd(), newInspectCmd(), newNotifyCmd())
 }
 
 type connMeta struct {

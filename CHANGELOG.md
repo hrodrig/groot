@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Tests:** `internal/cmd` `TestMain` removes stale `out/groot-capture-*` dirs after package tests (gitignored artifacts from local cmd runs). `(1.0.3 #91)`
 
+### Added
+
+- **Tests:** fake SMTP server coverage for email notifier (plain, STARTTLS, implicit TLS, AUTH PLAIN, FanOut integration). `(1.0.3 #89)`
+
 ## [1.0.2] - 2026-07-11
 
 Maintenance patch — distroless **Debian 13** runtime base (no CLI or config contract changes).

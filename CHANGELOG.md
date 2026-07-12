@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Container image default CMD** prints `--help` instead of running `collect` against the bundled sample config (`groot.yml.sample` remains in the image for copy/reference). `(1.0.3 #88)`
 
+### Security
+
+- **Dependencies:** bump `golang.org/x/crypto` to **v0.54.0** (and transitive `golang.org/x/net`, `golang.org/x/sys`, `golang.org/x/text`) — grype GO-2026-5932 hygiene; govulncheck reports no vulnerable call paths. `(1.0.3 #94)`
+
 ## [1.0.2] - 2026-07-11
 
 Maintenance patch — distroless **Debian 13** runtime base (no CLI or config contract changes).

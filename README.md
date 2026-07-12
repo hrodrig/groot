@@ -552,7 +552,7 @@ Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.t
 | Key | What it does |
 |-----|----------------|
 | **`timeout`** | Maximum wall time for the whole **`groot collect`** run (Go `context` deadline). |
-| **`worker_concurrency`** | Number of **parallel** collection workers (concurrent API jobs). |
+| **`worker_concurrency`** | Number of **parallel** collection workers (concurrent API jobs). Does **not** raise the Kubernetes client rate limit — see [API rate limiting](#kubernetes-api-rate-limiting). |
 | **`namespaces`** | For each entry, Groot lists namespace-scoped resources through the API (pods, services, Deployments, ReplicaSets, StatefulSets, DaemonSets), writes **JSON sections** to **`<ns>/resources.txt`**, and ensures **`<ns>/`** exists under the capture tree. |
 | **`targets`** | Per-namespace **pod log** filters only. Keys are **namespace names**. Under each: **`deployments`**, **`statefulsets`**, **`daemonsets`**, **`jobs`**, **`cronjobs`**, **`helm_releases`** (string lists). If a namespace has **at least one** non-empty list, only pods whose labels match those workloads get **log** jobs. Empty/missing entry → broad pod logs for that NS. |
 | **`include_pod_logs`** | When **`true`**, collects **pod logs** for workload and control-plane pods via the API (subject to **`targets`**, **`pod_log_tail_lines`**, **`pod_logs_since`**). When **`false`**, skips all pod log jobs. |
@@ -566,6 +566,15 @@ Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.t
 | **`redact_secrets`** | When **`true`**, scans collected **`*.log`** files and replaces likely secret values with **`[REDACTED]`** before the manifest and archive (see [Secret redaction](#secret-redaction)). Default **`false`**. |
 | **`redact_patterns`** | Optional list of extra regex patterns (RE2 syntax). Invalid patterns fail at collect time. |
 | **`extra_kubectl`** | List of extra **read-only** argv lines (allowlisted verbs; split on whitespace, **no shell**). Groot executes them in-process with **client-go**. See the note below on allowed verbs. |
+
+#### Kubernetes API rate limiting
+
+Groot builds the Kubernetes client with a fixed client-go token bucket: **QPS 50**, **burst 100** (set in `internal/kubeloader` — not exposed in YAML). Every collection job shares that REST config, so **`collection.worker_concurrency`** only controls how many jobs run at once; it does **not** increase the apiserver QPS cap.
+
+| Symptom | What to try |
+|---------|-------------|
+| Collect feels slow on large clusters | Lower **`worker_concurrency`** (e.g. `4` instead of `8`) so workers spend less time waiting on the shared rate limiter |
+| HTTP **429** / `Too Many Requests` in logs | Same — reduce concurrency; ensure apiserver/etcd capacity; future YAML-tunable QPS is tracked as roadmap **#67** |
 
 #### `notify` (each channel)
 

@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"testing"
 
 	"github.com/spf13/cobra"
 )
@@ -51,11 +49,7 @@ func versionPreRun(cmd *cobra.Command, _ []string) error {
 	if _, err := fmt.Fprintln(cmd.OutOrStdout(), FormatVersion(long)); err != nil {
 		return err
 	}
-	if testing.Testing() {
-		return ErrVersionPrinted
-	}
-	os.Exit(0)
-	return nil
+	return ErrVersionPrinted
 }
 
 var versionCmd = &cobra.Command{

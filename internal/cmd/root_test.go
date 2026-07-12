@@ -225,8 +225,12 @@ func TestRoot_version(t *testing.T) {
 	rootCmd.SetOut(&buf)
 	rootCmd.SetErr(&buf)
 	rootCmd.SetArgs([]string{"--version"})
-	if err := Execute(); err != nil {
+	err := Execute()
+	if err != nil {
 		t.Fatal(err)
+	}
+	if got := ExitCodeOf(err); got != ExitSuccess {
+		t.Fatalf("exit code = %d, want %d", got, ExitSuccess)
 	}
 	out := buf.String()
 	if !strings.Contains(out, "groot v0.9.9") {

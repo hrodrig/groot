@@ -33,6 +33,23 @@ func TestRun_printSampleConfig(t *testing.T) {
 	}
 }
 
+func TestRun_versionExitZero(t *testing.T) {
+	old := os.Args
+	t.Cleanup(func() {
+		os.Args = old
+		cmd.ResetPersistentCLI()
+	})
+	cmd.ResetPersistentCLI()
+	os.Args = []string{"groot", "--version"}
+	err := run()
+	if err != nil {
+		t.Fatalf("run: %v", err)
+	}
+	if got := exitCode(err); got != 0 {
+		t.Fatalf("exit code = %d, want 0", got)
+	}
+}
+
 func TestRun_collectQuiet(t *testing.T) {
 	kc, cleanupK := kubetest.StartAPIServer(t)
 	defer cleanupK()

@@ -133,8 +133,8 @@ Source: Hermes audit **2026-07-12** (validated); full merge order in [plan-1.0.3
 | 89 | 3 | **Email notifier tests** — fake SMTP in CI; optional Mailgun integration (`-tags=integration`). | **Done (v1.0.3)** |
 | 90 | 3 | **GCS upload tests** — emulator/fake server in CI; optional real bucket integration. | Pending |
 | 91 | 3 | **Cleanup `internal/cmd/out/`** capture artifacts in cmd tests. | **Done (v1.0.3)** |
-| 92 | 3 | **`--version` exit path** — remove `os.Exit(0)` from `versionPreRun`; use `ErrVersionPrinted`. | Pending |
-| 93 | 3 | **Document QPS/Burst** (50/100) vs `worker_concurrency`; configurable rate limit → **#67**. | Pending |
+| 92 | 3 | **`--version` exit path** — remove `os.Exit(0)` from `versionPreRun`; use `ErrVersionPrinted`. | **Done (v1.0.3)** |
+| 93 | 3 | **Document QPS/Burst** (50/100) vs `worker_concurrency`; configurable rate limit → **#67**. | **Done (v1.0.3)** |
 | 94 | 3 | **Bump `golang.org/x/crypto`** to v0.54.0+ (grype GO-2026-5932 hygiene; govulncheck clean). | **Done (v1.0.3)** |
 | 95 | 3 | **`groot notify test`** — synthetic summary to all enabled channels; no cluster/collect. | **Done (v1.0.3)** |
 

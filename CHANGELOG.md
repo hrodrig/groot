@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Tests:** `internal/cmd` `TestMain` removes stale `out/groot-capture-*` dirs after package tests (gitignored artifacts from local cmd runs). `(1.0.3 #91)`
+- **`--version` / `-v`:** always returns through `ErrVersionPrinted` and `ExecuteContext` (no `os.Exit(0)` in library code). `(1.0.3 #92)`
+- **Docs:** Kubernetes client **QPS 50 / burst 100** vs `collection.worker_concurrency`; YAML-tunable rate limit remains roadmap **#67**. `(1.0.3 #93)`
 
 ### Added
 

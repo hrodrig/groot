@@ -204,6 +204,7 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
 - Jobs built from: base diagnostics, `extra_kubectl`, node details/logs, namespace resources, pod logs (filtered by `targets`), metrics, RCA writers.
 - When `redact_secrets` is `true`, collected `*.log` files are scanned and likely secret values replaced with `[REDACTED]` after jobs complete and before `extras/manifest.json` and archiving.
 - Workers run jobs concurrently up to `worker_concurrency`.
+- **Kubernetes API rate limit:** Groot sets client-go **`QPS=50`** and **`Burst=100`** on the shared REST config (`internal/kubeloader`). All collection jobs share one token bucket; workers compete for those tokens. **`worker_concurrency`** controls how many jobs run in parallel, not the QPS cap. On large clusters or slow apiserver, reduce **`worker_concurrency`** if you see long stalls or HTTP **429** responses. QPS/Burst are **not** YAML-configurable today (roadmap **#67**).
 - Optional jobs may fail without aborting the whole run (`Optional: true` on internal jobs).
 - `Summary` reports `Total`, `Success`, `Failed`, `Failures[]`, `Duration`, `OutputDir`, `ArchivePath`.
 

@@ -1,21 +1,45 @@
 # groot roadmap
 
-This file is the **in-repo** source of truth for **planned** work and known gaps. It complements:
+This file is the **in-repo** source of truth for **planned** work and known gaps.
 
-- **[SPECIFICATIONS.md](SPECIFICATIONS.md)** — behavior contract, config shape, and what **`groot collect`** does **today**
-- **[CHANGELOG.md](CHANGELOG.md)** — what shipped in each release
+> **ROADMAP** = *what* we build and *when*. **[SPECIFICATIONS.md](SPECIFICATIONS.md)** = *how* each feature behaves today. Any roadmap item that changes observable behavior must land a SPEC update (or clear non-behavior note) **before** the release that ships it. **[CHANGELOG.md](CHANGELOG.md)** records what shipped.
 
 User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample](configs/groot.yml.sample)**.
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-07-12 (maintenance band **v1.0.3** shipped on `develop`; tag pending; **Band 4** active)
+**Last reviewed:** 2026-07-13 (Kimi roadmap review applied; **v1.0.3** tagged; **Band 4** next)
 
 ### Versioning note
 
 Public releases start at **v0.1.3** (early CLI and packaging). **`v0.3.0` was never published**; treat **[0.3.0]** changelog material as shipped from **`v0.3.1`** onward.
 
-Bands group semver minors into planning horizons — **Band 1** (shipped, 0.1.x–0.6.x), **Band 2** (shipped, 0.7.x), **Band 0.8.x** (RCA depth, shipped), **Band 0.9.x** (shipped, path to 1.0), **Band 3** (1.0.0 contract freeze, **active**), **Band 4** (1.1.x+ backlog). Individual items carry **global IDs** (#1–#N) stable across bands.
+Bands group semver minors into planning horizons. Individual items carry **global IDs** (#1–#N) stable across bands.
+
+### Band status (scan first)
+
+| Band | Version | Focus | Status | Closed |
+|------|---------|-------|--------|--------|
+| **1** | 0.1.x–0.6.x | Core CLI, notify, packaging, S3/GCS, BSD | ✅ Shipped | **2026-06-06** (v0.6.1) |
+| **2** | 0.7.x | SFTP, airgap relay, node logs, cluster_name | ✅ Shipped | **2026-06-17** (v0.7.2) |
+| **0.8** | 0.8.x | RCA workload resources | ✅ Shipped | **2026-06-17** (v0.8.0) |
+| **0.9** | 0.9.x | Operator wins (validate/inspect/plugin) | ✅ Shipped | **2026-06-29** (v0.9.2) |
+| **3** | 1.0.0 | Contract freeze | ✅ Shipped | **2026-07-03** (v1.0.0) |
+| **3 maint.** | 1.0.1–1.0.3 | Security + audit hygiene | ✅ Shipped | **2026-07-12** (v1.0.3) |
+| **4** | 1.1.x+ | Multi-cluster, analyze, triggered watch, addons | 📋 Active backlog | — |
+
+### Current focus (in flight)
+
+| Priority | Item | Theme | Notes |
+|----------|------|-------|-------|
+| **Next** | **#69** `groot analyze <archive>` | Analysis | Offline RCA; builds on inspect + golden fixtures (#87). Prefer as first **1.1.0** feature if RCA value > multi-cluster. |
+| **Next** | **#32** multi-cluster collect | Multi-cluster | [plan-1.0.0.md](docs/plan-1.0.0.md) post-1.0 order listed #32 before #69 — pick by product priority. |
+| Then | **#43** kubeconfig / `--context` | Multi-cluster | Operator ergonomics. |
+| Then | **#33** CI kind matrix | Platform | Documented minimum cluster version. |
+| Later | **#65** addon system | Ecosystem | After multi-cluster + plugin maturity. |
+| Later | **#55** event-driven watch | Triggered collect | Critical services → collect → S3/GCS/SFTP + notify (not live log tail). |
+
+Open a **`docs/plan-1.1.0.md`** when Band 4 scope locks for the first feature release.
 
 ### Strategic direction
 
@@ -23,24 +47,31 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 
 **Product positioning:** groot = **ticket-ready bundle** (`.tar.gz` + manifest + RCA TSVs + notify/upload). Tools like [kubectl-gather](https://github.com/nirs/kubectl-gather) optimize for **multi-cluster YAML trees and manual diff** — complementary, not identical (#60).
 
-**Target architecture:** **0.9.x** ships operator wins (validate, inspect, kubectl plugin, summary, collector fixes). **1.0.0** freezes **config + archive layout** and moves code to **`internal/`**. **1.1.x+** adds multi-cluster, analyze, streaming, and addons — only after the contract is stable.
+**Target architecture:** **0.9.x** shipped operator wins. **1.0.0** froze **config + archive layout** and moved code to **`internal/`**. **1.1.x+** (Band 4) adds multi-cluster, analyze, triggered collect-on-signal, and addons — only after that contract.
 
-**Honest gaps today:**
+### Known gaps / Non-goals
+
+**Gaps (honest — still pending):**
 
 - **`--output yaml`** for collect not implemented (#40 partial; JSON shipped).
-- **Multi-cluster**, **analyze**, **stream**, **progress bar** — Band 4 only.
+- **Multi-cluster**, **analyze**, **triggered watch**, **progress bar** — Band 4 only (`stream` live tail is out of philosophy; see Non-goals).
 
-**Current focus (planned work):**
+**Non-goals (do not expect these as product core):**
 
-| Band | Status | Items |
-|------|--------|-------|
-| **Band 1** (0.1.x–0.6.x) | **Shipped** (#1–#29) | Initial CLI through BSD ports; see [plan-0.4.0](docs/plan-0.4.0.md), [plan-0.5.0](docs/plan-0.5.0.md), [plan-0.6.0](docs/plan-0.6.0.md) |
-| **Band 2** (0.7.x) | **Shipped** (#36–#38) | SFTP upload, airgapped relay, container image SBOM; see [plan-0.7.0.md](docs/plan-0.7.0.md) |
-| **Band 0.8.x** | **Shipped** (#39) | Workload requests/limits in RCA extras — **`v0.8.0`** |
-| **Band 0.9.x** | **Shipped (v0.9.2)** | Operator wins — see [plan-0.9.0.md](docs/plan-0.9.0.md) (#31, #42, #60, #64, #79–#86) |
-| **Band 3** (1.0.0) | **Shipped (v1.0.0)** | Contract freeze — see [plan-1.0.0.md](docs/plan-1.0.0.md) (#30, #34, #35, #40, #48, #87) |
-| **Band 3 maint.** (1.0.3) | **Shipped (v1.0.3)** | Post-audit hygiene — see [plan-1.0.3.md](docs/plan-1.0.3.md) (#88–#95) |
-| **Band 4** (1.1.x+) | **Active** | Multi-cluster, analyze, stream, addons — post-1.0 |
+- Not an **automatic cluster diagnosis** product — evidence archive first; **`groot analyze`** (#69) may add heuristics later, not a full SRE co-pilot.
+- Not a **kubectl-gather** replacement — complementary workflows (#60).
+- Not **live log streaming / tail** (`groot stream`) — outside product philosophy (use `kubectl logs -f`, stern, or a log shipper). Continuous value for groot is **triggered collect → archive → upload → notify**, not a log agent.
+- Not **multi-cluster native** until Band 4 `#32`.
+- Not **mutating** cluster operations, full OpenTelemetry agent, managed SaaS, or native Windows GUI (long-term out of scope).
+
+### Community signals (Band 4)
+
+| Badge | Meaning |
+|-------|---------|
+| 🚀 | Maintainer priority |
+| 🤝 | Help wanted (good first / docs / tests contribution) |
+| 💡 | Design / RFC needed before code |
+| ⏳ | Blocked on another item or external dependency |
 
 ---
 
@@ -70,6 +101,8 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 
 ## Band 0.8.x — RCA depth (collector fidelity)
 
+**Closed:** **2026-06-17** at **`v0.8.0`**. Criterion: workload requests/limits in RCA extras (#39) in production archives.
+
 | # | Band | Item | Status |
 |---|------|------|--------|
 | 39 | 0.8 | **Workload requests/limits in RCA extras**: `extras/workload-resources.tsv` (per-container CPU/memory requests and limits, owner kind/name); **`all-pods-rca.tsv`** merges pod-level declared resources with metrics and log paths. | **Done (v0.8.0)** |
@@ -80,7 +113,9 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 
 ## Band 0.9.x (shipped) — path to 1.0
 
-**Implementation plan:** [plan-0.9.0.md](docs/plan-0.9.0.md) (closed at **`v0.9.2`**). Merge order: **#79 → #64+#85 → #80 → #81 → #82 → #31+#83 → #42+#84 → #86 → #60**.
+**Closed:** **2026-06-29** at **`v0.9.2`**. Criterion: kubectl plugin, exit codes, high-signal-first, operator wins (#31, #42, #60, #64, #79–#86) shipped.
+
+**Implementation plan:** [plan-0.9.0.md](docs/plan-0.9.0.md). Merge order: **#79 → #64+#85 → #80 → #81 → #82 → #31+#83 → #42+#84 → #86 → #60**.
 
 Ship **operator value** before the **1.0.0** compatibility promise. No `config_version` or `internal/` in this band.
 
@@ -105,11 +140,26 @@ Ship **operator value** before the **1.0.0** compatibility promise. No `config_v
 
 ## Band 3 (1.0.0) — stable contract only
 
-**Target:** **v1.0.0**. Major when config shape, archive layout, and module layout are stable.
+**Closed:** **2026-07-03** at **`v1.0.0`**. Criterion: config + archive layout frozen; `internal/` layout; governance templates; see success criteria in [plan-1.0.0.md](docs/plan-1.0.0.md).
+
+**Target (fulfilled):** Major when config shape, archive layout, and module layout are stable.
 
 **Implementation plan:** [plan-1.0.0.md](docs/plan-1.0.0.md). Merge order: **#30 → #34 → #35 → #40 → #87 → #48**.
 
 **Prerequisite met:** **v0.9.2** shipped (2026-06-29).
+
+### 1.0.0 contract surface (measurable)
+
+What “stable contract” means for GROOT — changes here need a **major** or clearly documented migration (see SPEC):
+
+| Surface | Commitment |
+|---------|------------|
+| **CLI** | Subcommand shape for `collect` / `validate` / `inspect` / `notify`; documented **exit codes** (SPEC §12); `--output json` schemas for those commands. |
+| **Config** | `groot.yml` keys with **`config_version: 1`**; legacy absent/`0` still loads; breaking key renames require bump or migration notes. |
+| **Archive** | Layout versioned via **`archive_layout_version`** in `extras/manifest.json`; stable paths for logs / extras / RCA TSVs for downstream tools. |
+| **Plugin** | **`kubectl-groot`** basename discovery (`kubectl groot …`); same CLI surface as `groot`. |
+
+Authoritative detail: **[SPECIFICATIONS.md](SPECIFICATIONS.md)** (behavior today). New observable behavior → update SPEC before ship.
 
 | # | Band | Item | Status |
 |---|------|------|--------|
@@ -124,9 +174,13 @@ Ship **operator value** before the **1.0.0** compatibility promise. No `config_v
 
 ---
 
-## Band 3 maintenance (1.0.3) — post-audit hygiene
+## Band 3 maintenance (1.0.1–1.0.3) — security + post-audit hygiene
 
-Source: Hermes audit **2026-07-12** (validated); full merge order in [plan-1.0.3.md](docs/plan-1.0.3.md). **#95 adds one CLI subcommand** (`groot notify test`); no config schema change.
+**Closed:** **2026-07-12** at **`v1.0.3`**. Criterion: Docker CMD safe default, email/GCS CI coverage, `notify test`, `x/crypto` ≥ v0.54.0; `make release-check` green. See [plan-1.0.3.md](docs/plan-1.0.3.md).
+
+**1.0.1** — Go **1.26.5** (stdlib CVEs). **1.0.2** — distroless Debian 13. **1.0.3** — audit items below.
+
+Source for 1.0.3: Hermes audit **2026-07-12** (validated). **#95 adds one CLI subcommand** (`groot notify test`); no config schema change.
 
 | # | Band | Item | Status |
 |---|------|------|--------|
@@ -141,41 +195,79 @@ Source: Hermes audit **2026-07-12** (validated); full merge order in [plan-1.0.3
 
 ---
 
-## Band 4 (1.1.x+) — backlog (post-1.0)
+## Band 4 (1.1.x+) — backlog by theme
 
-Items from community review **not** blocking **1.0.0**. Prioritize after [plan-1.0.0.md](docs/plan-1.0.0.md) ships.
+Items from community review **not** blocking **1.0.0**. Prioritize after contract freeze (done). Draft **`docs/plan-1.1.0.md`** when the first theme ships.
 
-### Platform depth (high value post-1.0)
+Themes (labels for contribute/vote — item IDs unchanged):
+
+| Theme | Intent | Sample IDs |
+|-------|--------|------------|
+| **Multi-cluster** | Federated collect, context selection | #32, #43 |
+| **Triggered collect** | Watch critical signals → collect → upload → notify | #55 (reframed; not live tail) |
+| **Analysis** | Offline heuristics on archives | #69, #56, #62 |
+| **Platform** | Managed clouds, CI matrix, edge | #33, #58, #49, #59 |
+| **Collector / UX** | Progress, flags, redaction, TUI | #44–#45, #54, #66–#68, #70–#72, #77–#78 |
+| **Ecosystem** | Packages, hooks, dashboards, community | #46–#53, #61, #63, #65, #73–#76 |
+
+**Explicitly out of philosophy:** live **`groot stream`** / continuous log tail (#41) — see Known gaps / Non-goals. Prefer shippers or `kubectl` for that job.
+
+### Theme: Multi-cluster
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 32 | 4 | **Multi-cluster collect** into one archive (multiple contexts, prefixed paths). | Pending |
-| 33 | 4 | **CI matrix**: kind E2E against more than one Kubernetes minor; documented minimum cluster version. | Pending |
-| 41 | 4 | **`groot stream`**: live pod log tailing with `collection.targets` filters. | Pending |
-| 43 | 4 | **Auto-detect kubeconfig / `--context`**: multi-path `KUBECONFIG`, context selection. | Pending |
-| 69 | 4 | **`groot analyze <archive>`**: heuristics (OOM, CrashLoop, trends) + executive `.md` summary. | Pending |
+| 32 | 4 | 🚀 **Multi-cluster collect** into one archive (multiple contexts, prefixed paths). | Pending |
+| 43 | 4 | 🚀 **Auto-detect kubeconfig / `--context`**: multi-path `KUBECONFIG`, context selection. | Pending |
+
+### Theme: Triggered collect (watch → archive)
+
+Event-driven **full collect** (not log streaming): watch critical workloads/services; on signal (CrashLoop, OOM, Warning threshold, probe fail), run the same collect pipeline, then **upload** (S3/GCS/SFTP) and **notify**. Complements CronJob schedule in groot-selfhosted with incident-triggered captures.
+
+| # | Band | Item | Status |
+|---|------|------|--------|
+| 55 | 4 | 🚀💡 **`groot watch`** (reframed): monitor critical targets; on signal → **collect → upload → notify**. Not a live log tailer. Design: signal sources, debounce, overlap with cron, exit/daemon model. | Pending |
+
+### Theme: Streaming (deferred / likely won't ship)
+
+| # | Band | Item | Status |
+|---|------|------|--------|
+| 41 | 4 | **`groot stream`**: live pod log tailing — **out of product philosophy** (log agent / stern territory). Kept for ID stability; do not prioritize. Prefer remove-from-contract later if unused. | Pending (deprioritized) |
+
+### Theme: Analysis
+
+| # | Band | Item | Status |
+|---|------|------|--------|
+| 69 | 4 | 🚀 **`groot analyze <archive>`**: heuristics (OOM, CrashLoop, trends) + executive `.md` summary. | Pending |
 | 56 | 4 | **`groot diff`**: compare two archives from the same cluster. | Pending |
-| 70 | 4 | **Dry-run size estimation**: extend `--list-jobs` with storage footprint estimate. | Pending |
-| 71 | 4 | **Smart collect rules**: conditional `collection.rules` in YAML. | Pending |
-| 72 | 4 | **Incremental collection**: `--incremental` with state in `~/.groot/state/`. | Pending |
+| 62 | 4 | **Post-collect analysis hooks** (Popeye, kubectl-debug). | Pending |
 
-### Collector and UX polish
+### Theme: Platform
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 44 | 4 | **Progress bar / spinner** during collect. | Pending |
+| 33 | 4 | **CI matrix**: kind E2E against more than one Kubernetes minor; documented minimum cluster version. | Pending |
+| 49 | 4 | **Promote kind E2E** from `continue-on-error` to required/nightly. | Pending |
+| 58 | 4 | **Edge/K3s/MicroK8s** adjustments. | Pending |
+| 59 | 4 | **E2E matrix expansion** (minikube, OpenShift local). | Pending |
+
+### Theme: Collector / UX
+
+| # | Band | Item | Status |
+|---|------|------|--------|
+| 44 | 4 | 🤝 **Progress bar / spinner** during collect. | Pending |
 | 45 | 4 | **Secret redaction enhancements**: JWT/AWS patterns, `--dry-run-redact`, extend to `.txt`/`.tsv`. | Pending |
-| 66 | 4 | **Label selector flag (`-l` / `--selector`)**. | Pending |
+| 66 | 4 | 🤝 **Label selector flag (`-l` / `--selector`)**. | Pending |
 | 67 | 4 | **Dynamic API rate limiting** (429 backoff). | Pending |
 | 68 | 4 | **Per-log `LimitBytes`**. | Pending |
-| 77 | 4 | **`--target` CLI flag** for ad-hoc filtering. | Pending |
+| 70 | 4 | **Dry-run size estimation**: extend `--list-jobs` with storage footprint estimate. | Pending |
+| 71 | 4 | 💡 **Smart collect rules**: conditional `collection.rules` in YAML. | Pending |
+| 72 | 4 | 💡 **Incremental collection**: `--incremental` with state in `~/.groot/state/`. | Pending |
+| 77 | 4 | 🤝 **`--target` CLI flag** for ad-hoc filtering. | Pending |
 | 78 | 4 | **`collection.events_min_type`** (Warning+ filter). | Pending |
-| 54 | 4 | **TUI mode** (`groot tui`). | Pending |
-| 55 | 4 | **Continuous watcher** (`groot watch`). | Pending |
+| 54 | 4 | 💡 **TUI mode** (`groot tui`). | Pending |
 | 57 | 4 | **`--compress-level`**, `--quick` lite mode. | Pending |
-| 58 | 4 | **Edge/K3s/MicroK8s** adjustments. | Pending |
 
-### Distribution, extensibility, and community
+### Theme: Ecosystem
 
 | # | Band | Item | Status |
 |---|------|------|--------|
@@ -183,15 +275,12 @@ Items from community review **not** blocking **1.0.0**. Prioritize after [plan-1
 | 51 | 4 | **Grafana / self-hosted dashboard** (groot-selfhosted). | Pending |
 | 52 | 4 | **Post-collect YAML hooks**. | Pending |
 | 53 | 4 | **Observability export** (Prometheus, Loki/Promtail detection). | Pending |
-| 65 | 4 | **Addon system** (kubectl-gather-style; after multi-cluster). | Pending |
-| 46 | 4 | **Generic `examples/`** beyond profiles (#86). | Pending |
-| 47 | 4 | **CONTRIBUTING.md** collector guide. | Pending |
-| 49 | 4 | **Promote kind E2E** from `continue-on-error` to required/nightly. | Pending |
-| 59 | 4 | **E2E matrix expansion** (minikube, OpenShift local). | Pending |
-| 61 | 4 | **Ticketing integration** (Jira/GitHub Issues drafts). | Pending |
-| 62 | 4 | **Post-collect analysis hooks** (Popeye, kubectl-debug). | Pending |
+| 65 | 4 | ⏳ **Addon system** (kubectl-gather-style; after multi-cluster). | Pending |
+| 46 | 4 | 🤝 **Generic `examples/`** beyond profiles (#86). | Pending |
+| 47 | 4 | 🤝 **CONTRIBUTING.md** collector guide. | Pending |
+| 61 | 4 | **Ticketing integration** — draft issues from collect summary / `run_id` / archive link: **GitHub Issues**, **GitLab Issues** (API), **Jira**. Same payload shape; provider adapters. | Pending |
 | 63 | 4 | **Community growth** (Reddit, CNCF Slack, articles). | Pending |
-| 73 | 4 | **Archive encryption/signing** (`--encrypt`, `--sign`). | Pending |
+| 73 | 4 | 💡 **Archive encryption/signing** (`--encrypt`, `--sign`). | Pending |
 | 74 | 4 | **Embedded web dashboard** (`groot serve`) — prefer groot-selfhosted + Grafana (#51). | Pending |
 | 75 | 4 | **Alternate formats** (SQLite, Parquet export). | Pending |
 | 76 | 4 | **`groot cleanup`** retention policy for `output_dir`. | Pending |

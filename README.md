@@ -33,6 +33,12 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 
 > **Operator deployment** (bastion, cron, `docker run`, Helm CronJob, flat manifests): **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** — this repo ships the CLI binary, packages, and container image only.
 
+**Related tools (same maintainer):**
+- **[pgwd](https://github.com/hrodrig/pgwd)** — PostgreSQL connection watchdog ([live traffic](https://gghstats.hermesrodriguez.com/hrodrig/pgwd); deploy: [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted))
+- **[gghstats](https://github.com/hrodrig/gghstats)** — GitHub repo traffic beyond 14 days ([live demo](https://gghstats.hermesrodriguez.com); deploy: [gghstats-selfhosted](https://github.com/hrodrig/gghstats-selfhosted))
+- **[kzero](https://github.com/hrodrig/kzero)** — bastion-first declarative workload reset ([live traffic](https://gghstats.hermesrodriguez.com/hrodrig/kzero); deploy: [kzero-selfhosted](https://github.com/hrodrig/kzero-selfhosted))
+- **[groot](https://github.com/hrodrig/groot)** — Kubernetes diagnostics archive ([live traffic](https://gghstats.hermesrodriguez.com/hrodrig/groot); deploy: [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted))
+
 ## Table of contents
 
 - [README badge reference](docs/badges.md)
@@ -182,10 +188,11 @@ brew upgrade --cask hrodrig/groot/groot
 
 The cask installs the **`groot`** binary to `$(brew --prefix)/bin/groot` and adds it to your `PATH` (already on it in default Homebrew setups). A **sample config** is not bundled with the cask; generate it with `groot --print-sample-config > ~/.config/groot/groot.yml` and edit.
 
-**macOS first run:** unsigned CLI binaries may trigger Gatekeeper (“Apple could not verify…”). The cask clears the download quarantine on install. If you still see the dialog, run once:
+**macOS first run:** unsigned CLI binaries may trigger Gatekeeper (“Apple could not verify…”). The cask clears the download quarantine on install. If you still see the dialog, run once for each binary you use:
 
 ```bash
 xattr -dr com.apple.quarantine "$(command -v groot)"
+xattr -dr com.apple.quarantine "$(command -v kubectl-groot)"
 ```
 
 Or use **System Settings → Privacy & Security → Open Anyway**. Same applies to binaries installed from GitHub `.tar.gz` (see [Install or update](#install-or-update)).

@@ -188,10 +188,11 @@ brew upgrade --cask hrodrig/groot/groot
 
 The cask installs the **`groot`** binary to `$(brew --prefix)/bin/groot` and adds it to your `PATH` (already on it in default Homebrew setups). A **sample config** is not bundled with the cask; generate it with `groot --print-sample-config > ~/.config/groot/groot.yml` and edit.
 
-**macOS first run:** unsigned CLI binaries may trigger Gatekeeper (“Apple could not verify…”). The cask clears the download quarantine on install. If you still see the dialog, run once:
+**macOS first run:** unsigned CLI binaries may trigger Gatekeeper (“Apple could not verify…”). The cask clears the download quarantine on install. If you still see the dialog, run once for each binary you use:
 
 ```bash
 xattr -dr com.apple.quarantine "$(command -v groot)"
+xattr -dr com.apple.quarantine "$(command -v kubectl-groot)"
 ```
 
 Or use **System Settings → Privacy & Security → Open Anyway**. Same applies to binaries installed from GitHub `.tar.gz` (see [Install or update](#install-or-update)).

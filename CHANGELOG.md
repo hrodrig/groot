@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **macOS Gatekeeper**: Homebrew cask post-install clears quarantine on **`kubectl-groot`** as well as **`groot`**; README documents both `xattr` one-liners.
+
 ### Changed
 
 - **ROADMAP**: Kimi review — band status table + close dates, **Current focus** (in flight), explicit **1.0.0 contract surface**, Band 4 **themes** + community signals, expanded **Known gaps / Non-goals**, stronger SPEC triad note. Product stance: **`stream` out of philosophy**; **`watch`** reframed as triggered collect → upload → notify (#55).

@@ -242,6 +242,7 @@ homebrew_casks:
         install: |
           if OS.mac?
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/groot"]
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/kubectl-groot"]
           end
     custom_block: |
       zap trash: "~/.config/groot"

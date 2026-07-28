@@ -902,7 +902,7 @@ Identity from env (never in YAML): `GROOT_UPLOAD_SFTP_IDENTITY_FILE=/home/groot/
 
 Auth: **public-key only** (BatchMode — password rejected). Host key verified against `known_hosts_file`; fails closed on mismatch. Same failure semantics as S3/GCS.
 
-Full relay playbook (systemd watcher → rclone → OneDrive): **[groot-selfhosted → airgapped-relay](https://github.com/hrodrig/groot-selfhosted/blob/main/run/examples/airgapped-relay/README.md)**.
+Full relay playbook (systemd watcher → rclone → **OneDrive or SharePoint**): **[groot-selfhosted → airgapped-relay](https://github.com/hrodrig/groot-selfhosted/blob/main/run/examples/airgapped-relay/README.md)** ([destinations](https://github.com/hrodrig/groot-selfhosted/blob/main/run/examples/airgapped-relay/DESTINATIONS.md)).
 
 [↑ Back to top](#readme-top)
 

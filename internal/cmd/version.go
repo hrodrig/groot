@@ -7,6 +7,8 @@ import (
 )
 
 // ErrVersionPrinted stops command execution after --version output; Execute treats it as success.
+// rootCmd SilenceErrors/SilenceUsage (kzero-style) prevent cobra from dumping "Error:" + Usage
+// for this empty-message sentinel.
 type versionPrintedError struct{}
 
 func (versionPrintedError) Error() string { return "" }

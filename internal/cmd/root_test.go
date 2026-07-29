@@ -221,23 +221,36 @@ func TestRoot_version(t *testing.T) {
 	resetPersistentFlags(t)
 	t.Cleanup(func() { SetBuildInfo("dev", "unknown", "unknown", "unknown") })
 	SetBuildInfo("0.9.9", "abc", "dev", "2000-01-01")
-	var buf bytes.Buffer
-	rootCmd.SetOut(&buf)
-	rootCmd.SetErr(&buf)
-	rootCmd.SetArgs([]string{"--version"})
-	err := Execute()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got := ExitCodeOf(err); got != ExitSuccess {
-		t.Fatalf("exit code = %d, want %d", got, ExitSuccess)
-	}
-	out := buf.String()
-	if !strings.Contains(out, "groot v0.9.9") {
-		t.Fatalf("version output: %s", out)
-	}
-	if strings.Contains(out, "I am Groot") {
-		t.Fatalf("short version should not include greeting: %s", out)
+	for _, args := range [][]string{{"--version"}, {"-v"}} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			resetPersistentFlags(t)
+			var buf bytes.Buffer
+			rootCmd.SetOut(&buf)
+			rootCmd.SetErr(&buf)
+			rootCmd.SetArgs(args)
+			err := Execute()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := ExitCodeOf(err); got != ExitSuccess {
+				t.Fatalf("exit code = %d, want %d", got, ExitSuccess)
+			}
+			out := buf.String()
+			if !strings.Contains(out, "groot v0.9.9") {
+				t.Fatalf("version output: %s", out)
+			}
+			if strings.Contains(out, "I am Groot") {
+				t.Fatalf("short version should not include greeting: %s", out)
+			}
+			// Regression: PersistentPreRunE sentinel must not dump cobra Usage/Error (kzero-style Silence*).
+			if strings.Contains(out, "Usage:") || strings.Contains(out, "Error:") {
+				t.Fatalf("version must not print Usage/Error: %q", out)
+			}
+			lines := strings.Split(strings.TrimSpace(out), "\n")
+			if len(lines) != 1 {
+				t.Fatalf("want single version line, got %d: %q", len(lines), out)
+			}
+		})
 	}
 }
 

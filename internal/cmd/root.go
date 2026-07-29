@@ -50,6 +50,10 @@ var rootCmd = &cobra.Command{
 	Use:   "groot",
 	Short: "Collect Kubernetes logs and cluster context",
 	Long:  "Groot collects read-only Kubernetes logs, events, and selected API snapshots into one archive (client-go; no kubectl binary required).",
+	// Match kzero: cobra must not dump Usage/Error when PersistentPreRunE returns
+	// ErrVersionPrinted (empty Error() string) or other handled sentinels; main prints real errors.
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		if printSampleConfig {
 			// Write to stdout so shell redirects (`> file`) work. Cobra's cmd.Print uses stderr.

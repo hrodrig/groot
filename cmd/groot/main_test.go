@@ -39,14 +39,17 @@ func TestRun_versionExitZero(t *testing.T) {
 		os.Args = old
 		cmd.ResetPersistentCLI()
 	})
-	cmd.ResetPersistentCLI()
-	os.Args = []string{"groot", "--version"}
-	err := run()
-	if err != nil {
-		t.Fatalf("run: %v", err)
-	}
-	if got := exitCode(err); got != 0 {
-		t.Fatalf("exit code = %d, want 0", got)
+	for _, args := range [][]string{
+		{"groot", "--version"},
+		{"groot", "-v"},
+	} {
+		t.Run(args[1], func(t *testing.T) {
+			cmd.ResetPersistentCLI()
+			os.Args = args
+			if got := runMain(); got != 0 {
+				t.Fatalf("runMain = %d, want 0", got)
+			}
+		})
 	}
 }
 

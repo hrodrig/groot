@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,7 +18,16 @@ var (
 )
 
 func main() {
-	os.Exit(exitCode(run()))
+	os.Exit(runMain())
+}
+
+// runMain runs the CLI and returns a process exit code (see cmd.ExitCodeOf).
+func runMain() int {
+	if err := run(); err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		return exitCode(err)
+	}
+	return 0
 }
 
 func run() error {

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`-v` / `--version`**: no longer prints empty `Error:` plus full Usage after the version line (cobra treated `ErrVersionPrinted` as a PreRun failure). Align with kzero: root `SilenceUsage`/`SilenceErrors`; `main` prints real errors to stderr. `(Unreleased)`
 - **macOS Gatekeeper**: Homebrew cask post-install clears quarantine on **`kubectl-groot`** as well as **`groot`**; README documents both `xattr` one-liners.
 
 ### Changed

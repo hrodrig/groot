@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.4] - 2026-07-29
 
-Security patch — `google.golang.org/grpc` **v1.82.1** (Dependabot #1); no CLI or config contract changes.
+Security patch — `google.golang.org/grpc` **v1.82.1** (Dependabot #1) and OpenTelemetry **v1.44.0**; no CLI or config contract changes.
 
 ### Security
 
 - **Dependencies:** bump `google.golang.org/grpc` to **v1.82.1** (Dependabot #1 / [GHSA-hrxh-6v49-42gf](https://github.com/advisories/GHSA-hrxh-6v49-42gf) — xDS RBAC + HTTP/2 Rapid Reset). Transitive via GCS client; groot does not expose a gRPC server.
+- **Dependencies:** bump `go.opentelemetry.io/otel` (and `metric`/`trace`/`sdk`) to **v1.44.0** — closes grype **GO-2026-5158** / [GHSA-5wrp-cwcj-q835](https://github.com/advisories/GHSA-5wrp-cwcj-q835) (baggage header length). Transitive via GCS; govulncheck reports no vulnerable call path in groot.
 
 ### Fixed
 

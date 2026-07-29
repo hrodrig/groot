@@ -96,7 +96,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **1.0.1** | 3 | **Security patch**: Go **1.26.5** — **CVE-2026-39822**, **CVE-2026-42505**; `Dockerfile` builder image aligned with `go.mod`. |
 | **1.0.2** | 3 | **Maintenance patch**: distroless **`static-debian13:nonroot`** runtime base (`Dockerfile`, `Dockerfile.release`). |
 | **1.0.3** | 3 | **Post-audit hygiene**: Docker CMD `--help`, email/GCS test coverage, `groot notify test`, `x/crypto` v0.54.0, QPS docs (#88–#95). See [plan-1.0.3.md](docs/plan-1.0.3.md). |
-| **1.0.4** | 3 | **Security patch**: `google.golang.org/grpc` **v1.82.1** (GHSA-hrxh-6v49-42gf); `-v` Usage dump fix; kubectl-groot Gatekeeper docs. |
+| **1.0.4** | 3 | **Security patch**: `grpc` **v1.82.1** (GHSA-hrxh-6v49-42gf); OpenTelemetry **v1.44.0** (GO-2026-5158); `-v` Usage dump fix; kubectl-groot Gatekeeper docs. |
 
 ---
 
@@ -179,7 +179,7 @@ Authoritative detail: **[SPECIFICATIONS.md](SPECIFICATIONS.md)** (behavior today
 
 **Closed:** **2026-07-29** at **`v1.0.4`**. Criterion: Dependabot #1 (`grpc` ≥ v1.82.1); prior 1.0.3 hygiene still required. See [plan-1.0.3.md](docs/plan-1.0.3.md) for #88–#95.
 
-**1.0.1** — Go **1.26.5** (stdlib CVEs). **1.0.2** — distroless Debian 13. **1.0.3** — audit items below. **1.0.4** — `google.golang.org/grpc` **v1.82.1** (GHSA-hrxh-6v49-42gf).
+**1.0.1** — Go **1.26.5** (stdlib CVEs). **1.0.2** — distroless Debian 13. **1.0.3** — audit items below. **1.0.4** — `grpc` **v1.82.1** + OpenTelemetry **v1.44.0**.
 
 Source for 1.0.3: Hermes audit **2026-07-12** (validated). **#95 adds one CLI subcommand** (`groot notify test`); no config schema change.
 

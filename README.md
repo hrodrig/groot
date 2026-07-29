@@ -175,12 +175,22 @@ If you installed from a **release package**, use `groot` on your `PATH` instead 
 
 ### Install with Homebrew (macOS / Linux, recommended for desktop)
 
+Use the **fully qualified** cask name (Homebrew **6+** [tap trust](https://docs.brew.sh/Tap-Trust) — installing this form trusts **only** the `groot` cask, not the whole tap):
+
 ```bash
-brew tap hrodrig/groot
 brew install --cask hrodrig/groot/groot
 ```
 
-**Upgrading** keeps the same tap; new releases are picked up automatically:
+Equivalent two-step (optional if you prefer short names later):
+
+```bash
+brew trust --cask hrodrig/groot/groot
+brew install --cask hrodrig/groot/groot
+```
+
+**Homebrew 6+ noise:** `brew` may print `Warning: Skipping … because it is not trusted` for **other** third-party taps during auto-update. That is unrelated to groot and does not block this install. Prefer trusting only what you use (`brew trust --cask …` / `brew trust --formula …`); do **not** set `HOMEBREW_NO_REQUIRE_TAP_TRUST=1` (Homebrew will remove that opt-out). To skip auto-update for one install: `HOMEBREW_NO_AUTO_UPDATE=1 brew install --cask hrodrig/groot/groot`.
+
+**Upgrading** keeps the same trust; new releases are picked up automatically:
 
 ```bash
 brew upgrade --cask hrodrig/groot/groot

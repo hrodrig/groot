@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Docs (Homebrew 6+):** README install block documents [tap trust](https://docs.brew.sh/Tap-Trust) — prefer fully qualified `brew install --cask hrodrig/groot/groot`; explain unrelated “Skipping … not trusted” warnings during auto-update.
+
 ## [1.0.4] - 2026-07-29
 
 Security patch — `google.golang.org/grpc` **v1.82.1** (Dependabot #1) and OpenTelemetry **v1.44.0**; no CLI or config contract changes.

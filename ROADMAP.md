@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-07-13 (Kimi roadmap review applied; **v1.0.3** tagged; **Band 4** next)
+**Last reviewed:** 2026-07-29 (**v1.0.4** security patch — `grpc` v1.82.1; **Band 4** next)
 
 ### Versioning note
 
@@ -25,7 +25,7 @@ Bands group semver minors into planning horizons. Individual items carry **globa
 | **0.8** | 0.8.x | RCA workload resources | ✅ Shipped | **2026-06-17** (v0.8.0) |
 | **0.9** | 0.9.x | Operator wins (validate/inspect/plugin) | ✅ Shipped | **2026-06-29** (v0.9.2) |
 | **3** | 1.0.0 | Contract freeze | ✅ Shipped | **2026-07-03** (v1.0.0) |
-| **3 maint.** | 1.0.1–1.0.3 | Security + audit hygiene | ✅ Shipped | **2026-07-12** (v1.0.3) |
+| **3 maint.** | 1.0.1–1.0.4 | Security + audit hygiene | ✅ Shipped | **2026-07-29** (v1.0.4) |
 | **4** | 1.1.x+ | Multi-cluster, analyze, triggered watch, addons | 📋 Active backlog | — |
 
 ### Current focus (in flight)
@@ -96,6 +96,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **1.0.1** | 3 | **Security patch**: Go **1.26.5** — **CVE-2026-39822**, **CVE-2026-42505**; `Dockerfile` builder image aligned with `go.mod`. |
 | **1.0.2** | 3 | **Maintenance patch**: distroless **`static-debian13:nonroot`** runtime base (`Dockerfile`, `Dockerfile.release`). |
 | **1.0.3** | 3 | **Post-audit hygiene**: Docker CMD `--help`, email/GCS test coverage, `groot notify test`, `x/crypto` v0.54.0, QPS docs (#88–#95). See [plan-1.0.3.md](docs/plan-1.0.3.md). |
+| **1.0.4** | 3 | **Security patch**: `google.golang.org/grpc` **v1.82.1** (GHSA-hrxh-6v49-42gf); `-v` Usage dump fix; kubectl-groot Gatekeeper docs. |
 
 ---
 
@@ -174,11 +175,11 @@ Authoritative detail: **[SPECIFICATIONS.md](SPECIFICATIONS.md)** (behavior today
 
 ---
 
-## Band 3 maintenance (1.0.1–1.0.3) — security + post-audit hygiene
+## Band 3 maintenance (1.0.1–1.0.4) — security + post-audit hygiene
 
-**Closed:** **2026-07-12** at **`v1.0.3`**. Criterion: Docker CMD safe default, email/GCS CI coverage, `notify test`, `x/crypto` ≥ v0.54.0; `make release-check` green. See [plan-1.0.3.md](docs/plan-1.0.3.md).
+**Closed:** **2026-07-29** at **`v1.0.4`**. Criterion: Dependabot #1 (`grpc` ≥ v1.82.1); prior 1.0.3 hygiene still required. See [plan-1.0.3.md](docs/plan-1.0.3.md) for #88–#95.
 
-**1.0.1** — Go **1.26.5** (stdlib CVEs). **1.0.2** — distroless Debian 13. **1.0.3** — audit items below.
+**1.0.1** — Go **1.26.5** (stdlib CVEs). **1.0.2** — distroless Debian 13. **1.0.3** — audit items below. **1.0.4** — `google.golang.org/grpc` **v1.82.1** (GHSA-hrxh-6v49-42gf).
 
 Source for 1.0.3: Hermes audit **2026-07-12** (validated). **#95 adds one CLI subcommand** (`groot notify test`); no config schema change.
 

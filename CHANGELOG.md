@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`-v` / `--version`**: no longer prints empty `Error:` plus full Usage after the version line (cobra treated `ErrVersionPrinted` as a PreRun failure). Align with kzero: root `SilenceUsage`/`SilenceErrors`; `main` prints real errors to stderr. `(Unreleased)`
 - **macOS Gatekeeper**: Homebrew cask post-install clears quarantine on **`kubectl-groot`** as well as **`groot`**; README documents both `xattr` one-liners.
 
+### Security
+
+- **Dependencies:** bump `google.golang.org/grpc` to **v1.82.1** (Dependabot #1 / [GHSA-hrxh-6v49-42gf](https://github.com/advisories/GHSA-hrxh-6v49-42gf) — xDS RBAC + HTTP/2 Rapid Reset). Transitive via GCS client; groot does not expose a gRPC server.
+
 ### Changed
 
 - **ROADMAP**: Kimi review — band status table + close dates, **Current focus** (in flight), explicit **1.0.0 contract surface**, Band 4 **themes** + community signals, expanded **Known gaps / Non-goals**, stronger SPEC triad note. Product stance: **`stream` out of philosophy**; **`watch`** reframed as triggered collect → upload → notify (#55).

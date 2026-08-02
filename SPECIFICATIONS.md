@@ -25,6 +25,16 @@ This document is the source of truth for **observable behavior** and test expect
 - Arbitrary non-JSON webhook bodies.
 - Multi-cluster capture in one archive (see ROADMAP **1.0.0 #32**).
 
+### Packaging / man pages (planned — ROADMAP #96)
+
+**Not shipped yet** (as of **v1.0.5**). When #96 lands, the contract will be:
+
+- Authoritative man source: **`contrib/man/man1/groot.1`** (optional `kubectl-groot.1` if packaged).
+- Each release bumps the man **`.TH`** line to match **`VERSION`** (date + `groot vX.Y.Z`).
+- GoReleaser **nfpm** (`.deb` / `.rpm`) installs the man page to the distro man path.
+- **FreeBSD** and **OpenBSD** ports install/expose the **same** man page so **`man groot`** works on BSD — ports are first-class, not Linux-only afterthoughts.
+- Release hygiene: man + VHS (`docs/demo.gif`) stay in the VERSION bump checklist alongside README/CHANGELOG/BSD `PORTVERSION`.
+
 ### Design principles
 
 - **Read-only collection only**—`collection.extra_kubectl` is allowlisted at config load and implemented via **`internal/k8srunner`** (argv slices, no shell).

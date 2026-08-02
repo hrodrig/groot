@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-08-01
+
+Docs patch — Homebrew 6+ tap trust guidance; no CLI or config contract changes.
+
 ### Changed
 
 - **Docs (Homebrew 6+):** README install block documents [tap trust](https://docs.brew.sh/Tap-Trust) — prefer fully qualified `brew install --cask hrodrig/groot/groot`; explain unrelated “Skipping … not trusted” warnings during auto-update.
+- **README / BSD ports:** version badge and package pins synced to **1.0.5**.
+- **VHS demo** (`docs/demo.gif`): regenerated at **v1.0.5** so `groot --version` matches the release.
 
 ## [1.0.4] - 2026-07-29
 

@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-07-29 (**v1.0.4** security patch — `grpc` v1.82.1; **Band 4** next)
+**Last reviewed:** 2026-08-01 (**v1.0.5** docs patch — Homebrew 6+ tap trust; **Band 4** next)
 
 ### Versioning note
 
@@ -25,7 +25,7 @@ Bands group semver minors into planning horizons. Individual items carry **globa
 | **0.8** | 0.8.x | RCA workload resources | ✅ Shipped | **2026-06-17** (v0.8.0) |
 | **0.9** | 0.9.x | Operator wins (validate/inspect/plugin) | ✅ Shipped | **2026-06-29** (v0.9.2) |
 | **3** | 1.0.0 | Contract freeze | ✅ Shipped | **2026-07-03** (v1.0.0) |
-| **3 maint.** | 1.0.1–1.0.4 | Security + audit hygiene | ✅ Shipped | **2026-07-29** (v1.0.4) |
+| **3 maint.** | 1.0.1–1.0.5 | Security + audit hygiene + docs | ✅ Shipped | **2026-08-01** (v1.0.5) |
 | **4** | 1.1.x+ | Multi-cluster, analyze, triggered watch, addons | 📋 Active backlog | — |
 
 ### Current focus (in flight)
@@ -38,6 +38,7 @@ Bands group semver minors into planning horizons. Individual items carry **globa
 | Then | **#33** CI kind matrix | Platform | Documented minimum cluster version. |
 | Later | **#65** addon system | Ecosystem | After multi-cluster + plugin maturity. |
 | Later | **#55** event-driven watch | Triggered collect | Critical services → collect → S3/GCS/SFTP + notify (not live log tail). |
+| **Packaging** | **#96** man(1) + nfpm + BSD | Ecosystem | `groot.1` + nfpm install; FreeBSD/OpenBSD ports must ship working `man groot`. |
 
 Open a **`docs/plan-1.1.0.md`** when Band 4 scope locks for the first feature release.
 
@@ -55,6 +56,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 
 - **`--output yaml`** for collect not implemented (#40 partial; JSON shipped).
 - **Multi-cluster**, **analyze**, **triggered watch**, **progress bar** — Band 4 only (`stream` live tail is out of philosophy; see Non-goals).
+- **No `man(1)` / nfpm man install yet** (#96) — unlike pgwd/gghstats; FreeBSD/OpenBSD ports must gain a working man page when #96 ships.
 
 **Non-goals (do not expect these as product core):**
 
@@ -97,6 +99,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **1.0.2** | 3 | **Maintenance patch**: distroless **`static-debian13:nonroot`** runtime base (`Dockerfile`, `Dockerfile.release`). |
 | **1.0.3** | 3 | **Post-audit hygiene**: Docker CMD `--help`, email/GCS test coverage, `groot notify test`, `x/crypto` v0.54.0, QPS docs (#88–#95). See [plan-1.0.3.md](docs/plan-1.0.3.md). |
 | **1.0.4** | 3 | **Security patch**: `grpc` **v1.82.1** (GHSA-hrxh-6v49-42gf); OpenTelemetry **v1.44.0** (GO-2026-5158); `-v` Usage dump fix; kubectl-groot Gatekeeper docs. |
+| **1.0.5** | 3 | **Docs**: Homebrew 6+ tap trust (`brew install --cask hrodrig/groot/groot`); README/BSD pins. |
 
 ---
 
@@ -175,11 +178,11 @@ Authoritative detail: **[SPECIFICATIONS.md](SPECIFICATIONS.md)** (behavior today
 
 ---
 
-## Band 3 maintenance (1.0.1–1.0.4) — security + post-audit hygiene
+## Band 3 maintenance (1.0.1–1.0.5) — security + post-audit hygiene
 
-**Closed:** **2026-07-29** at **`v1.0.4`**. Criterion: Dependabot #1 (`grpc` ≥ v1.82.1); prior 1.0.3 hygiene still required. See [plan-1.0.3.md](docs/plan-1.0.3.md) for #88–#95.
+**Closed:** **2026-08-01** at **`v1.0.5`**. Criterion: Dependabot #1 (`grpc` ≥ v1.82.1); prior 1.0.3 hygiene still required. See [plan-1.0.3.md](docs/plan-1.0.3.md) for #88–#95.
 
-**1.0.1** — Go **1.26.5** (stdlib CVEs). **1.0.2** — distroless Debian 13. **1.0.3** — audit items below. **1.0.4** — `grpc` **v1.82.1** + OpenTelemetry **v1.44.0**.
+**1.0.1** — Go **1.26.5** (stdlib CVEs). **1.0.2** — distroless Debian 13. **1.0.3** — audit items below. **1.0.4** — `grpc` **v1.82.1** + OpenTelemetry **v1.44.0**. **1.0.5** — Homebrew 6+ tap trust docs.
 
 Source for 1.0.3: Hermes audit **2026-07-12** (validated). **#95 adds one CLI subcommand** (`groot notify test`); no config schema change.
 
@@ -209,7 +212,7 @@ Themes (labels for contribute/vote — item IDs unchanged):
 | **Analysis** | Offline heuristics on archives | #69, #56, #62 |
 | **Platform** | Managed clouds, CI matrix, edge | #33, #58, #49, #59 |
 | **Collector / UX** | Progress, flags, redaction, TUI | #44–#45, #54, #66–#68, #70–#72, #77–#78 |
-| **Ecosystem** | Packages, hooks, dashboards, community | #46–#53, #61, #63, #65, #73–#76 |
+| **Ecosystem** | Packages, hooks, dashboards, community | #46–#53, #61, #63, #65, #73–#76, **#96** |
 
 **Explicitly out of philosophy:** live **`groot stream`** / continuous log tail (#41) — see Known gaps / Non-goals. Prefer shippers or `kubectl` for that job.
 
@@ -272,6 +275,7 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 
 | # | Band | Item | Status |
 |---|------|------|--------|
+| 96 | 4 | 🚀 **man page + nfpm + BSD**: ship `contrib/man/man1/groot.1` (`.TH` synced to each `VERSION`); install via GoReleaser **nfpm** (`.deb`/`.rpm`); FreeBSD + OpenBSD ports must install the same page so **`man groot`** works on BSD. Release checklist: bump `.TH`, keep ports in sync. Optional: `kubectl-groot` man if useful. | Pending |
 | 50 | 4 | **Additional package managers**: Scoop, Nix, Chocolatey, Snap. | Pending |
 | 51 | 4 | **Grafana / self-hosted dashboard** (groot-selfhosted). | Pending |
 | 52 | 4 | **Post-collect YAML hooks**. | Pending |

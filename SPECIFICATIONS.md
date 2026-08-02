@@ -25,7 +25,7 @@ This document is the source of truth for **observable behavior** and test expect
 - Arbitrary non-JSON webhook bodies.
 - Multi-cluster capture in one archive (see ROADMAP **1.0.0 #32**).
 
-### Packaging / man pages (planned — ROADMAP #96)
+### Packaging / man pages (planned — ROADMAP #96 / [GH #2](https://github.com/hrodrig/groot/issues/2))
 
 **Not shipped yet** (as of **v1.0.5**). When #96 lands, the contract will be:
 

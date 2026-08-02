@@ -38,7 +38,7 @@ Bands group semver minors into planning horizons. Individual items carry **globa
 | Then | **#33** CI kind matrix | Platform | Documented minimum cluster version. |
 | Later | **#65** addon system | Ecosystem | After multi-cluster + plugin maturity. |
 | Later | **#55** event-driven watch | Triggered collect | Critical services → collect → S3/GCS/SFTP + notify (not live log tail). |
-| **Packaging** | **#96** man(1) + nfpm + BSD | Ecosystem | `groot.1` + nfpm install; FreeBSD/OpenBSD ports must ship working `man groot`. |
+| **Packaging** | **[#96](https://github.com/hrodrig/groot/issues/2)** man(1) + nfpm + BSD | Ecosystem | `groot.1` + nfpm install; FreeBSD/OpenBSD ports must ship working `man groot` (GH #2). |
 
 Open a **`docs/plan-1.1.0.md`** when Band 4 scope locks for the first feature release.
 
@@ -56,7 +56,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 
 - **`--output yaml`** for collect not implemented (#40 partial; JSON shipped).
 - **Multi-cluster**, **analyze**, **triggered watch**, **progress bar** — Band 4 only (`stream` live tail is out of philosophy; see Non-goals).
-- **No `man(1)` / nfpm man install yet** (#96) — unlike pgwd/gghstats; FreeBSD/OpenBSD ports must gain a working man page when #96 ships.
+- **No `man(1)` / nfpm man install yet** ([#96](https://github.com/hrodrig/groot/issues/2) / GH #2) — unlike pgwd/gghstats; FreeBSD/OpenBSD ports must gain a working man page when #96 ships.
 
 **Non-goals (do not expect these as product core):**
 
@@ -275,7 +275,7 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 96 | 4 | 🚀 **man page + nfpm + BSD**: ship `contrib/man/man1/groot.1` (`.TH` synced to each `VERSION`); install via GoReleaser **nfpm** (`.deb`/`.rpm`); FreeBSD + OpenBSD ports must install the same page so **`man groot`** works on BSD. Release checklist: bump `.TH`, keep ports in sync. Optional: `kubectl-groot` man if useful. | Pending |
+| 96 | 4 | 🚀 **man page + nfpm + BSD** ([GH #2](https://github.com/hrodrig/groot/issues/2)): ship `contrib/man/man1/groot.1` (`.TH` synced to each `VERSION`); install via GoReleaser **nfpm** (`.deb`/`.rpm`); FreeBSD + OpenBSD ports must install the same page so **`man groot`** works on BSD. Release checklist: bump `.TH`, keep ports in sync. Optional: `kubectl-groot` man if useful. | Pending |
 | 50 | 4 | **Additional package managers**: Scoop, Nix, Chocolatey, Snap. | Pending |
 | 51 | 4 | **Grafana / self-hosted dashboard** (groot-selfhosted). | Pending |
 | 52 | 4 | **Post-collect YAML hooks**. | Pending |

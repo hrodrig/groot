@@ -446,16 +446,25 @@ Analyzes an existing `.tar.gz` produced by `groot collect`. Does **not** require
 
 **Exit codes (see §3):** 0 success, 3 archive read failure, 1 manifest parse failure (non-fatal).
 
-## 14. Config profiles (0.9.x #86)
+## 14. Config profiles and examples (0.9.x #86, 1.1.x #46)
 
-Ready-to-use YAML files for common scenarios live in [`examples/profiles/`](../examples/profiles/):
+Ready-to-use YAML files for common scenarios live in [`examples/`](examples/) (index: [`examples/README.md`](examples/README.md)).
+
+**Profiles** ([`examples/profiles/`](examples/profiles/)):
 
 - **incident-quick.yml** — narrow namespaces, `--since 1h`, events + failing pods, no notify/upload.
 - **compliance-full.yml** — all namespaces, full logs, redaction enabled, metrics on.
 - **bastion-airgap.yml** — SFTP upload via SSH relay, no external webhooks.
 - **eks-managed.yml** — skip node logs (not supported on managed control planes), metrics enabled.
+- **gke-managed.yml** / **aks-managed.yml** — same managed-node posture as EKS (no host node logs; metrics + redact).
 
-Copy a profile as a starting point (`cp examples/profiles/incident-quick.yml groot.yml`) and edit to match your cluster.
+**Beyond profiles (#46):**
+
+- [`examples/notify/`](examples/notify/) — channel smokes for `groot notify test` (Slack, Teams, generic webhook, PagerDuty, Mailgun SMTP).
+- [`examples/upload/`](examples/upload/) — S3 / GCS / SFTP post-collect skeletons (credentials via env).
+- [`examples/collection/`](examples/collection/) — `targets` + `extra_kubectl`, redaction patterns.
+
+Copy a profile as a starting point (`cp examples/profiles/incident-quick.yml groot.yml`) and edit to match your cluster. Secrets stay in env — never commit webhook URLs or keys.
 
 ## 15. `groot notify test` — channel smoke test (1.0.3 #95)
 

@@ -54,7 +54,7 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - [Shell completion](#shell-completion)
 - [Exit codes](#exit-codes)
 - [Validate and inspect](#validate-and-inspect)
-- [User profiles](#user-profiles)
+- [User profiles and examples](#user-profiles-and-examples)
 - [GROOT vs kubectl-gather](#groot-vs-kubectl-gather)
 - [Usage examples](#usage-examples)
 - [Config](#config)
@@ -279,9 +279,11 @@ Both support `--output json` for scripting.
 
 [↑ Back to top](#readme-top)
 
-## User profiles
+## User profiles and examples
 
-Ready-to-use configs for common scenarios live in [`examples/profiles/`](examples/profiles/):
+Ready-to-use configs live under [`examples/`](examples/) (index: [`examples/README.md`](examples/README.md)).
+
+### Profiles (`examples/profiles/`)
 
 | Profile | File | Use case |
 |---------|------|----------|
@@ -289,12 +291,23 @@ Ready-to-use configs for common scenarios live in [`examples/profiles/`](example
 | Compliance full | `examples/profiles/compliance-full.yml` | All namespaces, redaction enabled, full pod logs |
 | Bastion airgap | `examples/profiles/bastion-airgap.yml` | SFTP upload + SSH relay, no external webhooks |
 | EKS managed | `examples/profiles/eks-managed.yml` | Skip node logs (unsupported), metrics enabled |
+| GKE managed | `examples/profiles/gke-managed.yml` | Skip node host logs, metrics + redact |
+| AKS managed | `examples/profiles/aks-managed.yml` | Skip node host logs, metrics + redact |
+
+### Other examples
+
+| Area | Path | Use case |
+|------|------|----------|
+| Notify smokes | `examples/notify/` | Slack, Teams, generic webhook, PagerDuty, Mailgun SMTP (`groot notify test`) |
+| Upload | `examples/upload/` | S3, GCS, SFTP post-collect |
+| Collection | `examples/collection/` | `targets` + `extra_kubectl`, redaction |
 
 Copy a profile as a starting point:
 
 ```bash
 cp examples/profiles/incident-quick.yml groot.yml
 # Edit to match your cluster and notification channels.
+groot validate --config groot.yml
 ```
 
 [↑ Back to top](#readme-top)

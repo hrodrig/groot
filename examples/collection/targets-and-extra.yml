@@ -1,0 +1,46 @@
+# Narrow pod logs via collection.targets + allowlisted extra_kubectl.
+# Matching uses labels: app.kubernetes.io/name|instance, job-name, app.
+# extra_kubectl: whitespace-split argv only (no shell). See SPEC §6 / CONTRIBUTING.
+
+config_version: 1
+kubeconfig: ~/.kube/config
+output_dir: ./out
+file_prefix: groot-targets
+collection:
+  timeout: 10m
+  worker_concurrency: 4
+  namespaces:
+    - default
+    - kube-system
+  targets:
+    default:
+      deployments:
+        - api
+      statefulsets:
+        - redis
+      # daemonsets: []
+      # jobs: []
+      # cronjobs: []
+      # helm_releases: []
+  include_pod_logs: true
+  include_previous_logs: false
+  pod_log_tail_lines: 300
+  pod_logs_since: 2h
+  include_node_details: false
+  include_node_logs: false
+  include_pod_metrics: true
+  extra_kubectl:
+    - "get ingress -A"
+    - "get pvc -A"
+    - "auth can-i get pods --all-namespaces"
+  redact_secrets: false
+notify:
+  slack: { enabled: false }
+  discord: { enabled: false }
+  teams: { enabled: false }
+  telegram: { enabled: false }
+  generic: { enabled: false }
+  pagerduty: { enabled: false }
+  email: { enabled: false }
+upload:
+  enabled: false

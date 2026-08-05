@@ -1,0 +1,34 @@
+# Log redaction before archive (*.log scan).
+# Built-in patterns + optional RE2 redact_patterns. Invalid patterns fail at collect.
+# Prefer redact for shared tickets; keep patterns reviewed (no PII surprises).
+
+config_version: 1
+kubeconfig: ~/.kube/config
+output_dir: ./out
+file_prefix: groot-redact
+collection:
+  timeout: 15m
+  worker_concurrency: 4
+  namespaces:
+    - default
+    - kube-system
+  include_pod_logs: true
+  include_previous_logs: false
+  pod_log_tail_lines: 500
+  include_node_details: false
+  include_node_logs: false
+  include_pod_metrics: false
+  redact_secrets: true
+  redact_patterns:
+    - '(?i)authorization:\s*bearer\s+\S+'
+    - '(?i)x-api-key\s*[:=]\s*\S+'
+notify:
+  slack: { enabled: false }
+  discord: { enabled: false }
+  teams: { enabled: false }
+  telegram: { enabled: false }
+  generic: { enabled: false }
+  pagerduty: { enabled: false }
+  email: { enabled: false }
+upload:
+  enabled: false

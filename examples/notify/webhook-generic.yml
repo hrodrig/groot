@@ -1,0 +1,35 @@
+# Generic JSON webhook smoke for `groot notify test`.
+# Secrets: export GROOT_NOTIFY_GENERIC_WEBHOOK_URL
+# Optional HMAC: export GROOT_NOTIFY_GENERIC_HMAC_SECRET
+# See SPEC §4 for body_template / extra_fields / hmac_header.
+
+config_version: 1
+kubeconfig: ~/.kube/config
+output_dir: ./out
+collection:
+  worker_concurrency: 1
+  namespaces: [kube-system]
+  include_pod_logs: false
+  include_node_details: false
+  include_node_logs: false
+  include_pod_metrics: false
+notify:
+  slack: { enabled: false }
+  discord: { enabled: false }
+  teams: { enabled: false }
+  telegram: { enabled: false }
+  pagerduty: { enabled: false }
+  email: { enabled: false }
+  generic:
+    enabled: true
+    webhook_url: ""
+    json_key: text
+    # hmac_secret: ""   # prefer GROOT_NOTIFY_GENERIC_HMAC_SECRET
+    # hmac_header: X-Groot-Signature
+    # extra_fields:
+    #   event: "{{event}}"
+    #   failed: "{{failed}}"
+  on_failure:
+    enabled: true
+    on_abort: true
+    min_failed_jobs: 1

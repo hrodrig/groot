@@ -1,0 +1,40 @@
+# Post-collect upload to Google Cloud Storage.
+# Credentials: Application Default Credentials or GOOGLE_APPLICATION_CREDENTIALS.
+# Run: groot collect --config examples/upload/gcs.yml
+
+config_version: 1
+kubeconfig: ~/.kube/config
+output_dir: ./out
+file_prefix: groot-gcs
+collection:
+  timeout: 10m
+  worker_concurrency: 4
+  namespaces:
+    - default
+    - kube-system
+  include_pod_logs: true
+  include_previous_logs: false
+  pod_log_tail_lines: 200
+  include_node_details: false
+  include_node_logs: false
+  include_pod_metrics: false
+notify:
+  slack: { enabled: false }
+  discord: { enabled: false }
+  teams: { enabled: false }
+  telegram: { enabled: false }
+  generic: { enabled: false }
+  pagerduty: { enabled: false }
+  email: { enabled: false }
+upload:
+  enabled: true
+  continue_on_error: true
+  timeout: 5m
+  s3:
+    enabled: false
+  gcs:
+    enabled: true
+    bucket: "YOUR_BUCKET"
+    key_prefix: "groot-archives"
+  sftp:
+    enabled: false

@@ -282,7 +282,7 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 | 53 | 4 | **Observability export** (Prometheus, Loki/Promtail detection). | Pending |
 | 65 | 4 | ⏳ **Addon system** (kubectl-gather-style; after multi-cluster). | Pending |
 | 46 | 4 | 🤝 **Generic `examples/`** beyond profiles (#86). | Pending |
-| 47 | 4 | 🤝 **CONTRIBUTING.md** collector guide. | Pending |
+| 47 | 4 | 🤝 **CONTRIBUTING.md** collector guide. | Done (Unreleased) |
 | 61 | 4 | **Ticketing integration** — draft issues from collect summary / `run_id` / archive link: **GitHub Issues**, **GitLab Issues** (API), **Jira**. Same payload shape; provider adapters. | Pending |
 | 63 | 4 | **Community growth** (Reddit, CNCF Slack, articles). | Pending |
 | 73 | 4 | 💡 **Archive encryption/signing** (`--encrypt`, `--sign`). | Pending |

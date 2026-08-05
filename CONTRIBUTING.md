@@ -16,7 +16,7 @@ Use focused branches, for example `fix/short-topic` or `feat/short-topic`.
 
 ## Planning docs (SPEC, ROADMAP, CHANGELOG)
 
-Behavior contract: **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. Planned work: **[docs/ROADMAP.md](docs/ROADMAP.md)**.
+Behavior contract: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. Planned work: **[ROADMAP.md](ROADMAP.md)**.
 
 **Triad sync (kzero-style):** when you ship user-facing behavior—
 
@@ -33,6 +33,69 @@ On release: move `[Unreleased]` to a version section, add a **Shipped** row in R
 3. **Broader check (optional):** `make all` adds merged coverage and a build; maintainers run **`make release-check`** before tagging a release (GoReleaser config, **`fmt-check`**, **`lint`**, **`cover`** with `COVER_MIN`, **`security`**, and optionally **`STRICT_RELEASE=1`** for **`docker-scan`**).
 
 Keep commits scoped and messages understandable.
+
+## Collector guide (ROADMAP #47)
+
+GROOT is a **read-only** collector: one **`groot collect`** builds a timestamped **`.tar.gz`**. Runtime path is **client-go** via **`internal/k8srunner`** (argv slices, **no shell**). There is **no plugin registry** — jobs are wired in Go.
+
+### Where things live
+
+| Concern | Path |
+|---------|------|
+| Job plan / `buildJobs` | `internal/collector/collector.go` |
+| Builtin / pattern dispatch | `internal/collector/k8s_exec.go` |
+| Argv → API (`Runner.Run`) | `internal/k8srunner/` |
+| YAML `collection:` schema | `internal/config/config.go` (`CollectionCfg`) |
+| Sample config | `configs/groot.yml.sample`, `internal/config/sample.go` |
+| `extra_kubectl` allowlist | `internal/config/extra_kubectl.go` + SPEC §6 |
+| CLI entry (`collect`, `--list-jobs`) | `internal/cmd/root.go` |
+| Behavior contract | [SPECIFICATIONS.md](SPECIFICATIONS.md) |
+
+### Adding a built-in collection job
+
+1. **Shape** — jobs are `Name` / `Args` / `FileName` / `Optional` (`job` in `collector.go`). Prefer a clear name that `--list-jobs` can show.
+2. **Plan** — append from `buildJobs` (or a new `append*Jobs` helper called from there). Keep signal-first behavior in mind (`prioritizeSignalJobs`, ROADMAP #84) if the job is high-signal.
+3. **Execute** — teach `runNamedBuiltinJob` and/or `runJobByNamePattern` in `k8s_exec.go` to produce bytes (usually via `k8srunner` / existing helpers). Mark jobs **`Optional`** when failure should not abort the whole collect.
+4. **Config** — if operators need a toggle or knobs, add fields on `CollectionCfg`, defaults in `setDefaults` / Viper, sample YAML, and a SPEC table row. Do **not** document behavior only in README.
+5. **Archive path** — pick a stable relative path under the archive; update SPEC “collected layout” if the tree changes.
+6. **Triad** — SPEC + ROADMAP `#` + CHANGELOG `(band #N)`.
+
+### Prefer `extra_kubectl` when possible
+
+Operators can add **read-only** argv lists under `collection.extra_kubectl` without a code change. Validation runs at **config load** (`ValidateExtraKubectl`); runtime rejects unknown verbs/resources again in **`k8srunner`**.
+
+Allowed verbs (summary — full table in SPEC §6): `get`, `describe`, `top`, `logs`, discovery (`api-resources`, `api-versions`, `version`, `cluster-info`), `config view`, `auth can-i`. **Rejected:** `explain`, `wait`, and anything mutating. Args are whitespace-split — **no** shell pipelines or redirects.
+
+Use a new built-in job only when the work needs multi-step client-go logic, structured tables (e.g. RCA TSV), or behavior that cannot be expressed as a safe argv list.
+
+### Tests (pick the lightest that proves the change)
+
+| Layer | When | Where / how |
+|-------|------|-------------|
+| Unit | helpers, job plan order, allowlist, config rejects | `internal/collector/*_test.go`, `internal/config/*_test.go`, `internal/k8srunner/*_test.go` |
+| Fake API | `Run` / archive contents without a real cluster | `internal/collector/run_integration_test.go` + `internal/kubetest/` |
+| Golden | inspect / fixture layout (#87) | `internal/collector/inspect_golden_test.go` |
+| Kind E2E | optional smoke after deeper collect changes | `make test-e2e-kind` — [docs/e2e-kind.md](docs/e2e-kind.md), [testing/README.md](testing/README.md) |
+
+Local loop: `make lint-fix && make ci`. Coverage gate: `make cover` / `COVER_MIN` (default 80%).
+
+### Design constraints (do not violate)
+
+- **Read-only** — no create/update/delete/exec/attach/port-forward as product features.
+- **No kubectl binary** on the runtime path for built-ins — client-go + `k8srunner` only.
+- **Partial job failures** are counted in `Summary` and must not fail collect unless **`--strict`** (see SPEC exit codes).
+- **Redaction** — if you write new text that may contain secrets, respect `redact_secrets` / `redact_patterns`.
+- Operator deployment (Helm CronJob, bastion wrappers) belongs in **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**, not this repo ([AGENTS.md](AGENTS.md)).
+
+### Quick checklist for a collector PR
+
+- [ ] Job appears in `groot collect --list-jobs` when enabled
+- [ ] SPEC updated for config keys and/or archive paths
+- [ ] Sample YAML / `--print-sample-config` updated if config changed
+- [ ] Unit or kubetest coverage for the new path
+- [ ] `extra_kubectl` still reject-tested if you touched the allowlist
+- [ ] ROADMAP `#` + CHANGELOG under `[Unreleased]`
+- [ ] `make ci` green
 
 ## Codecov (repository maintainers)
 

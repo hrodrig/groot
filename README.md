@@ -987,7 +987,7 @@ Optional **`collection.redact_secrets`** reduces accidental exposure in **`*.log
 Found Groot useful? We'd love your help to make it better. You can:
 
 - **Report bugs** or **suggest features** — [open an issue](https://github.com/hrodrig/groot/issues)
-- **Contribute code** — see [CONTRIBUTING.md](./CONTRIBUTING.md) for how to submit a pull request
+- **Contribute code** — see [CONTRIBUTING.md](./CONTRIBUTING.md) (includes a **collector guide** for adding jobs)
 - **Star the repo** — it helps others discover Groot
 
 Thanks for using Groot.

@@ -4,7 +4,7 @@ Port files for submitting **groot** to the official OpenBSD ports tree.
 
 ## Version bump
 
-From the groot repo root, after updating **`VERSION`**, run **`make port-openbsd-sync`** to refresh **DISTNAME**, **PKGNAME**, **MASTER_SITES**, and **DISTFILES** in this **Makefile**.
+From the groot repo root, after updating **`VERSION`**, run **`make man-sync`** (man **`.TH`**) and **`make port-openbsd-sync`** to refresh **DISTNAME**, **PKGNAME**, **MASTER_SITES**, and **DISTFILES** in this **Makefile**. The port installs **`man groot`** / **`man kubectl-groot`** from the release tarball.
 
 ## distinfo
 

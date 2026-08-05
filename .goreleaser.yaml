@@ -6,6 +6,8 @@ before:
   hooks:
     - go mod tidy
     - go test ./...
+    - sh -c 'gzip -cn contrib/man/man1/groot.1 > contrib/man/man1/groot.1.gz'
+    - sh -c 'gzip -cn contrib/man/man1/kubectl-groot.1 > contrib/man/man1/kubectl-groot.1.gz'
 
 builds:
   - id: groot
@@ -90,6 +92,10 @@ archives:
         dst: share/doc/groot/LICENSE
       - src: configs/groot.yml.sample
         dst: share/examples/groot/groot.yml.sample
+      - src: contrib/man/man1/groot.1
+        dst: share/man/man1/groot.1
+      - src: contrib/man/man1/kubectl-groot.1
+        dst: share/man/man1/kubectl-groot.1
 
 nfpms:
   - id: groot-packages
@@ -119,6 +125,10 @@ nfpms:
       - src: configs/groot.yml.sample
         dst: /etc/groot/groot.yml.sample
         type: config|noreplace
+      - src: contrib/man/man1/groot.1.gz
+        dst: /usr/share/man/man1/
+      - src: contrib/man/man1/kubectl-groot.1.gz
+        dst: /usr/share/man/man1/
     deb:
       lintian_overrides:
         - statically-linked-binary
@@ -229,6 +239,9 @@ homebrew_casks:
     homepage: https://github.com/hrodrig/groot
     description: "Read-only log and context collector for Kubernetes (also ships the kubectl-groot plugin)"
     license: MIT
+    manpages:
+      - share/man/man1/groot.1
+      - share/man/man1/kubectl-groot.1
     # Generate the URL from the released .tar.gz artifact matching
     # the v-prefixed tag pattern (post 0.6.x).
     url:

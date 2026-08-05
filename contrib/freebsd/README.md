@@ -38,4 +38,4 @@ After changing port files: `make deinstall && make clean && make install`.
 
 3. Copy into **DISTDIR** or use **`MASTER_SITES=file:///.../`** as in the [FreeBSD Porter's Handbook](https://docs.freebsd.org/en/books/porters-handbook/).
 
-The tarball contains: `groot`, `share/doc/groot/LICENSE`, `share/examples/groot/groot.yml.sample`.
+The tarball contains: `groot`, `share/man/man1/groot.1`, `share/man/man1/kubectl-groot.1`, `share/doc/groot/LICENSE`, `share/examples/groot/groot.yml.sample`. After install, **`man groot`** works.

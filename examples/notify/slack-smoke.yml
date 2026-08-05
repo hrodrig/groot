@@ -1,0 +1,28 @@
+# Slack smoke for `groot notify test`.
+# Secrets: export GROOT_NOTIFY_SLACK_WEBHOOK_URL
+# Multiple destinations: separate URLs with ';'
+
+config_version: 1
+kubeconfig: ~/.kube/config
+output_dir: ./out
+collection:
+  worker_concurrency: 1
+  namespaces: [kube-system]
+  include_pod_logs: false
+  include_node_details: false
+  include_node_logs: false
+  include_pod_metrics: false
+notify:
+  slack:
+    enabled: true
+    webhook_url: ""
+  discord: { enabled: false }
+  teams: { enabled: false }
+  telegram: { enabled: false }
+  generic: { enabled: false }
+  pagerduty: { enabled: false }
+  email: { enabled: false }
+  on_failure:
+    enabled: true
+    on_abort: true
+    min_failed_jobs: 1

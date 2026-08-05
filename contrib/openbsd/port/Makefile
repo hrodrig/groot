@@ -3,8 +3,8 @@
 # Submit: send diff to ports@openbsd.org
 
 COMMENT =	read-only log and context collector for Kubernetes
-DISTNAME =	groot_v1.0.5_openbsd_${MACHINE_ARCH:S/aarch64/arm64/}
-PKGNAME =	groot-1.0.5
+DISTNAME =	groot_v1.0.6_openbsd_${MACHINE_ARCH:S/aarch64/arm64/}
+PKGNAME =	groot-1.0.6
 CATEGORIES =	sysutils
 HOMEPAGE =	https://github.com/hrodrig/groot
 MAINTAINER =	hrodrig@usb.ve
@@ -16,8 +16,8 @@ PERMIT_DISTFILES =	Yes
 # Local test before release: copy tarball to DISTDIR or use
 #   make fetch MASTER_SITES=file:///absolute/path/to/dir/
 # See README.md "Test with a local tarball".
-MASTER_SITES =	https://github.com/hrodrig/groot/releases/download/v1.0.5/
-DISTFILES =	groot_v1.0.5_openbsd_${MACHINE_ARCH:S/aarch64/arm64/}.tar.gz
+MASTER_SITES =	https://github.com/hrodrig/groot/releases/download/v1.0.6/
+DISTFILES =	groot_v1.0.6_openbsd_${MACHINE_ARCH:S/aarch64/arm64/}.tar.gz
 EXTRACT_SUFX =	.tar.gz
 
 ONLY_FOR_ARCHS =	amd64 arm64 aarch64
@@ -27,6 +27,8 @@ PKG_ARCH =	*
 
 do-install:
 	${INSTALL_PROGRAM} ${WRKDIR}/groot ${PREFIX}/bin/groot
+	${INSTALL_MAN} ${WRKDIR}/share/man/man1/groot.1 ${PREFIX}/man/man1/groot.1
+	${INSTALL_MAN} ${WRKDIR}/share/man/man1/kubectl-groot.1 ${PREFIX}/man/man1/kubectl-groot.1
 	${INSTALL_DATA_DIR} ${PREFIX}/share/doc/groot
 	${INSTALL_DATA} ${WRKDIR}/share/doc/groot/LICENSE ${PREFIX}/share/doc/groot/
 	${INSTALL_DATA_DIR} ${PREFIX}/share/examples/groot

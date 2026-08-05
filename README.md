@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-1.0.5-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-1.0.6-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -54,7 +54,7 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - [Shell completion](#shell-completion)
 - [Exit codes](#exit-codes)
 - [Validate and inspect](#validate-and-inspect)
-- [User profiles](#user-profiles)
+- [User profiles and examples](#user-profiles-and-examples)
 - [GROOT vs kubectl-gather](#groot-vs-kubectl-gather)
 - [Usage examples](#usage-examples)
 - [Config](#config)
@@ -137,7 +137,7 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 **404 on `groot_v0.1.6_amd64.deb`:** the file on GitHub is **`groot_0.1.6_amd64.deb`** (no `v` in the basename). **Empty `TAG`:** if `jq`/`python3` failed, you get `.../download//groot__amd64.deb` and **`./groot__amd64.deb`** from `apt`.
 
-`groot` is installed to `/usr/bin`. The package drops a **sample** at **`/etc/groot/groot.yml.sample`** (from `configs/groot.yml.sample` in the repo) as a **template**; it is **not** read unless you pass **`--config`**. With no **`--config`**, discovery is **`./groot.yml`**, then **`~/.groot/groot.yml`**, then **`/etc/groot/groot.yml`**, then built-in defaults. Use a per-user file under **`~/.groot/`**, **`sudo cp /etc/groot/groot.yml.sample /etc/groot/groot.yml`** for a machine-wide config, or **`--config /path/to/file.yaml`**. Use `arm64` in the download filename on ARM64.
+`groot` (and **`kubectl-groot`**) install to `/usr/bin`. Packages also install **`man groot`** / **`man kubectl-groot`**. The package drops a **sample** at **`/etc/groot/groot.yml.sample`** (from `configs/groot.yml.sample` in the repo) as a **template**; it is **not** read unless you pass **`--config`**. With no **`--config`**, discovery is **`./groot.yml`**, then **`~/.groot/groot.yml`**, then **`/etc/groot/groot.yml`**, then built-in defaults. Use a per-user file under **`~/.groot/`**, **`sudo cp /etc/groot/groot.yml.sample /etc/groot/groot.yml`** for a machine-wide config, or **`--config /path/to/file.yaml`**. Use `arm64` in the download filename on ARM64.
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 
@@ -217,7 +217,7 @@ From any machine with Go **1.26+** (installs to `$(go env GOPATH)/bin`; ensure t
 go install github.com/hrodrig/groot/cmd/groot@latest
 ```
 
-Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v1.0.5`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot) (CLI binary; library code is **`internal/`** since **1.0.0**).
+Use a **release tag** instead of `@latest` if you want a pinned version (for example `@v1.0.6`). Documentation for the module: [pkg.go.dev/github.com/hrodrig/groot](https://pkg.go.dev/github.com/hrodrig/groot) (CLI binary; library code is **`internal/`** since **1.0.0**).
 
 ### Install as a kubectl plugin (0.9.x #64)
 
@@ -279,9 +279,11 @@ Both support `--output json` for scripting.
 
 [↑ Back to top](#readme-top)
 
-## User profiles
+## User profiles and examples
 
-Ready-to-use configs for common scenarios live in [`examples/profiles/`](examples/profiles/):
+Ready-to-use configs live under [`examples/`](examples/) (index: [`examples/README.md`](examples/README.md)).
+
+### Profiles (`examples/profiles/`)
 
 | Profile | File | Use case |
 |---------|------|----------|
@@ -289,12 +291,23 @@ Ready-to-use configs for common scenarios live in [`examples/profiles/`](example
 | Compliance full | `examples/profiles/compliance-full.yml` | All namespaces, redaction enabled, full pod logs |
 | Bastion airgap | `examples/profiles/bastion-airgap.yml` | SFTP upload + SSH relay, no external webhooks |
 | EKS managed | `examples/profiles/eks-managed.yml` | Skip node logs (unsupported), metrics enabled |
+| GKE managed | `examples/profiles/gke-managed.yml` | Skip node host logs, metrics + redact |
+| AKS managed | `examples/profiles/aks-managed.yml` | Skip node host logs, metrics + redact |
+
+### Other examples
+
+| Area | Path | Use case |
+|------|------|----------|
+| Notify smokes | `examples/notify/` | Slack, Teams, generic webhook, PagerDuty, Mailgun SMTP (`groot notify test`) |
+| Upload | `examples/upload/` | S3, GCS, SFTP post-collect |
+| Collection | `examples/collection/` | `targets` + `extra_kubectl`, redaction |
 
 Copy a profile as a starting point:
 
 ```bash
 cp examples/profiles/incident-quick.yml groot.yml
 # Edit to match your cluster and notification channels.
+groot validate --config groot.yml
 ```
 
 [↑ Back to top](#readme-top)
@@ -929,10 +942,10 @@ This repository ships the **CLI**, **packages**, and **`ghcr.io/hrodrig/groot`**
 | Flat CronJob YAML | [run/deploy/k8s/cronjob.yaml](https://github.com/hrodrig/groot-selfhosted/blob/main/run/deploy/k8s/cronjob.yaml) |
 | cron / systemd (Releases binary) | [run/standalone/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/standalone) |
 
-Pull the image from here (pin to the [version badge](#readme-top) — currently **`1.0.5`**):
+Pull the image from here (pin to the [version badge](#readme-top) — currently **`1.0.6`**):
 
 ```bash
-docker pull ghcr.io/hrodrig/groot:1.0.5
+docker pull ghcr.io/hrodrig/groot:1.0.6
 ```
 
 In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](SPECIFICATIONS.md#8-runtime-and-kubernetes-access).
@@ -987,7 +1000,7 @@ Optional **`collection.redact_secrets`** reduces accidental exposure in **`*.log
 Found Groot useful? We'd love your help to make it better. You can:
 
 - **Report bugs** or **suggest features** — [open an issue](https://github.com/hrodrig/groot/issues)
-- **Contribute code** — see [CONTRIBUTING.md](./CONTRIBUTING.md) for how to submit a pull request
+- **Contribute code** — see [CONTRIBUTING.md](./CONTRIBUTING.md) (includes a **collector guide** for adding jobs)
 - **Star the repo** — it helps others discover Groot
 
 Thanks for using Groot.

@@ -43,7 +43,7 @@ DOCKER_BUILD_ARGS := \
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all build test cover fmt fmt-check lint-fix lint vet run clean install install-kubectl-plugin docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan test-e2e-kind e2e-kind snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync
+.PHONY: help all build test cover fmt fmt-check lint-fix lint vet run clean install install-kubectl-plugin docker-build docker-buildx docker-build-amd64 docker-build-arm64 scan govulncheck vulncheck ci gocyclo grype security release-check docker-scan test-e2e-kind e2e-kind snapshot dist-freebsd dist-openbsd port-freebsd-sync port-openbsd-sync man-sync
 
 help:
 	@echo "Available targets:"
@@ -71,6 +71,7 @@ help:
 	@echo "  make dist-openbsd   Tarball for OpenBSD ports (default OPENBSD_ARCH=amd64)"
 	@echo "  make port-freebsd-sync   Set PORTVERSION in contrib/freebsd/Makefile from VERSION"
 	@echo "  make port-openbsd-sync   Sync contrib/openbsd/port/Makefile from VERSION"
+	@echo "  make man-sync            Bump .TH in contrib/man/man1/*.1 from VERSION + today"
 	@echo "  make run            Run collector with default config"
 	@echo "  make scan           Build amd64/arm64 images and scan both with Grype"
 	@echo "  make security       govulncheck + gocyclo + grype (dir scan)"
@@ -261,6 +262,18 @@ snapshot:
 	echo "$$ver" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' || { echo "Error: VERSION must be semantic MAJOR.MINOR.PATCH (got: $$ver_raw)"; exit 1; }; \
 	goreleaser release --snapshot --clean
 
+man-sync:
+	@[ -n "$(PORT_VERSION)" ] || { echo "Error: VERSION file empty or missing"; exit 1; }
+	@today=$$(date +%Y-%m-%d); \
+	for f in contrib/man/man1/groot.1 contrib/man/man1/kubectl-groot.1; do \
+	  test -f "$$f" || { echo "Error: $$f not found"; exit 1; }; \
+	  name=$$(awk '/^\.TH /{print $$2; exit}' "$$f"); \
+	  [ -n "$$name" ] || { echo "Error: no .TH line in $$f"; exit 1; }; \
+	  sed -i.bak "s/^\\.TH .*/.TH $$name 1 \"$$today\" \"groot v$(PORT_VERSION)\" \"User Commands\"/" "$$f"; \
+	  rm -f "$$f.bak"; \
+	  echo "Updated $$f .TH to groot v$(PORT_VERSION) ($$today)"; \
+	done
+
 port-freebsd-sync:
 	@[ -n "$(PORT_VERSION)" ] || { echo "Error: VERSION file empty or missing"; exit 1; }
 	@sed -i.bak "s/^PORTVERSION=.*/PORTVERSION=\t$(PORT_VERSION)/" contrib/freebsd/Makefile
@@ -294,11 +307,13 @@ dist-freebsd:
 	mkdir -p "$(DIST)"; \
 	GOOS=freebsd GOARCH="$$arch" go build -trimpath -ldflags "$(LDFLAGS)" -o "$$tmpbin" ./cmd/groot; \
 	rm -rf "$$stage"; \
-	mkdir -p "$$stage/share/doc/groot" "$$stage/share/examples/groot"; \
+	mkdir -p "$$stage/share/doc/groot" "$$stage/share/examples/groot" "$$stage/share/man/man1"; \
 	cp "$$tmpbin" "$$stage/groot"; \
 	rm -f "$$tmpbin"; \
 	cp LICENSE "$$stage/share/doc/groot/LICENSE"; \
 	cp configs/groot.yml.sample "$$stage/share/examples/groot/groot.yml.sample"; \
+	cp contrib/man/man1/groot.1 "$$stage/share/man/man1/groot.1"; \
+	cp contrib/man/man1/kubectl-groot.1 "$$stage/share/man/man1/kubectl-groot.1"; \
 	tar -C "$$stage" -czf "$$out" .; \
 	rm -rf "$$stage"; \
 	echo "Wrote $$out"
@@ -318,11 +333,13 @@ dist-openbsd:
 	mkdir -p "$(DIST)"; \
 	GOOS=openbsd GOARCH="$$arch" go build -trimpath -ldflags "$(LDFLAGS)" -o "$$tmpbin" ./cmd/groot; \
 	rm -rf "$$stage"; \
-	mkdir -p "$$stage/share/doc/groot" "$$stage/share/examples/groot"; \
+	mkdir -p "$$stage/share/doc/groot" "$$stage/share/examples/groot" "$$stage/share/man/man1"; \
 	cp "$$tmpbin" "$$stage/groot"; \
 	rm -f "$$tmpbin"; \
 	cp LICENSE "$$stage/share/doc/groot/LICENSE"; \
 	cp configs/groot.yml.sample "$$stage/share/examples/groot/groot.yml.sample"; \
+	cp contrib/man/man1/groot.1 "$$stage/share/man/man1/groot.1"; \
+	cp contrib/man/man1/kubectl-groot.1 "$$stage/share/man/man1/kubectl-groot.1"; \
 	tar -C "$$stage" -czf "$$out" .; \
 	rm -rf "$$stage"; \
 	echo "Wrote $$out"

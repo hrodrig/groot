@@ -25,15 +25,14 @@ This document is the source of truth for **observable behavior** and test expect
 - Arbitrary non-JSON webhook bodies.
 - Multi-cluster capture in one archive (see ROADMAP **1.0.0 #32**).
 
-### Packaging / man pages (planned — ROADMAP #96 / [GH #2](https://github.com/hrodrig/groot/issues/2))
+### Packaging / man pages (ROADMAP #96 / [GH #2](https://github.com/hrodrig/groot/issues/2))
 
-**Not shipped yet** (as of **v1.0.5**). When #96 lands, the contract will be:
-
-- Authoritative man source: **`contrib/man/man1/groot.1`** (optional `kubectl-groot.1` if packaged).
-- Each release bumps the man **`.TH`** line to match **`VERSION`** (date + `groot vX.Y.Z`).
-- GoReleaser **nfpm** (`.deb` / `.rpm`) installs the man page to the distro man path.
-- **FreeBSD** and **OpenBSD** ports install/expose the **same** man page so **`man groot`** works on BSD — ports are first-class, not Linux-only afterthoughts.
-- Release hygiene: man + VHS (`docs/demo.gif`) stay in the VERSION bump checklist alongside README/CHANGELOG/BSD `PORTVERSION`.
+- Authoritative man sources: **`contrib/man/man1/groot.1`** and **`contrib/man/man1/kubectl-groot.1`**.
+- Each release bumps the man **`.TH`** lines to match **`VERSION`** (date + `groot vX.Y.Z`) via **`make man-sync`**.
+- GoReleaser **nfpm** (`.deb` / `.rpm`) installs gzipped pages under **`/usr/share/man/man1/`**.
+- Release **archives** ship uncompressed pages under **`share/man/man1/`** (Homebrew cask `manpages:`; FreeBSD/OpenBSD ports install from the same layout).
+- **FreeBSD** and **OpenBSD** ports install those pages so **`man groot`** / **`man kubectl-groot`** work on BSD — ports are first-class, not Linux-only afterthoughts.
+- Release hygiene: **`make man-sync`**, VHS (`docs/demo.gif`), README/CHANGELOG, and BSD **`PORTVERSION`** stay in the VERSION bump checklist.
 
 ### Design principles
 
@@ -447,16 +446,25 @@ Analyzes an existing `.tar.gz` produced by `groot collect`. Does **not** require
 
 **Exit codes (see §3):** 0 success, 3 archive read failure, 1 manifest parse failure (non-fatal).
 
-## 14. Config profiles (0.9.x #86)
+## 14. Config profiles and examples (0.9.x #86, 1.1.x #46)
 
-Ready-to-use YAML files for common scenarios live in [`examples/profiles/`](../examples/profiles/):
+Ready-to-use YAML files for common scenarios live in [`examples/`](examples/) (index: [`examples/README.md`](examples/README.md)).
+
+**Profiles** ([`examples/profiles/`](examples/profiles/)):
 
 - **incident-quick.yml** — narrow namespaces, `--since 1h`, events + failing pods, no notify/upload.
 - **compliance-full.yml** — all namespaces, full logs, redaction enabled, metrics on.
 - **bastion-airgap.yml** — SFTP upload via SSH relay, no external webhooks.
 - **eks-managed.yml** — skip node logs (not supported on managed control planes), metrics enabled.
+- **gke-managed.yml** / **aks-managed.yml** — same managed-node posture as EKS (no host node logs; metrics + redact).
 
-Copy a profile as a starting point (`cp examples/profiles/incident-quick.yml groot.yml`) and edit to match your cluster.
+**Beyond profiles (#46):**
+
+- [`examples/notify/`](examples/notify/) — channel smokes for `groot notify test` (Slack, Teams, generic webhook, PagerDuty, Mailgun SMTP).
+- [`examples/upload/`](examples/upload/) — S3 / GCS / SFTP post-collect skeletons (credentials via env).
+- [`examples/collection/`](examples/collection/) — `targets` + `extra_kubectl`, redaction patterns.
+
+Copy a profile as a starting point (`cp examples/profiles/incident-quick.yml groot.yml`) and edit to match your cluster. Secrets stay in env — never commit webhook URLs or keys.
 
 ## 15. `groot notify test` — channel smoke test (1.0.3 #95)
 

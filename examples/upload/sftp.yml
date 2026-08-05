@@ -1,0 +1,44 @@
+# Post-collect upload over SFTP (public-key only).
+# Secrets: GROOT_UPLOAD_SFTP_IDENTITY_FILE (and host/user if not set below).
+# Production: set known_hosts_file. Relay playbook → groot-selfhosted airgapped-relay.
+# Run: groot collect --config examples/upload/sftp.yml
+
+config_version: 1
+kubeconfig: ~/.kube/config
+output_dir: ./out
+file_prefix: groot-sftp
+collection:
+  timeout: 10m
+  worker_concurrency: 4
+  namespaces:
+    - default
+    - kube-system
+  include_pod_logs: true
+  include_previous_logs: false
+  pod_log_tail_lines: 200
+  include_node_details: false
+  include_node_logs: false
+  include_pod_metrics: false
+notify:
+  slack: { enabled: false }
+  discord: { enabled: false }
+  teams: { enabled: false }
+  telegram: { enabled: false }
+  generic: { enabled: false }
+  pagerduty: { enabled: false }
+  email: { enabled: false }
+upload:
+  enabled: true
+  continue_on_error: true
+  timeout: 5m
+  s3:
+    enabled: false
+  gcs:
+    enabled: false
+  sftp:
+    enabled: true
+    host: "bastion.example.com"
+    port: 22
+    user: "groot-inbox"
+    remote_dir: "inbox"
+    # known_hosts_file: "/etc/groot/known_hosts"

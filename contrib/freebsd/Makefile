@@ -1,5 +1,5 @@
 PORTNAME=	groot
-PORTVERSION=	1.0.5
+PORTVERSION=	1.0.6
 DISTVERSIONPREFIX=	v
 CATEGORIES=	sysutils
 # Local test before release: copy the tarball into DISTDIR (see `make -V DISTDIR`
@@ -20,6 +20,9 @@ ONLY_FOR_ARCHS=	amd64 aarch64
 
 do-install:
 	${INSTALL_PROGRAM} ${WRKDIR}/groot ${STAGEDIR}${PREFIX}/bin/groot
+	${MKDIR} ${STAGEDIR}${PREFIX}/share/man/man1
+	${INSTALL_MAN} ${WRKDIR}/share/man/man1/groot.1 ${STAGEDIR}${PREFIX}/share/man/man1/
+	${INSTALL_MAN} ${WRKDIR}/share/man/man1/kubectl-groot.1 ${STAGEDIR}${PREFIX}/share/man/man1/
 	${MKDIR} ${STAGEDIR}${PREFIX}/share/doc/groot
 	${INSTALL_DATA} ${WRKDIR}/share/doc/groot/LICENSE ${STAGEDIR}${PREFIX}/share/doc/groot/
 	${MKDIR} ${STAGEDIR}${PREFIX}/share/examples/groot

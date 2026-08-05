@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-08-04
+
+Packaging + docs patch — man(1)/nfpm/BSD, CONTRIBUTING collector guide, expanded examples. No CLI or config contract changes.
+
 ### Added
 
 - **man(1) + packaging (1.1.x #96 / GH #2):** ship `contrib/man/man1/groot.1` and `kubectl-groot.1`; GoReleaser archives + nfpm (`.deb`/`.rpm`) install man pages; Homebrew cask `manpages:`; FreeBSD/OpenBSD ports install the same pages; `make man-sync` bumps `.TH` from `VERSION`.
 - **CONTRIBUTING collector guide (1.1.x #47):** how jobs are wired (`buildJobs` / `k8s_exec` / `k8srunner`), when to prefer `extra_kubectl`, test layers, and a PR checklist.
 - **Examples beyond profiles (1.1.x #46):** `examples/README.md` index; notify smokes (Slack/Teams/generic/PagerDuty); upload skeletons (S3/GCS/SFTP); collection (`targets`/`extra_kubectl`, redact); GKE/AKS managed profiles.
+
+### Changed
+
+- **README / BSD ports:** version badge and package pins synced to **1.0.6**.
+- **VHS demo** (`docs/demo.gif`): regenerated at **v1.0.6** so `groot --version` matches the release.
 
 ## [1.0.5] - 2026-08-01
 

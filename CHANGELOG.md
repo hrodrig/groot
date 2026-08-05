@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **kind E2E archive check:** avoid `tar | grep -q` under `pipefail` (SIGPIPE false negative for `e2e-groot/resources.txt` on GitHub Actions); silence `/dev/tty` probe noise when there is no controlling TTY.
+
 ## [1.0.6] - 2026-08-04
 
 Packaging + docs patch — man(1)/nfpm/BSD, CONTRIBUTING collector guide, expanded examples. No CLI or config contract changes.

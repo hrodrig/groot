@@ -8,16 +8,19 @@ This tree holds files referenced by **GoReleaser** (`.goreleaser.yaml`): maintai
 
 GoReleaser **nfpm** integration produces, per Linux architecture:
 
-- **`*.deb`** and **`*.rpm`** — install **`/usr/bin/groot`** and **`/etc/groot/groot.yml.sample`** (`config|noreplace` on upgrades)
+- **`*.deb`** and **`*.rpm`** — install **`/usr/bin/groot`**, **`/usr/bin/kubectl-groot`**, **`/etc/groot/groot.yml.sample`** (`config|noreplace` on upgrades), and man pages under **`/usr/share/man/man1/`** (`groot.1.gz`, `kubectl-groot.1.gz`)
 - **`contrib/deb/prerm.sh`** — no-op (CLI-only package)
 - **`contrib/deb/postrm.sh`** — on **`apt purge`**, removes **`/etc/groot`** so no stale config remains
 
-**Tarballs / zip:** the **`archives`** section in `.goreleaser.yaml` emits **`*.tar.gz`** (and **`*.zip`** on Windows), including **FreeBSD** and **OpenBSD** builds. Each archive includes **`share/doc/groot/LICENSE`** and **`share/examples/groot/groot.yml.sample`** (same layout as the BSD port distfiles).
+**Man pages:** authoritative sources live in **`contrib/man/man1/`**. GoReleaser **before** hooks gzip them for nfpm; **`make man-sync`** bumps the **`.TH`** line from **`VERSION`**. Generated **`*.1.gz`** files are gitignored.
+
+**Tarballs / zip:** the **`archives`** section in `.goreleaser.yaml` emits **`*.tar.gz`** (and **`*.zip`** on Windows), including **FreeBSD** and **OpenBSD** builds. Each archive includes **`share/doc/groot/LICENSE`**, **`share/examples/groot/groot.yml.sample`**, and **`share/man/man1/*.1`** (same layout as the BSD port distfiles).
 
 ## FreeBSD and OpenBSD ports
 
 Maintainer-facing skeletons live under **`contrib/freebsd/`** and **`contrib/openbsd/port/`** (submit to the official trees when ready).
 
+- **`make man-sync`** — bump **`.TH`** in **`contrib/man/man1/*.1`** from **`VERSION`** + today’s date.
 - **`make port-freebsd-sync`** / **`make port-openbsd-sync`** — refresh **`PORTVERSION`** / **`DISTNAME`** / **`PKGNAME`** / **`MASTER_SITES`** / **`DISTFILES`** from the repo **`VERSION`** file.
 - **`make dist-freebsd`** — cross-build **`dist/groot_v<semver>_freebsd_<arch>.tar.gz`** (default **`FREEBSD_ARCH=amd64`**).
 - **`make dist-openbsd`** — cross-build **`dist/groot_v<semver>_openbsd_<arch>.tar.gz`** (default **`OPENBSD_ARCH=amd64`**).

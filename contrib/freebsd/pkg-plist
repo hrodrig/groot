@@ -1,3 +1,5 @@
 bin/groot
+share/man/man1/groot.1.gz
+share/man/man1/kubectl-groot.1.gz
 share/doc/groot/LICENSE
 share/examples/groot/groot.yml.sample

@@ -1,0 +1,35 @@
+.\" Copyright (c) 2026 hrodrig
+.\" SPDX-License-Identifier: MIT
+.TH KUBECTL-GROOT 1 "2026-08-04" "groot v1.0.5" "User Commands"
+.SH NAME
+kubectl-groot \- kubectl plugin entry point for groot
+.SH SYNOPSIS
+.B kubectl groot
+[\fIcommand\fR] [\fIflags\fR]
+.PP
+.B kubectl-groot
+[\fIcommand\fR] [\fIflags\fR]
+.SH DESCRIPTION
+.B kubectl-groot
+is the same program as
+.BR groot (1),
+installed with basename
+.B kubectl-groot
+so that
+.B kubectl
+discovers it as the
+.B groot
+plugin (
+.BR "kubectl groot ..." ).
+.PP
+All commands, flags, configuration, and exit codes match
+.BR groot (1).
+Prefer
+.B kubectl groot \-\-help
+or
+.B man groot
+for the full reference.
+.SH SEE ALSO
+.BR groot (1).
+.SH AUTHORS
+Maintained by hrodrig and contributors.

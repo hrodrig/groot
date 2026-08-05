@@ -24,7 +24,7 @@ Behavior contract: **[docs/SPECIFICATIONS.md](docs/SPECIFICATIONS.md)**. Planned
 2. Mark the roadmap item **Done** in **ROADMAP** (reference global `#` IDs).
 3. Add a **CHANGELOG** bullet under `[Unreleased]` with **`(band #N)`** when applicable (e.g. `(0.4.x #12)`).
 
-On release: move `[Unreleased]` to a version section, add a **Shipped** row in ROADMAP, sync **VERSION** and README badges, run **`make release-check`** before tag.
+On release: move `[Unreleased]` to a version section, add a **Shipped** row in ROADMAP, sync **VERSION** and README badges, run **`make man-sync`** (man `.TH`), **`make port-freebsd-sync`** / **`make port-openbsd-sync`**, refresh VHS if UX changed, then **`make release-check`** before tag.
 
 ## Before you open a PR
 

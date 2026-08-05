@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **man(1) + packaging (1.1.x #96 / GH #2):** ship `contrib/man/man1/groot.1` and `kubectl-groot.1`; GoReleaser archives + nfpm (`.deb`/`.rpm`) install man pages; Homebrew cask `manpages:`; FreeBSD/OpenBSD ports install the same pages; `make man-sync` bumps `.TH` from `VERSION`.
+
 ## [1.0.5] - 2026-08-01
 
 Docs patch — Homebrew 6+ tap trust guidance; no CLI or config contract changes.

@@ -1,0 +1,139 @@
+.\" Copyright (c) 2026 hrodrig
+.\" SPDX-License-Identifier: MIT
+.TH GROOT 1 "2026-08-04" "groot v1.0.5" "User Commands"
+.SH NAME
+groot \- collect Kubernetes logs and cluster context into one archive
+.SH SYNOPSIS
+.B groot
+[\fIglobal flags\fR]
+.I command
+[\fIcommand flags\fR]
+.SH DESCRIPTION
+.B groot
+is a read-only Kubernetes diagnostics CLI.
+It gathers logs, events, and selected API snapshots into a timestamped
+.B .tar.gz
+archive for incident response and RCA.
+Collection uses
+.B client-go
+end-to-end; no
+.B kubectl
+binary is required at runtime.
+.PP
+The same program is also shipped as
+.B kubectl-groot
+so kubectl can invoke it as
+.BR "kubectl groot" .
+See
+.BR kubectl-groot (1).
+.SH COMMANDS
+.TP
+.B collect
+Run a collection into a
+.B .tar.gz
+archive (primary workflow).
+.TP
+.B validate
+Preflight checks (config, cluster, RBAC, disk) without collecting.
+.TP
+.B inspect \fIarchive.tar.gz\fR
+Inspect an existing groot archive (manifest and file tree).
+.TP
+.B notify test
+Send a test notification without running collect.
+.TP
+.B completion \fIbash|zsh|fish|powershell\fR
+Generate a shell completion script.
+.TP
+.B version
+Print version information.
+.SH GLOBAL OPTIONS
+.TP
+.BR \-c ", " \-\-config " " \fIpath\fR
+Path to YAML configuration (see
+.B FILES
+and
+.BR SPECIFICATIONS.md
+in the project docs).
+.TP
+.BR \-v ", " \-\-version
+Print version and exit (same payload as
+.BR "groot version" ).
+.TP
+.B \-\-verbose
+Enable verbose logging.
+.TP
+.B \-\-quiet
+Reduce log noise.
+.TP
+.B \-\-no\-color
+Disable ANSI colors.
+.TP
+.B \-\-kubeconfig \fIpath\fR
+Override kubeconfig path for this invocation.
+.TP
+.B \-\-print\-sample\-config
+Print a sample YAML config to stdout and exit.
+.TP
+.B \-\-test\-connection
+Verify Kubernetes connectivity and exit.
+.SH COLLECT OPTIONS
+Common flags for
+.B groot collect
+(see
+.B groot collect \-\-help
+for the full list):
+.TP
+.B \-\-since \fIduration\fR
+Limit pod log history (for example
+.BR 1h ,
+.BR 30m ).
+.TP
+.B \-\-summary
+Print a human-readable summary footer after collect.
+.TP
+.B \-\-output \fIjson\fR
+Emit machine-readable collect result JSON (when supported).
+.TP
+.B \-\-no\-notify
+Skip configured notifications after collect.
+.TP
+.B \-\-no\-upload
+Skip configured S3/GCS/SFTP upload after collect.
+.TP
+.B \-\-strict
+Exit non-zero when collect reports partial job failures.
+.TP
+.B \-\-list\-jobs
+List collect jobs from config and exit.
+.TP
+.B \-\-message \fItext\fR
+Optional operator message included in notify payloads.
+.SH EXIT STATUS
+.B groot
+uses distinct exit codes for scripting (see project
+.B SPECIFICATIONS.md
+). Broadly: success, usage/config errors, Kubernetes client failures, and
+optional strict-mode partial-failure exits.
+.SH FILES
+.TP
+.I ./groot.yml
+Default config search path (and other locations documented in SPEC).
+.TP
+.I /etc/groot/groot.yml.sample
+Example config installed by
+.B .deb
+/
+.B .rpm
+packages (
+.BR config|noreplace
+on upgrades). Not auto-loaded; copy or pass
+.BR \-\-config .
+.SH SEE ALSO
+.BR kubectl-groot (1),
+project documentation at
+.I https://github.com/hrodrig/groot
+(README, SPECIFICATIONS.md), and operator deployment examples in
+.BR groot-selfhosted .
+.SH AUTHORS
+Maintained by hrodrig and contributors.

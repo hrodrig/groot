@@ -137,7 +137,7 @@ Paste the block **as a whole**, or chain with `&&`, so **`apt` does not run** af
 
 **404 on `groot_v0.1.6_amd64.deb`:** the file on GitHub is **`groot_0.1.6_amd64.deb`** (no `v` in the basename). **Empty `TAG`:** if `jq`/`python3` failed, you get `.../download//groot__amd64.deb` and **`./groot__amd64.deb`** from `apt`.
 
-`groot` is installed to `/usr/bin`. The package drops a **sample** at **`/etc/groot/groot.yml.sample`** (from `configs/groot.yml.sample` in the repo) as a **template**; it is **not** read unless you pass **`--config`**. With no **`--config`**, discovery is **`./groot.yml`**, then **`~/.groot/groot.yml`**, then **`/etc/groot/groot.yml`**, then built-in defaults. Use a per-user file under **`~/.groot/`**, **`sudo cp /etc/groot/groot.yml.sample /etc/groot/groot.yml`** for a machine-wide config, or **`--config /path/to/file.yaml`**. Use `arm64` in the download filename on ARM64.
+`groot` (and **`kubectl-groot`**) install to `/usr/bin`. Packages also install **`man groot`** / **`man kubectl-groot`**. The package drops a **sample** at **`/etc/groot/groot.yml.sample`** (from `configs/groot.yml.sample` in the repo) as a **template**; it is **not** read unless you pass **`--config`**. With no **`--config`**, discovery is **`./groot.yml`**, then **`~/.groot/groot.yml`**, then **`/etc/groot/groot.yml`**, then built-in defaults. Use a per-user file under **`~/.groot/`**, **`sudo cp /etc/groot/groot.yml.sample /etc/groot/groot.yml`** for a machine-wide config, or **`--config /path/to/file.yaml`**. Use `arm64` in the download filename on ARM64.
 
 ### Fixed-tag examples (copy from the release page if you prefer)
 

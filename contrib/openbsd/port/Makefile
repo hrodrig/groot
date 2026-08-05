@@ -27,6 +27,8 @@ PKG_ARCH =	*
 
 do-install:
 	${INSTALL_PROGRAM} ${WRKDIR}/groot ${PREFIX}/bin/groot
+	${INSTALL_MAN} ${WRKDIR}/share/man/man1/groot.1 ${PREFIX}/man/man1/groot.1
+	${INSTALL_MAN} ${WRKDIR}/share/man/man1/kubectl-groot.1 ${PREFIX}/man/man1/kubectl-groot.1
 	${INSTALL_DATA_DIR} ${PREFIX}/share/doc/groot
 	${INSTALL_DATA} ${WRKDIR}/share/doc/groot/LICENSE ${PREFIX}/share/doc/groot/
 	${INSTALL_DATA_DIR} ${PREFIX}/share/examples/groot

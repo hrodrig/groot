@@ -4,17 +4,17 @@ milestone: v1.1.0
 milestone_name: milestone
 current_phase: 1
 current_phase_name: Shared Offline Archive Reader
-status: planning
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-08-10T23:11:08.855Z"
+status: verifying
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-08-10T23:21:47.122Z"
 last_activity: 2026-08-10
-last_activity_desc: "Plan-checker: 1 blocker (RESEARCH Open Questions unresolved); plans otherwise cover READ-01..04 / D-01..D-06"
+last_activity_desc: "Completed 01-02: hostile fail-closed matrix, inspect retarget, docs/plan-1.1.0.md stub"
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 25
 ---
 
 # Project State
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 ## Current Position
 
 Phase: 1 of 4 (Shared Offline Archive Reader)
-Plan: 1 of 2 in current phase
-Status: Plan check FAIL — revision required (see 01-VERIFICATION.md)
-Last activity: 2026-08-10 — Plan-checker: 1 blocker (RESEARCH Open Questions unresolved); plans otherwise cover READ-01..04 / D-01..D-06
+Plan: 2 of 2 in current phase
+Status: Phase 1 plans complete — ready for verification
+Last activity: 2026-08-10 — Completed 01-02 (hostile matrix + inspect retarget + plan-1.1.0 stub)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [█████░░░░░] 50%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01-shared-offline-archive-reader P01 | 8min | 2 tasks | 11 files |
+| Phase 01-shared-offline-archive-reader P02 | 8min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - Mode: mvp; granularity: coarse
 - [Phase ?]: Index mechanism: ordinal + two-pass reopen (gzip.Reader not seekable)
 - [Phase ?]: Pass-1 cache for extras/manifest.json; collector.ArchiveLayoutVersion aliases arcread
+- [Phase ?]: Hostile oversized/count/decompress fixtures use OpenWithCaps small Caps for speed
+- [Phase ?]: docs/plan-1.1.0.md Phase 1 stub only; Phase 4 owns full checklist (QUAL-03)
 
 ### Pending Todos
 
@@ -95,7 +98,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-10T23:11:08.849Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-08-10T23:21:47.115Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
-Next: `/gsd-execute-phase 1`
+Next: `/gsd-verify-work` (Phase 1 plans 01-01 + 01-02 complete)

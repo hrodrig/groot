@@ -32,11 +32,11 @@ Ship Band 4 first feature: offline `groot analyze <archive>` with ranked evidenc
   3. `groot inspect` inventory uses the shared reader (no duplicate tar parse) and still presents inventory-only UX
   4. Offline reader package under `internal/` has no `client-go` import
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans executed
 Plans:
 
 - [x] 01-01-PLAN.md — Tracer: arcread Open/index/Manifest/ReadMember + thin InspectArchive + shared Manifest writer
-- [ ] 01-02-PLAN.md — Hostile fail-closed matrix, inspect test retarget, docs/plan-1.1.0.md stub
+- [x] 01-02-PLAN.md — Hostile fail-closed matrix, inspect test retarget, docs/plan-1.1.0.md stub
 
 **Notes**: Optional stub of `docs/plan-1.1.0.md` and reader-test fixture skeleton OK; full plan lock is Phase 4.
 
@@ -90,7 +90,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Shared Offline Archive Reader | 1/2 | In Progress|  |
+| 1. Shared Offline Archive Reader | 2/2 | In Progress|  |
 | 2. Heuristic Analyze + Executive Markdown | 0/TBD | Not started | - |
 | 3. LLM-Ready Markdown Packaging | 0/TBD | Not started | - |
 | 4. Fixtures, SPEC, and Release Lock | 0/TBD | Not started | - |

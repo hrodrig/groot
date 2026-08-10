@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/hrodrig/groot/internal/archive"
@@ -45,6 +46,21 @@ func TestInspectArchive_goldenFixture(t *testing.T) {
 	}
 	if info.ManifestJSON == "" {
 		t.Fatal("expected manifest in archive")
+	}
+	if info.ParseErr != "" {
+		t.Fatalf("ParseErr=%q", info.ParseErr)
+	}
+	// DirToTarGz prefixes members with the session directory basename; inventory
+	// must still surface extras/manifest.json via arcread suffix lookup.
+	foundManifest := false
+	for _, line := range info.Files {
+		if strings.Contains(line, "extras/manifest.json (") {
+			foundManifest = true
+			break
+		}
+	}
+	if !foundManifest {
+		t.Fatalf("session-prefixed inventory missing extras/manifest.json: %v", info.Files)
 	}
 	var m map[string]any
 	if err := json.Unmarshal([]byte(info.ManifestJSON), &m); err != nil {

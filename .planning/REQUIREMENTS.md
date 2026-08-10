@@ -113,4 +113,4 @@ Deferred after 1.1.0 validation.
 
 ---
 *Requirements defined: 2026-08-10*  
-*Last updated: 2026-08-10 after roadmap (v1.1.0)*
+*Last updated: 2026-08-10 after Phase 2 verification (ANLZ-01..06 confirmed in codebase)*

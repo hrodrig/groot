@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1.0
 milestone_name: milestone
-current_phase: 2
-current_phase_name: Heuristic Analyze + Executive Markdown
-status: Phase 2 plan 02-01 complete — awaiting commit approval; next 02-02
-stopped_at: Completed 02-02-PLAN.md (awaiting commit approval)
-last_updated: "2026-08-10T23:47:35.680Z"
+current_phase: 3
+current_phase_name: LLM-Ready Markdown Packaging
+status: Phase 2 complete — verified; next Phase 3
+stopped_at: Phase 2 verification passed (goal-backward)
+last_updated: "2026-08-10T23:50:20Z"
 last_activity: 2026-08-10
-last_activity_desc: executed 02-01 (analyze package + CLI; staged, not committed)
+last_activity_desc: Phase 2 verified (analyze heuristics + executive MD); ROADMAP marked complete
 progress:
   total_phases: 4
   completed_phases: 2
@@ -24,22 +24,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-10)
 
 **Core value:** Ticket-ready evidence archive — freeze cluster state into one reproducible bundle operators can attach, inspect offline, and summarize for RCA / LLM paste.
-**Current focus:** Phase 2 — Heuristic Analyze + Executive Markdown (v1.1.0 `#69`)
+**Current focus:** Phase 3 — LLM-Ready Markdown Packaging (v1.1.0 `#69`)
 
 ## Current Position
 
-Phase: 2 of 4 (Heuristic Analyze + Executive Markdown)
-Plan: 2 of 2 in current phase (next: 02-02)
-Status: Phase 2 plan 02-01 complete — awaiting commit approval; next 02-02
-Last activity: 2026-08-10 — executed 02-01 (analyze package + CLI; staged, not committed)
+Phase: 3 of 4 (LLM-Ready Markdown Packaging)
+Plan: 0 of TBD in current phase
+Status: Phase 2 complete — verified; ready to plan/execute Phase 3
+Last activity: 2026-08-10 — Phase 2 goal-backward verification PASSED
 
-Progress: [██████████] 100%
+Progress: [██████████░░░░░░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3 (Phase 1 ×2 + Phase 2 ×1 staged)
+- Total plans completed: 4 (Phase 1 ×2 + Phase 2 ×2)
 - Average duration: —
 - Total execution time: —
 
@@ -48,7 +48,7 @@ Progress: [██████████] 100%
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 1 Shared Offline Archive Reader | 2/2 | Complete |
-| 2 Heuristic Analyze + Executive Markdown | 1/2 | In Progress (02-01 done) |
+| 2 Heuristic Analyze + Executive Markdown | 2/2 | Complete (verified) |
 | 3 LLM-Ready Markdown Packaging | 0/TBD | Pending |
 | 4 Fixtures, SPEC, and Release Lock | 0/TBD | Pending |
 
@@ -61,20 +61,19 @@ Progress: [██████████] 100%
 
 ## Session Continuity
 
-**Last session:** 2026-08-10T23:47:35.674Z
-**Stopped at:** Completed 02-02-PLAN.md (awaiting commit approval)
+**Last session:** 2026-08-10T23:50:20Z
+**Stopped at:** Phase 2 verification passed (goal-backward)
 **Resume file:** None
 
-Next: Approve/commit 02-01 changeset, then execute `02-02-PLAN.md`
+Next: Plan/execute Phase 3 (LLM-ready Markdown over the same Report model)
 
 ---
-*Updated: 2026-08-10 after 02-01 execution*
+*Updated: 2026-08-10 after Phase 2 verification*
 
 ## Decisions
 
 - [Phase 2]: D-01: internal/analyze + newAnalyzeCmd for offline heuristics
-- [Phase 2]: D-04 partial: CrashLoopBackOff only in 02-01; other kinds in 02-02
+- [Phase 2]: D-04: five heuristic scanners (CrashLoop/OOM/ImagePull/NotReady/Evicted)
 - [Phase 2]: D-07: archive I/O → exit 3; healthy zero hints → exit 0
-- [Phase ?]: D-04 complete: five heuristic scanners (CrashLoop/OOM/ImagePull/NotReady/Evicted)
-- [Phase ?]: OOM requires OOMKilled text; exit 137 alone → open_question Note only
-- [Phase ?]: D-08 missing-extras: Notes + zero invented hints + err nil
+- [Phase 2]: OOM requires OOMKilled text; exit 137 alone → open_question Note only
+- [Phase 2]: D-08 missing-extras: Notes + zero invented hints + err nil

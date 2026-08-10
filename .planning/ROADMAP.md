@@ -13,7 +13,7 @@ Ship Band 4 first feature: offline `groot analyze <archive>` with ranked evidenc
 ## Phases
 
 - [x] **Phase 1: Shared Offline Archive Reader** - Safe selective `.tar.gz` + typed manifest; inspect on shared reader
-- [ ] **Phase 2: Heuristic Analyze + Executive Markdown** - Offline `analyze` with ranked hints, citations, JSON/exit codes
+- [x] **Phase 2: Heuristic Analyze + Executive Markdown** - Offline `analyze` with ranked hints, citations, JSON/exit codes
 - [ ] **Phase 3: LLM-Ready Markdown Packaging** - Same findings model; budgeted paste format with omit markers
 - [ ] **Phase 4: Fixtures, SPEC, and Release Lock** - Golden corpus, contract docs, CHANGELOG, release-check → v1.1.0
 
@@ -95,7 +95,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Shared Offline Archive Reader | 2/2 | Complete | 2026-08-10 |
-| 2. Heuristic Analyze + Executive Markdown | 2/2 | In Progress|  |
+| 2. Heuristic Analyze + Executive Markdown | 2/2 | Complete | 2026-08-10 |
 | 3. LLM-Ready Markdown Packaging | 0/TBD | Not started | - |
 | 4. Fixtures, SPEC, and Release Lock | 0/TBD | Not started | - |
 

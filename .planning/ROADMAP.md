@@ -42,7 +42,7 @@ Plans:
 
 ### Phase 2: Heuristic Analyze + Executive Markdown
 
-**Goal**: On-call can run offline `groot analyze` and get ranked evidence-backed hints as executive Markdown
+**Goal:** As an on-call, I want to run offline `groot analyze` and get ranked evidence-backed hints as executive Markdown, so that I can investigate incidents without kubeconfig.
 **Mode:** mvp
 **Depends on**: Phase 1
 **Requirements**: ANLZ-01, ANLZ-02, ANLZ-03, ANLZ-04, ANLZ-05, ANLZ-06
@@ -54,7 +54,11 @@ Plans:
   4. Missing members or older layouts degrade with explicit insufficient-evidence notes (no crash, no invented findings)
   5. Default human output is executive Markdown including `run_id` / `archive_sha256` when present; JSON output and archive I/O exit codes (code 3 family) are documented and observed
 
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+
+- [ ] 02-01-PLAN.md — Tracer: analyze.Run CrashLoop → executive MD → CLI + JSON/exit 3
+- [ ] 02-02-PLAN.md — Expand OOM/ImagePull/NotReady/Evicted + degrade notes + ranking
 
 ### Phase 3: LLM-Ready Markdown Packaging
 
@@ -91,7 +95,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Shared Offline Archive Reader | 2/2 | Complete | 2026-08-10 |
-| 2. Heuristic Analyze + Executive Markdown | 0/TBD | Not started | - |
+| 2. Heuristic Analyze + Executive Markdown | 0/2 | Planned | - |
 | 3. LLM-Ready Markdown Packaging | 0/TBD | Not started | - |
 | 4. Fixtures, SPEC, and Release Lock | 0/TBD | Not started | - |
 

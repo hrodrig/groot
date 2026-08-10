@@ -4,17 +4,17 @@ milestone: v1.1.0
 milestone_name: milestone
 current_phase: 2
 current_phase_name: Heuristic Analyze + Executive Markdown
-status: Phase 2 research complete — ready to plan
-last_updated: "2026-08-10T23:35:00.000Z"
+status: Phase 2 planned — ready to execute
+last_updated: "2026-08-10T23:45:00.000Z"
 last_activity: 2026-08-10
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
+  total_plans: 4
   completed_plans: 2
   percent: 25
-stopped_at: Phase 2 research complete (02-RESEARCH.md)
-last_activity_desc: Phase 2 research — heuristic analyze + executive Markdown
+stopped_at: Phase 2 plans created (02-01, 02-02)
+last_activity_desc: Phase 2 planning — heuristic analyze + executive Markdown
 ---
 
 # Project State
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 ## Current Position
 
 Phase: 2 of 4 (Heuristic Analyze + Executive Markdown)
-Plan: 0 of TBD in current phase
-Status: Phase 2 research complete — ready to plan
-Last activity: 2026-08-10 — 02-RESEARCH.md committed
+Plan: 0 of 2 in current phase
+Status: Phase 2 planned — ready to execute
+Last activity: 2026-08-10 — 02-01/02-02 PLAN.md created
 
 Progress: [██░░░░░░░░] 25%
 
@@ -48,13 +48,13 @@ Progress: [██░░░░░░░░] 25%
 | Phase | Plans | Status |
 |-------|-------|--------|
 | 1 Shared Offline Archive Reader | 2/2 | Complete |
-| 2 Heuristic Analyze + Executive Markdown | 0/TBD | Research done |
+| 2 Heuristic Analyze + Executive Markdown | 0/2 | Planned |
 | 3 LLM-Ready Markdown Packaging | 0/TBD | Pending |
 | 4 Fixtures, SPEC, and Release Lock | 0/TBD | Pending |
 
 ## Session Continuity
 
-Next: `/gsd-plan-phase 2` (CONTEXT already batch-locked)
+Next: `/gsd-execute-phase 2` (plans 02-01 → 02-02)
 
 ---
-*Updated: 2026-08-10 after Phase 2 research*
+*Updated: 2026-08-10 after Phase 2 planning*

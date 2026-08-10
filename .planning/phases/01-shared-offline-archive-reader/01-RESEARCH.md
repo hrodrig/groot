@@ -429,17 +429,13 @@ return info, nil
 
 **If wrong:** Add Multistream tests (A1); narrow type policy (A2); changelog note for hostile/invalid archives (A3).
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `collector.ArchiveLayoutVersion` move to `arcread` in Phase 1?**
-   - What we know: constant is `1` in `collector.go:25-26` — quote: `const ArchiveLayoutVersion = 1`
-   - What's unclear: blast radius of import churn across tests
-   - Recommendation: define `arcread.ArchiveLayoutVersion = 1` and make collector `const ArchiveLayoutVersion = arcread.ArchiveLayoutVersion` **or** keep collector const and assert equality in tests — either is fine if JSON stays `1`
+   - **RESOLVED:** Share/alias per Plan 01 Task 2 — define `arcread.ArchiveLayoutVersion = 1`; collector re-exports or aliases so JSON stays `1` with one source of truth.
 
 2. **Does SPEC §13 need a note that inspect rejects hostile archives?**
-   - What we know: §13 describes inventory UX; exit 3 already means archive read failure
-   - What's unclear: whether to document caps in SPEC now vs Phase 4
-   - Recommendation: Phase 1 — behavior + tests; Phase 4 — SPEC sentence on caps (QUAL-03). Stub plan can mention caps.
+   - **RESOLVED:** Phase 1 ships behavior + tests only; SPEC caps/hostile-archive sentence deferred to Phase 4 QUAL-03. Stub `docs/plan-1.1.0.md` may mention caps.
 
 ## Environment Availability
 

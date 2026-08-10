@@ -18,7 +18,7 @@ affects:
 actuals:
   tokens: 3494
   tasks: 2
-  commits: 2
+  commits: 3
 
 tech-stack:
   added: []
@@ -112,7 +112,7 @@ Each task was committed atomically:
 1. **Task 1: Hostile archive fail-closed matrix** - `1780e29` (test)
 2. **Task 2: Retarget inspect tests and stub plan-1.1.0.md** - `18e2eb2` (docs)
 
-**Plan metadata:** _(see final docs commit)_
+**Plan metadata:** `4909597` (docs: complete plan)
 
 ## Files Created/Modified
 

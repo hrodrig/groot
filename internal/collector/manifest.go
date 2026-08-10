@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/hrodrig/groot/internal/arcread"
 )
 
 // BuildInfo is injected from the CLI for archive manifests.
@@ -17,36 +19,6 @@ type BuildInfo struct {
 	Commit  string
 	Branch  string
 	Date    string
-}
-
-type manifestCluster struct {
-	Context string `json:"context"`
-	Cluster string `json:"cluster"`
-	User    string `json:"user"`
-	Server  string `json:"server"`
-}
-
-type manifestJobs struct {
-	Total   int `json:"total"`
-	Success int `json:"success"`
-	Failed  int `json:"failed"`
-}
-
-type captureManifest struct {
-	GrootVersion         string          `json:"groot_version"`
-	GrootCommit          string          `json:"groot_commit,omitempty"`
-	ConfigVersion        int             `json:"config_version,omitempty"`
-	ArchiveLayoutVersion int             `json:"archive_layout_version"`
-	RunID                string          `json:"run_id,omitempty"`
-	ArchiveSHA256        string          `json:"archive_sha256,omitempty"`
-	CollectedAt          string          `json:"collected_at"`
-	DurationSeconds      float64         `json:"duration_seconds"`
-	SessionBase          string          `json:"session_base"`
-	ArchiveBasename      string          `json:"archive_basename"`
-	FilePrefix           string          `json:"file_prefix"`
-	Cluster              manifestCluster `json:"cluster"`
-	Jobs                 manifestJobs    `json:"jobs"`
-	Paths                []string        `json:"paths"`
 }
 
 // SetBuildInfo records CLI build metadata for manifests.
@@ -82,7 +54,7 @@ func (s *Service) writeManifest(
 		ver = "dev"
 	}
 
-	m := captureManifest{
+	m := arcread.Manifest{
 		GrootVersion:         ver,
 		GrootCommit:          strings.TrimSpace(s.buildInfo.Commit),
 		ConfigVersion:        s.cfg.ConfigVersion,
@@ -94,13 +66,13 @@ func (s *Service) writeManifest(
 		SessionBase:          sessionBase,
 		ArchiveBasename:      archiveBasename,
 		FilePrefix:           strings.TrimSpace(s.cfg.FilePrefix),
-		Cluster: manifestCluster{
+		Cluster: arcread.ManifestCluster{
 			Context: emptyAsUnknown(meta.Context),
 			Cluster: emptyAsUnknown(cluster),
 			User:    emptyAsUnknown(meta.User),
 			Server:  emptyAsUnknown(meta.Server),
 		},
-		Jobs: manifestJobs{
+		Jobs: arcread.ManifestJobs{
 			Total:   summary.Total,
 			Success: summary.Success,
 			Failed:  summary.Failed,

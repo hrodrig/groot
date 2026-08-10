@@ -14,6 +14,7 @@ import (
 	"unicode"
 
 	"github.com/hrodrig/groot/internal/archive"
+	"github.com/hrodrig/groot/internal/arcread"
 	"github.com/hrodrig/groot/internal/config"
 	"github.com/hrodrig/groot/internal/k8srunner"
 	"golang.org/x/text/unicode/norm"
@@ -23,7 +24,8 @@ import (
 )
 
 // ArchiveLayoutVersion is written to extras/manifest.json on every collect (1.0.0 #34).
-const ArchiveLayoutVersion = 1
+// Alias of arcread.ArchiveLayoutVersion so collect and offline readers share one source of truth.
+const ArchiveLayoutVersion = arcread.ArchiveLayoutVersion
 
 // Summary reports collection execution details.
 type Summary struct {

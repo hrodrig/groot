@@ -20,7 +20,7 @@ Ship Band 4 first feature: offline `groot analyze <archive>` with ranked evidenc
 ## Phase Details
 
 ### Phase 1: Shared Offline Archive Reader
-**Goal**: Operators and tools open groot archives offline through one capped, typed reader that inspect reuses
+**Goal:** As an operator, I want to open groot archives offline through one capped typed reader that inspect reuses, so that inventory and later analyze share one safe selective-read path.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
 **Requirements**: READ-01, READ-02, READ-03, READ-04
@@ -29,7 +29,10 @@ Ship Band 4 first feature: offline `groot analyze <archive>` with ranked evidenc
   2. Typed `extras/manifest.json` decodes and member paths resolve for selective reads without unpacking the full archive
   3. `groot inspect` inventory uses the shared reader (no duplicate tar parse) and still presents inventory-only UX
   4. Offline reader package under `internal/` has no `client-go` import
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Tracer: arcread Open/index/Manifest/ReadMember + thin InspectArchive + shared Manifest writer
+- [ ] 01-02-PLAN.md — Hostile fail-closed matrix, inspect test retarget, docs/plan-1.1.0.md stub
 **Notes**: Optional stub of `docs/plan-1.1.0.md` and reader-test fixture skeleton OK; full plan lock is Phase 4.
 
 ### Phase 2: Heuristic Analyze + Executive Markdown
@@ -73,7 +76,7 @@ Ship Band 4 first feature: offline `groot analyze <archive>` with ranked evidenc
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Shared Offline Archive Reader | 0/TBD | Not started | - |
+| 1. Shared Offline Archive Reader | 0/2 | Planned | - |
 | 2. Heuristic Analyze + Executive Markdown | 0/TBD | Not started | - |
 | 3. LLM-Ready Markdown Packaging | 0/TBD | Not started | - |
 | 4. Fixtures, SPEC, and Release Lock | 0/TBD | Not started | - |

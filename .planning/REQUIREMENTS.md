@@ -85,17 +85,31 @@ Deferred after 1.1.0 validation.
 
 ## Traceability
 
-Filled by roadmapper.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(pending roadmap)* | | |
+| READ-01 | Phase 1 | Pending |
+| READ-02 | Phase 1 | Pending |
+| READ-03 | Phase 1 | Pending |
+| READ-04 | Phase 1 | Pending |
+| ANLZ-01 | Phase 2 | Pending |
+| ANLZ-02 | Phase 2 | Pending |
+| ANLZ-03 | Phase 2 | Pending |
+| ANLZ-04 | Phase 2 | Pending |
+| ANLZ-05 | Phase 2 | Pending |
+| ANLZ-06 | Phase 2 | Pending |
+| LLM-01 | Phase 3 | Pending |
+| LLM-02 | Phase 3 | Pending |
+| LLM-03 | Phase 3 | Pending |
+| QUAL-01 | Phase 4 | Pending |
+| QUAL-02 | Phase 4 | Pending |
+| QUAL-03 | Phase 4 | Pending |
+| QUAL-04 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 17 total
-- Mapped to phases: TBD
-- Unmapped: TBD
+- Mapped to phases: 17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-08-10*  
-*Last updated: 2026-08-10 after research synthesis*
+*Last updated: 2026-08-10 after roadmap (v1.1.0)*

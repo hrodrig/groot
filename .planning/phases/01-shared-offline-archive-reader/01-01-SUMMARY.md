@@ -18,7 +18,7 @@ affects:
 actuals:
   tokens: 7237
   tasks: 2
-  commits: 4
+  commits: 5
 
 tech-stack:
   added: []
@@ -137,7 +137,7 @@ Each task was committed atomically:
 3. **Task 2 (tests): Manifest golden / round-trip** - `048c4be` (test)
 4. **Task 2 (GREEN): share Manifest with collect writer** - `e7aff82` (feat)
 
-**Plan metadata:** _(pending docs commit)_
+**Plan metadata:** `f0f7bcb` (docs: complete plan)
 
 ### Commit messages
 
@@ -146,6 +146,7 @@ d367cfa test(01-01): add failing test for arcread Open path
 d9a97c8 feat(01-01): implement arcread Open and InspectArchive wrapper
 048c4be test(01-01): add Manifest golden and round-trip tests
 e7aff82 feat(01-01): share arcread.Manifest with collect writer
+f0f7bcb docs(01-01): complete shared offline archive reader plan
 ```
 
 ## Files Created/Modified

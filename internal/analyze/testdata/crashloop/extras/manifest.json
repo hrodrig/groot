@@ -1,0 +1,26 @@
+{
+  "groot_version": "dev",
+  "archive_layout_version": 1,
+  "run_id": "run-crashloop-001",
+  "archive_sha256": "abc123deadbeef0123456789abcdef",
+  "collected_at": "2026-08-10T12:00:00Z",
+  "duration_seconds": 1.5,
+  "session_base": "crashloop",
+  "archive_basename": "crashloop.tar.gz",
+  "file_prefix": "crashloop",
+  "cluster": {
+    "context": "kind-demo",
+    "cluster": "kind-demo",
+    "user": "kind-demo",
+    "server": "https://127.0.0.1:6443"
+  },
+  "jobs": {
+    "total": 1,
+    "success": 1,
+    "failed": 0
+  },
+  "paths": [
+    "extras/manifest.json",
+    "extras/all-cluster-events.log"
+  ]
+}

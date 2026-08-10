@@ -1,0 +1,4 @@
+LAST SEEN   TYPE      REASON      OBJECT            MESSAGE
+5m          Normal    Scheduled   pod/ok-0          Successfully assigned default/ok-0 to worker-1
+4m          Normal    Pulled      pod/ok-0          Container image already present on machine
+3m          Normal    Started     pod/ok-0          Started container app

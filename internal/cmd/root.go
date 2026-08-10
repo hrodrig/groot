@@ -314,7 +314,7 @@ func init() {
 	collectCmd.Flags().StringVar(&collectOutputForm, "output", "text", "Output format after collect: text or json")
 	collectCmd.Flags().BoolVar(&strictMode, "strict", false, "Exit with code 5 when partial job failures >= threshold (default 1; see --strict-threshold)")
 	collectCmd.Flags().IntVar(&strictThreshold, "strict-threshold", 1, "Minimum failed job count to trigger exit 5 when --strict is set")
-	rootCmd.AddCommand(collectCmd, versionCmd, newCompletionCmd(), newValidateCmd(), newInspectCmd(), newNotifyCmd())
+	rootCmd.AddCommand(collectCmd, versionCmd, newCompletionCmd(), newValidateCmd(), newInspectCmd(), newAnalyzeCmd(), newNotifyCmd())
 }
 
 type connMeta struct {

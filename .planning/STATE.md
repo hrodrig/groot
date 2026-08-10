@@ -1,11 +1,19 @@
 ---
-gsd_state_version: '1.0'
+gsd_state_version: 1.0
+milestone: v1.1.0
+milestone_name: milestone
+current_phase: 1
+current_phase_name: Shared Offline Archive Reader
 status: planning
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-08-10T23:11:08.855Z"
+last_activity: 2026-08-10
+last_activity_desc: "Plan-checker: 1 blocker (RESEARCH Open Questions unresolved); plans otherwise cover READ-01..04 / D-01..D-06"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,15 +29,16 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 ## Current Position
 
 Phase: 1 of 4 (Shared Offline Archive Reader)
-Plan: 0 of 2 in current phase
-Status: Plans created — ready to execute
-Last activity: 2026-08-10 — Phase 1 PLAN.md files written (01-01 tracer + 01-02 safety/stub)
+Plan: 1 of 2 in current phase
+Status: Plan check FAIL — revision required (see 01-VERIFICATION.md)
+Last activity: 2026-08-10 — Plan-checker: 1 blocker (RESEARCH Open Questions unresolved); plans otherwise cover READ-01..04 / D-01..D-06
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: —
 - Total execution time: —
@@ -41,10 +50,16 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: —
 - Trend: —
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01-shared-offline-archive-reader P01 | 8min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -58,6 +73,8 @@ Recent decisions affecting current work:
 - LLM MD is a format of the same analyze pipeline, not a second engine
 - `docs/plan-1.1.0.md` stub OK in Phase 1; full lock in Phase 4
 - Mode: mvp; granularity: coarse
+- [Phase ?]: Index mechanism: ordinal + two-pass reopen (gzip.Reader not seekable)
+- [Phase ?]: Pass-1 cache for extras/manifest.json; collector.ArchiveLayoutVersion aliases arcread
 
 ### Pending Todos
 
@@ -65,6 +82,7 @@ None yet.
 
 ### Blockers/Concerns
 
+- Phase 1 plan-check: mark `01-RESEARCH.md` Open Questions as RESOLVED (plans already chose answers); then re-run plan-checker
 - Phase 2 needs SPEC-locked evidence rules per heuristic (research flag)
 - Phase 3 budget/flag names and `#45` vs rich-snippet sequencing TBD at plan time
 - Prefer no `archive_layout_version` bump for MVP unless parsers on existing evidence prove brittle
@@ -77,7 +95,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-08-10
-Stopped at: Phase 1 plans created (01-01, 01-02)
+Last session: 2026-08-10T23:11:08.849Z
+Stopped at: Completed 01-01-PLAN.md
 Resume file: None
 Next: `/gsd-execute-phase 1`

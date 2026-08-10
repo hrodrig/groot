@@ -10,9 +10,9 @@ Requirements for **v1.1.0** (`#69` + LLM-ready Markdown). Each maps to roadmap p
 ### Archive Reader
 
 - [ ] **READ-01**: Operator can open a groot `.tar.gz` offline with path/size/decompressed-byte caps (reject `..`, absolute paths, symlink abuse)
-- [ ] **READ-02**: Tool can decode typed `extras/manifest.json` and resolve member paths without extracting the full archive to disk
-- [ ] **READ-03**: `groot inspect` inventory uses the shared offline reader (no duplicate tar parse; UX stays inventory-only)
-- [ ] **READ-04**: Shared reader lives under `internal/` (e.g. `arcread`) and does not import client-go
+- [x] **READ-02**: Tool can decode typed `extras/manifest.json` and resolve member paths without extracting the full archive to disk
+- [x] **READ-03**: `groot inspect` inventory uses the shared offline reader (no duplicate tar parse; UX stays inventory-only)
+- [x] **READ-04**: Shared reader lives under `internal/` (e.g. `arcread`) and does not import client-go
 
 ### Analyze Heuristics
 
@@ -88,9 +88,9 @@ Deferred after 1.1.0 validation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | READ-01 | Phase 1 | Pending |
-| READ-02 | Phase 1 | Pending |
-| READ-03 | Phase 1 | Pending |
-| READ-04 | Phase 1 | Pending |
+| READ-02 | Phase 1 | Complete |
+| READ-03 | Phase 1 | Complete |
+| READ-04 | Phase 1 | Complete |
 | ANLZ-01 | Phase 2 | Pending |
 | ANLZ-02 | Phase 2 | Pending |
 | ANLZ-03 | Phase 2 | Pending |
@@ -106,6 +106,7 @@ Deferred after 1.1.0 validation.
 | QUAL-04 | Phase 4 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 17 total
 - Mapped to phases: 17
 - Unmapped: 0

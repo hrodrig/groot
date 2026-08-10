@@ -4,11 +4,11 @@ milestone: v1.1.0
 milestone_name: milestone
 current_phase: 3
 current_phase_name: LLM-Ready Markdown Packaging
-status: Phase 2 complete — verified; next Phase 3
-stopped_at: Phase 2 verification passed (goal-backward)
-last_updated: "2026-08-10T23:50:20Z"
+status: Phase 3 research complete — ready for planning
+stopped_at: Phase 3 RESEARCH.md written; next /gsd-plan-phase planner
+last_updated: "2026-08-10T23:56:00Z"
 last_activity: 2026-08-10
-last_activity_desc: Phase 2 verified (analyze heuristics + executive MD); ROADMAP marked complete
+last_activity_desc: Phase 3 RESEARCH complete (RenderLLM, 32 KiB budget, --output llm)
 progress:
   total_phases: 4
   completed_phases: 2
@@ -30,8 +30,8 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 
 Phase: 3 of 4 (LLM-Ready Markdown Packaging)
 Plan: 0 of TBD in current phase
-Status: Phase 2 complete — verified; ready to plan/execute Phase 3
-Last activity: 2026-08-10 — Phase 2 goal-backward verification PASSED
+Status: Phase 3 RESEARCH complete; next plan
+Last activity: 2026-08-10 — Phase 3 domain research (LLM Markdown packaging)
 
 Progress: [██████████░░░░░░░░░░] 50%
 
@@ -61,11 +61,11 @@ Progress: [██████████░░░░░░░░░░] 50%
 
 ## Session Continuity
 
-**Last session:** 2026-08-10T23:50:20Z
-**Stopped at:** Phase 2 verification passed (goal-backward)
-**Resume file:** None
+**Last session:** 2026-08-10T23:56:00Z
+**Stopped at:** Phase 3 RESEARCH.md complete
+**Resume file:** `.planning/phases/03-llm-ready-markdown-packaging/03-RESEARCH.md`
 
-Next: Plan/execute Phase 3 (LLM-ready Markdown over the same Report model)
+Next: Plan Phase 3 (`RenderLLM`, `--output llm`, budget + omit markers)
 
 ---
 *Updated: 2026-08-10 after Phase 2 verification*

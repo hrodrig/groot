@@ -1,0 +1,2 @@
+LAST SEEN   TYPE      REASON      OBJECT            MESSAGE
+2m          Warning   Evicted     pod/batch-0       The node was low on resource: ephemeral-storage. Container batch was using 2Gi.

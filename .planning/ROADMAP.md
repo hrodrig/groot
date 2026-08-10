@@ -54,11 +54,11 @@ Plans:
   4. Missing members or older layouts degrade with explicit insufficient-evidence notes (no crash, no invented findings)
   5. Default human output is executive Markdown including `run_id` / `archive_sha256` when present; JSON output and archive I/O exit codes (code 3 family) are documented and observed
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans executed
 Plans:
 
 - [x] 02-01-PLAN.md — Tracer: analyze.Run CrashLoop → executive MD → CLI + JSON/exit 3
-- [ ] 02-02-PLAN.md — Expand OOM/ImagePull/NotReady/Evicted + degrade notes + ranking
+- [x] 02-02-PLAN.md — Expand OOM/ImagePull/NotReady/Evicted + degrade notes + ranking
 
 ### Phase 3: LLM-Ready Markdown Packaging
 
@@ -95,7 +95,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Shared Offline Archive Reader | 2/2 | Complete | 2026-08-10 |
-| 2. Heuristic Analyze + Executive Markdown | 1/2 | In Progress|  |
+| 2. Heuristic Analyze + Executive Markdown | 2/2 | In Progress|  |
 | 3. LLM-Ready Markdown Packaging | 0/TBD | Not started | - |
 | 4. Fixtures, SPEC, and Release Lock | 0/TBD | Not started | - |
 

@@ -1,0 +1,4 @@
+LAST SEEN   TYPE      REASON             OBJECT           MESSAGE
+4m          Normal    Scheduled          pod/badimg-0     Successfully assigned default/badimg-0 to worker-1
+3m          Warning   Failed             pod/badimg-0     Failed to pull image "missing/app:1": rpc error
+2m          Warning   BackOff            pod/badimg-0     Back-off pulling image "missing/app:1": ImagePullBackOff

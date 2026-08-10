@@ -1,0 +1,2 @@
+LAST SEEN   TYPE      REASON      OBJECT            MESSAGE
+1m          Warning   Killing     pod/worker-0      Stopping container worker: exit code 137

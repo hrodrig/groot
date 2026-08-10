@@ -1,0 +1,2 @@
+namespace	pod	node	pod_log_file
+default	memhog-0	worker-2	default/pods/memhog-0/memhog.log

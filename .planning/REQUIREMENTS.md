@@ -17,9 +17,9 @@ Requirements for **v1.1.0** (`#69` + LLM-ready Markdown). Each maps to roadmap p
 ### Analyze Heuristics
 
 - [x] **ANLZ-01**: Operator can run `groot analyze <archive>` with no kubeconfig / API access
-- [ ] **ANLZ-02**: Analyze surfaces ranked **hints** for CrashLoopBackOff, OOMKilled, ImagePullBackOff, NotReady, Evicted when archive evidence supports them
+- [x] **ANLZ-02**: Analyze surfaces ranked **hints** for CrashLoopBackOff, OOMKilled, ImagePullBackOff, NotReady, Evicted when archive evidence supports them
 - [x] **ANLZ-03**: Each hint cites archive member path(s) and short excerpts; language is hints/hypotheses, not definitive root cause
-- [ ] **ANLZ-04**: Missing members / old layouts degrade gracefully with explicit insufficient-evidence notes
+- [x] **ANLZ-04**: Missing members / old layouts degrade gracefully with explicit insufficient-evidence notes
 - [x] **ANLZ-05**: Analyze emits executive Markdown (default human format) including `run_id` / `archive_sha256` when present
 - [x] **ANLZ-06**: Analyze supports machine-readable JSON output and documented exit codes (archive I/O → code 3 family)
 
@@ -92,9 +92,9 @@ Deferred after 1.1.0 validation.
 | READ-03 | Phase 1 | Complete |
 | READ-04 | Phase 1 | Complete |
 | ANLZ-01 | Phase 2 | Complete |
-| ANLZ-02 | Phase 2 | Pending |
+| ANLZ-02 | Phase 2 | Complete |
 | ANLZ-03 | Phase 2 | Complete |
-| ANLZ-04 | Phase 2 | Pending |
+| ANLZ-04 | Phase 2 | Complete |
 | ANLZ-05 | Phase 2 | Complete |
 | ANLZ-06 | Phase 2 | Complete |
 | LLM-01 | Phase 3 | Pending |

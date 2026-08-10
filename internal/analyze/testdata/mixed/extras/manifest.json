@@ -1,0 +1,27 @@
+{
+  "groot_version": "dev",
+  "archive_layout_version": 1,
+  "run_id": "run-mixed-001",
+  "archive_sha256": "mixedsha0123456789abcdef01234567",
+  "collected_at": "2026-08-10T13:30:00Z",
+  "duration_seconds": 1.0,
+  "session_base": "mixed",
+  "archive_basename": "mixed.tar.gz",
+  "file_prefix": "mixed",
+  "cluster": {
+    "context": "kind-demo",
+    "cluster": "kind-demo",
+    "user": "kind-demo",
+    "server": "https://127.0.0.1:6443"
+  },
+  "jobs": {
+    "total": 1,
+    "success": 1,
+    "failed": 0
+  },
+  "paths": [
+    "extras/manifest.json",
+    "extras/all-cluster-events.log",
+    "default/resources.txt"
+  ]
+}

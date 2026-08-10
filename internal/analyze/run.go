@@ -48,7 +48,7 @@ func Run(arc *arcread.Archive) (Report, error) {
 		return Report{}, err
 	}
 
-	rep.Hints = runHeuristics(ev)
+	rep.Hints = runHeuristics(ev, &rep.Notes)
 	sortHints(rep.Hints)
 	rep.Summary = buildSummary(rep.Hints)
 	return rep, nil

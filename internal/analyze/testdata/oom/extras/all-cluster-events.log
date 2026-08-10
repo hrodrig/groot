@@ -1,0 +1,3 @@
+LAST SEEN   TYPE      REASON      OBJECT            MESSAGE
+3m          Normal    Scheduled   pod/memhog-0      Successfully assigned default/memhog-0 to worker-2
+2m          Warning   OOMKilled   pod/memhog-0      Container memhog was OOMKilled (memory limit exceeded)

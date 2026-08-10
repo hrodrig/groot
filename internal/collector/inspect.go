@@ -1,14 +1,9 @@
 package collector
 
 import (
-	"archive/tar"
-	"compress/gzip"
-	"encoding/json"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
-	"strings"
+
+	"github.com/hrodrig/groot/internal/arcread"
 )
 
 // InspectInfo summarizes the contents of a completed groot archive (.tar.gz).
@@ -27,61 +22,32 @@ type InspectInfo struct {
 // the summary. This is the "minimum" version from ROADMAP #31 (0.9.x).
 //
 // The archive path is resolved relative to the current working directory.
+// Inventory uses the shared offline reader (arcread); UX stays inventory-only.
 func InspectArchive(archivePath string) (InspectInfo, error) {
-	abs, err := filepath.Abs(archivePath)
+	arc, err := arcread.Open(archivePath)
 	if err != nil {
-		return InspectInfo{}, fmt.Errorf("resolve path: %w", err)
+		return InspectInfo{}, err
 	}
-	fi, err := os.Stat(abs)
-	if err != nil {
-		return InspectInfo{}, fmt.Errorf("stat %s: %w", abs, err)
-	}
-
-	f, err := os.Open(abs)
-	if err != nil {
-		return InspectInfo{}, fmt.Errorf("open %s: %w", abs, err)
-	}
-	defer f.Close()
-
-	gzr, err := gzip.NewReader(f)
-	if err != nil {
-		return InspectInfo{}, fmt.Errorf("gzip reader: %w", err)
-	}
-	defer gzr.Close()
+	defer arc.Close()
 
 	info := InspectInfo{
-		ArchivePath: abs,
-		ArchiveSize: fi.Size(),
+		ArchivePath: arc.Path(),
+		ArchiveSize: arc.Size(),
+	}
+	for _, m := range arc.Members() {
+		info.Files = append(info.Files, fmt.Sprintf("%s (%d bytes)", m.Name, m.Size))
+		info.FileCount++
 	}
 
-	tarReader := tar.NewReader(gzr)
-	for {
-		hdr, terr := tarReader.Next()
-		if terr == io.EOF {
-			break
-		}
-		if terr != nil {
-			return InspectInfo{}, fmt.Errorf("tar read: %w", terr)
-		}
-		if hdr.Typeflag == tar.TypeReg && hdr.Name != "" {
-			info.Files = append(info.Files, fmt.Sprintf("%s (%d bytes)", hdr.Name, hdr.Size))
-			info.FileCount++
-			// Attempt to read manifest.json for a pretty-print summary.
-			if strings.HasSuffix(hdr.Name, "extras/manifest.json") {
-				buf, rerr := io.ReadAll(tarReader)
-				if rerr != nil {
-					info.ParseErr = fmt.Sprintf("read manifest: %v", rerr)
-					continue
-				}
-				// Compact JSON, but only validate it parses.
-				var raw any
-				if jerr := json.Unmarshal(buf, &raw); jerr != nil {
-					info.ParseErr = fmt.Sprintf("manifest parse: %v", jerr)
-					continue
-				}
-				info.ManifestJSON = string(buf)
-			}
-		}
+	raw, err := arc.ManifestRaw()
+	if err != nil {
+		// Missing manifest is not a hard error for inventory-only inspect.
+		return info, nil
 	}
+	if _, perr := arcread.DecodeManifest(raw); perr != nil {
+		info.ParseErr = fmt.Sprintf("manifest parse: %v", perr)
+		return info, nil
+	}
+	info.ManifestJSON = string(raw)
 	return info, nil
 }

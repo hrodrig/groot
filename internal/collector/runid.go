@@ -29,18 +29,42 @@ import (
 // timestamp anyway.
 func newRunID() string {
 	now := time.Now().UTC()
+	return fmt.Sprintf("%s-%s", now.Format("20060102T150405Z"), newRunIDShort())
+}
+
+// newRunIDShort returns the random suffix used in run_id and sessionBase
+// (uppercase base32, no padding). Prefer runIDShort(newRunID()) when a full
+// run id already exists.
+func newRunIDShort() string {
 	var buf [4]byte
 	if _, err := rand.Read(buf[:]); err != nil {
 		// Fall back to a deterministic-but-unique suffix drawn from the
 		// timestamp nanoseconds. Still unique within a single process.
-		b := now.UnixNano()
+		b := time.Now().UTC().UnixNano()
 		buf[0] = byte(b >> 24)
 		buf[1] = byte(b >> 16)
 		buf[2] = byte(b >> 8)
 		buf[3] = byte(b)
 	}
-	suffix := strings.ToUpper(strings.TrimRight(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(buf[:]), "="))
-	return fmt.Sprintf("%s-%s", now.Format("20060102T150405Z"), suffix)
+	return strings.ToUpper(strings.TrimRight(base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(buf[:]), "="))
+}
+
+// runIDShort extracts the random suffix from a run_id (substring after the
+// last '-'). If the shape is unexpected, returns a freshly generated short.
+func runIDShort(id string) string {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return newRunIDShort()
+	}
+	i := strings.LastIndex(id, "-")
+	if i < 0 || i+1 >= len(id) {
+		return newRunIDShort()
+	}
+	short := id[i+1:]
+	if short == "" {
+		return newRunIDShort()
+	}
+	return short
 }
 
 // fileSHA256 returns the SHA-256 hex digest of the file at the given path.

@@ -29,6 +29,16 @@ func TestNewRunID_unique(t *testing.T) {
 	}
 }
 
+func TestRunIDShort_extractsSuffix(t *testing.T) {
+	id := "20260628T153045Z-7KQV2XY"
+	if got := runIDShort(id); got != "7KQV2XY" {
+		t.Fatalf("got %q", got)
+	}
+	if got := runIDShort(""); len(got) < 5 {
+		t.Fatalf("empty id should mint a short, got %q", got)
+	}
+}
+
 func TestFileSHA256_matchesStdlib(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "blob.txt")

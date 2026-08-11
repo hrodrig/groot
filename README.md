@@ -570,8 +570,8 @@ notify:
 |-----|----------------|
 | **`kubeconfig`** | Path to the kubeconfig file used to build the **client-go** REST config (same discovery rules as **client-go** / **`clientcmd`**). Empty: use **`KUBECONFIG`** if set, then the default kubeconfig locations (for example **`~/.kube/config`**), or in-cluster credentials when Groot runs as a pod. Supports **`~`** and **`${VAR}`** expansion (YAML, `KUBECONFIG`, and **`--kubeconfig`**). **`groot --kubeconfig`** overrides this for a single run (see [Resolution and precedence](#resolution-and-precedence)). |
 | **`cluster_name`** | Optional label for the **`<cluster>`** segment in archive basenames. When empty, Groot resolves: kubeconfig cluster name → **`kube-public/cluster-info`** → API server host → **`unknown-cluster`**. Set explicitly for in-cluster pods without kubeconfig context. Env: **`GROOT_CLUSTER_NAME`**. |
-| **`output_dir`** | Base directory: each run creates **`<file_prefix>-<timestamp>[-since-<slug>]/`**, then **`<sessionBase>-<cluster>[-<message>].tar.gz`** beside it. Supports **`~`** and **`${VAR}`** expansion. |
-| **`file_prefix`** | Prefix for capture directory and archive basename (default **`groot-capture`**). Example session: **`groot-capture-20260606-120000-my-cluster.tar.gz`**. |
+| **`output_dir`** | Base directory: each run creates **`<file_prefix>-<short>-<timestamp>[-since-<slug>]/`**, then **`<sessionBase>-<cluster>[-<message>].tar.gz`** beside it. **`<short>`** is from **`run_id`** (concurrent-safe). Supports **`~`** and **`${VAR}`** expansion. |
+| **`file_prefix`** | Prefix for capture directory and archive basename (default **`groot-capture`**). Example session: **`groot-capture-7kqv2xy-20260606-120000-my-cluster.tar.gz`**. |
 | **`collection`** | Tuning for timeouts, parallelism, namespaces, pod logs, optional **`extra_kubectl`** argv lines, redaction, etc. (see below). |
 | **`notify`** | Optional webhooks, email, and failure alerts after collect (see [Notifications](#notifications)). |
 
@@ -687,8 +687,8 @@ Workload filter behavior (`collection.targets`):
 
 Capture output names use **`file_prefix`** (default **`groot-capture`**):
 
-- **directory:** `<file_prefix>-<timestamp>` or `<file_prefix>-<timestamp>-since-<slug>` when **`pod_logs_since`** / **`--since`** is set
-- **archive:** `<sessionBase>-<cluster>[-<message>].tar.gz` (for example **`groot-capture-20260606-120000-my-cluster.tar.gz`**)
+- **directory:** `<file_prefix>-<short>-<timestamp>` or `<file_prefix>-<short>-<timestamp>-since-<slug>` when **`pod_logs_since`** / **`--since`** is set (`<short>` = lowercase `run_id` suffix)
+- **archive:** `<sessionBase>-<cluster>[-<message>].tar.gz` (for example **`groot-capture-7kqv2xy-20260606-120000-my-cluster.tar.gz`**)
 
 When **`pod_logs_since`** is set, **`<slug>`** is a filesystem-safe form of the duration (for example **`12h`**, **`45m`**).
 
@@ -705,8 +705,8 @@ Example:
 
 - input: `--message "network routing issue"`
 - suffix: `network-routing-issue`
-- output: `groot-capture-20260428-123200-my-cluster-network-routing-issue.tar.gz`
-- with **`pod_logs_since`** (or **`--since`**) set to **`12h`** and no message: `groot-capture-20260428-123200-since-12h-my-cluster.tar.gz`
+- output: `groot-capture-7kqv2xy-20260428-123200-my-cluster-network-routing-issue.tar.gz`
+- with **`pod_logs_since`** (or **`--since`**) set to **`12h`** and no message: `groot-capture-7kqv2xy-20260428-123200-since-12h-my-cluster.tar.gz`
 
 Directory layout:
 

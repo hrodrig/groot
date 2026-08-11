@@ -179,8 +179,9 @@ Validation: enabled channels must have non-empty credentials after env merge.
 ### Session and archive naming
 
 1. **Capture folder** under `output_dir`: `<sessionBase>/` where `sessionBase` is:
-   - `<sanitize(file_prefix)>-<timestamp>`, or
-   - `<sanitize(file_prefix)>-<timestamp>-since-<slug>` when `pod_logs_since` / `--since` is set (`slug` = sanitized since value).
+   - `<sanitize(file_prefix)>-<short>-<timestamp>`, or
+   - `<sanitize(file_prefix)>-<short>-<timestamp>-since-<slug>` when `pod_logs_since` / `--since` is set (`slug` = sanitized since value).
+   - `<short>` is the lowercase random suffix from this run’s `run_id` (same entropy as `#81`), so concurrent collects in the same second do not collide on a shared `output_dir`.
    - Default `file_prefix` is `groot-capture`; empty value falls back to the same default.
 2. **Archive file**: `<sessionBase>-<cluster>[-<message-suffix>].tar.gz` in `output_dir`.
    - `<cluster>` resolution order: `cluster_name` config (if set) → kubeconfig cluster metadata → `kube-public/cluster-info` ConfigMap → API server host (sanitized) → `unknown-cluster`.
@@ -201,7 +202,7 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
   "archive_layout_version": 1,
   "collected_at": "2026-06-05T12:00:00Z",
   "duration_seconds": 42.5,
-  "session_base": "groot-capture-20260605-120000",
+  "session_base": "groot-capture-7kqv2xy-20260605-120000",
   "archive_basename": "groot-capture-20260605-120000-my-cluster",
   "file_prefix": "groot-capture",
   "cluster": { "context": "…", "cluster": "…", "user": "…", "server": "…" },

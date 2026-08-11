@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Capture / archive naming:** `sessionBase` is now `<file_prefix>-<short>-<timestamp>[…]` where `<short>` is the lowercase random suffix from `run_id`, so concurrent collects in the same second do not collide on a shared `output_dir`.
+
 ### Fixed
 
 - **`kubeconfig` path expansion:** `~` and `${VAR}` now expand for `kubeconfig` (YAML), `KUBECONFIG`, and `--kubeconfig` — same rules as `output_dir`. Multipath lists expand per entry. SFTP `identity_file` / `known_hosts_file` paths expand too.

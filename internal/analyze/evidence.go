@@ -8,10 +8,11 @@ import (
 )
 
 // Analyze-local read caps (stricter than arcread defaults for text scans).
+// Resources/TSV default 32 MiB stays under arcread DefaultMaxMemberBytes (64 MiB).
 const (
-	capEventsBytes  = 2 << 20 // 2 MiB
-	capTextBytes    = 2 << 20 // 2 MiB for TSV / resources
-	maxExcerptRunes = 512     // display excerpt clip
+	capEventsBytes  = 2 << 20  // 2 MiB
+	capTextBytes    = 32 << 20 // 32 MiB for TSV / resources.txt / pods-wide
+	maxExcerptRunes = 512      // display excerpt clip
 )
 
 // evidence holds capped archive member payloads for heuristics.

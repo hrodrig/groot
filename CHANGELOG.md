@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **arcread / analyze / inspect (1.1.x #69):** raise default max decompressed archive total from 512MiB to **16GiB** so typical large collects can be indexed; add `--max-decompressed` on `groot analyze` and `groot inspect` (bytes; `0` = default).
+- **analyze evidence (1.1.x #69):** raise analyze-local read cap for TSV / `resources.txt` / pods-wide from 2MiB to **32MiB** (still under the 64MiB per-member arcread cap) so large namespace inventories are not skipped.
 
 ### Fixed
 

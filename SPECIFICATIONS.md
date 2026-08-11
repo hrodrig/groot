@@ -523,5 +523,12 @@ Opens a local `groot collect` archive and emits evidence-backed heuristic **hint
 - `json` — same findings model (`Report`) as Markdown renderers.
 - `llm` — paste pack with assistant instructions, ranked findings, head/tail omit markers under a **32 KiB** byte budget, and an explicit secrets warning (collect-time redaction may not cover all cited member types).
 
+**Analyze-local member read caps** (after open; optional members degrade with Notes, not exit 3):
+
+| Member class | Cap |
+|--------------|-----|
+| Cluster/warning events logs | **2 MiB** |
+| TSV / `*/resources.txt` / pods-wide text | **32 MiB** |
+
 **Exit codes (see §3):** 0 success (including zero hints / healthy empty summary); 3 archive open/read failure (including §13.1 cap rejection). Invalid `--output` is an ordinary error (not exit 3).
 

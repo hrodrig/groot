@@ -14,7 +14,7 @@ Ship Band 4 first feature: offline `groot analyze <archive>` with ranked evidenc
 
 - [x] **Phase 1: Shared Offline Archive Reader** - Safe selective `.tar.gz` + typed manifest; inspect on shared reader
 - [x] **Phase 2: Heuristic Analyze + Executive Markdown** - Offline `analyze` with ranked hints, citations, JSON/exit codes
-- [ ] **Phase 3: LLM-Ready Markdown Packaging** - Same findings model; budgeted paste format with omit markers
+- [x] **Phase 3: LLM-Ready Markdown Packaging** - Same findings model; budgeted paste format with omit markers
 - [ ] **Phase 4: Fixtures, SPEC, and Release Lock** - Golden corpus, contract docs, CHANGELOG, release-check → v1.1.0
 
 ## Phase Details
@@ -72,10 +72,11 @@ Plans:
   2. Token/byte budget is enforced; default path does not dump unbounded logs
   3. Default paste prefers citations + bounded excerpts and warns that paste may still contain secrets
 
-**Plans:** 1 plan
+**Plans:** 1/1 plans executed
 
 Plans:
-- [ ] 03-01-PLAN.md — Tracer: RenderLLM + 32KiB budget/omit + CLI --output llm + goldens
+
+- [x] 03-01-PLAN.md — Tracer: RenderLLM + 32KiB budget/omit + CLI --output llm + goldens
 
 ### Phase 4: Fixtures, SPEC, and Release Lock
 
@@ -99,7 +100,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Shared Offline Archive Reader | 2/2 | Complete | 2026-08-10 |
 | 2. Heuristic Analyze + Executive Markdown | 2/2 | Complete | 2026-08-10 |
-| 3. LLM-Ready Markdown Packaging | 0/1 | Planned | - |
+| 3. LLM-Ready Markdown Packaging | 1/1 | Complete | 03-01-SUMMARY.md (commit pending) |
 | 4. Fixtures, SPEC, and Release Lock | 0/TBD | Not started | - |
 
 ## Coverage

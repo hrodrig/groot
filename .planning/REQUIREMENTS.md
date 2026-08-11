@@ -25,9 +25,9 @@ Requirements for **v1.1.0** (`#69` + LLM-ready Markdown). Each maps to roadmap p
 
 ### LLM Packaging
 
-- [ ] **LLM-01**: Same findings model can emit LLM-ready Markdown (system-prompt framing, findings, head/tail truncation with visible omit markers)
-- [ ] **LLM-02**: Token/byte budget enforced; no unbounded log dumps in default path
-- [ ] **LLM-03**: Default paste path prefers citations + bounded excerpts; warns that paste may still contain secrets (track `#45` before rich snippets)
+- [x] **LLM-01**: Same findings model can emit LLM-ready Markdown (system-prompt framing, findings, head/tail truncation with visible omit markers)
+- [x] **LLM-02**: Token/byte budget enforced; no unbounded log dumps in default path
+- [x] **LLM-03**: Default paste path prefers citations + bounded excerpts; warns that paste may still contain secrets (track `#45` before rich snippets)
 
 ### Quality / Contract
 
@@ -97,9 +97,9 @@ Deferred after 1.1.0 validation.
 | ANLZ-04 | Phase 2 | Complete |
 | ANLZ-05 | Phase 2 | Complete |
 | ANLZ-06 | Phase 2 | Complete |
-| LLM-01 | Phase 3 | Pending |
-| LLM-02 | Phase 3 | Pending |
-| LLM-03 | Phase 3 | Pending |
+| LLM-01 | Phase 3 | Complete |
+| LLM-02 | Phase 3 | Complete |
+| LLM-03 | Phase 3 | Complete |
 | QUAL-01 | Phase 4 | Pending |
 | QUAL-02 | Phase 4 | Pending |
 | QUAL-03 | Phase 4 | Pending |

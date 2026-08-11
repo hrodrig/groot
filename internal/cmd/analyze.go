@@ -44,7 +44,7 @@ Exit codes follow #82:
 		},
 	}
 
-	cmd.Flags().StringVar(&outputForm, "output", "text", "Output format: text (executive Markdown) or json")
+	cmd.Flags().StringVar(&outputForm, "output", "text", "Output format: text (executive Markdown), json, or llm")
 	return cmd
 }
 
@@ -65,7 +65,14 @@ func renderAnalyze(cmd *cobra.Command, rep analyze.Report, format string) error 
 		}
 		fmt.Fprintln(out, string(b))
 		return nil
+	case "llm":
+		md, err := analyze.RenderLLM(rep)
+		if err != nil {
+			return fmt.Errorf("render llm markdown: %w", err)
+		}
+		fmt.Fprint(out, md)
+		return nil
 	default:
-		return fmt.Errorf("unsupported --output %q (want text or json)", format)
+		return fmt.Errorf("unsupported --output %q (want text, json, or llm)", format)
 	}
 }

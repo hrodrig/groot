@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 2
+open_count: 3
 waived_count: 0
 fixed_count: 0
-total_count: 2
-last_updated: 2026-08-10T23:21:47.320Z
+total_count: 3
+last_updated: 2026-08-11T00:11:45.818Z
 ---
 
 # Broken Windows Ledger
@@ -17,6 +17,7 @@ last_updated: 2026-08-10T23:21:47.320Z
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
 | 1 | 01 | deviation | internal/arcread/manifest_test.go |  | Task 2 soft RED: DecodeManifest already present from tracer | open |  | 2026-08-10T23:11:36.300Z |  |
 | 2 | 01 | stub | docs/plan-1.1.0.md |  | Intentional Band 4 stub (D-06); full checklist/SPEC lock deferred to Phase 4 QUAL-03 | open |  | 2026-08-10T23:21:47.320Z |  |
+| 3 | 03 | deviation | internal/analyze/render_llm.go |  | Keep ≥1 hint before head/tail so omit markers remain visible under tiny budgets | open |  | 2026-08-11T00:11:45.818Z |  |
 
 ````json
 [
@@ -42,6 +43,18 @@ last_updated: 2026-08-10T23:21:47.320Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-08-10T23:21:47.320Z",
+    "resolved_at": null
+  },
+  {
+    "id": 3,
+    "kind": "deviation",
+    "phase": "03",
+    "file": "internal/analyze/render_llm.go",
+    "line": null,
+    "description": "Keep ≥1 hint before head/tail so omit markers remain visible under tiny budgets",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-11T00:11:45.818Z",
     "resolved_at": null
   }
 ]

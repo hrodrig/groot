@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-08-04 (**v1.0.6** packaging/docs — man/nfpm/BSD #96, CONTRIBUTING #47, examples #46; **Band 4** next)
+**Last reviewed:** 2026-08-11 (**v1.1.0** shipped — `#69` offline analyze + LLM Markdown + goldens; Band 4 continues with `#32` / `#56`)
 
 ### Versioning note
 
@@ -26,20 +26,21 @@ Bands group semver minors into planning horizons. Individual items carry **globa
 | **0.9** | 0.9.x | Operator wins (validate/inspect/plugin) | ✅ Shipped | **2026-06-29** (v0.9.2) |
 | **3** | 1.0.0 | Contract freeze | ✅ Shipped | **2026-07-03** (v1.0.0) |
 | **3 maint.** | 1.0.1–1.0.6 | Security + audit hygiene + docs/packaging | ✅ Shipped | **2026-08-04** (v1.0.6) |
-| **4** | 1.1.x+ | Multi-cluster, analyze, triggered watch, addons | 📋 Active backlog | — |
+| **4** | 1.1.x+ | Multi-cluster, analyze, triggered watch, addons | 📋 Active backlog | **2026-08-10** (`v1.1.0` = `#69` analyze) |
 
 ### Current focus (in flight)
 
 | Priority | Item | Theme | Notes |
 |----------|------|-------|-------|
-| **Next** | **#69** `groot analyze <archive>` | Analysis | Offline RCA; builds on inspect + golden fixtures (#87). Prefer as first **1.1.0** feature if RCA value > multi-cluster. |
-| **Next** | **#32** multi-cluster collect | Multi-cluster | [plan-1.0.0.md](docs/plan-1.0.0.md) post-1.0 order listed #32 before #69 — pick by product priority. |
+| **Shipped** | **#69** `groot analyze <archive>` | Analysis | **Done (v1.1.0)** — offline heuristics + executive/LLM Markdown + goldens. |
+| **Next** | **#32** multi-cluster collect | Multi-cluster | [plan-1.0.0.md](docs/plan-1.0.0.md) post-1.0 order; first open Band 4 theme after analyze. |
+| **Next** | **#56** `groot diff` | Analysis | Shared `arcread` reader; natural follow-on to `#69`. |
 | Then | **#43** kubeconfig / `--context` | Multi-cluster | Operator ergonomics. |
 | Then | **#33** CI kind matrix | Platform | Documented minimum cluster version. |
 | Later | **#65** addon system | Ecosystem | After multi-cluster + plugin maturity. |
 | Later | **#55** event-driven watch | Triggered collect | Critical services → collect → S3/GCS/SFTP + notify (not live log tail). |
 
-Open a **`docs/plan-1.1.0.md`** when Band 4 scope locks for the first feature release.
+Ship lock for analyze: **[`docs/plan-1.1.0.md`](docs/plan-1.1.0.md)**.
 
 ### Strategic direction
 

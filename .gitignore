@@ -12,6 +12,7 @@
 !Dockerfile
 !Dockerfile.release
 !Makefile
+!GNUmakefile
 !README.md
 !VERSION
 !LICENSE

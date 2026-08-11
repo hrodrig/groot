@@ -15,7 +15,7 @@ Ship Band 4 first feature: offline `groot analyze <archive>` with ranked evidenc
 - [x] **Phase 1: Shared Offline Archive Reader** - Safe selective `.tar.gz` + typed manifest; inspect on shared reader
 - [x] **Phase 2: Heuristic Analyze + Executive Markdown** - Offline `analyze` with ranked hints, citations, JSON/exit codes
 - [x] **Phase 3: LLM-Ready Markdown Packaging** - Same findings model; budgeted paste format with omit markers
-- [ ] **Phase 4: Fixtures, SPEC, and Release Lock** - Golden corpus, contract docs, CHANGELOG, release-check → v1.1.0
+- [x] **Phase 4: Fixtures, SPEC, and Release Lock** - Golden corpus, contract docs, CHANGELOG, release-check → v1.1.0
 
 ## Phase Details
 
@@ -91,8 +91,14 @@ Plans:
   3. SPEC, `docs/plan-1.1.0.md` (full write/update), and ROADMAP `#69` status reflect the analyze contract
   4. CHANGELOG Unreleased bullets cite `(1.1.x #69)` and the tree is ready for annotated tag `v1.1.0` after merge to `main`
 
-**Plans**: TBD
-**Notes**: This phase owns the complete `docs/plan-1.1.0.md` ship checklist (stub from Phase 1 is acceptable until then).
+**Plans**: 3/3 plans executed
+Plans:
+
+- [x] 04-01-PLAN.md — Golden fixtures under `testing/fixtures/archives/` and executive/LLM golden tests
+- [x] 04-02-PLAN.md — Full `docs/plan-1.1.0.md`, SPEC analyze sections, ROADMAP #69 Done
+- [x] 04-03-PLAN.md — VERSION bump, README/ports/man sync, CHANGELOG [1.1.0], `make release-check`
+
+**Notes**: Annotated tag `v1.1.0` and merge to `main` remain human steps per git-flow.
 
 ## Progress
 
@@ -101,7 +107,7 @@ Plans:
 | 1. Shared Offline Archive Reader | 2/2 | Complete | 2026-08-10 |
 | 2. Heuristic Analyze + Executive Markdown | 2/2 | Complete | 2026-08-10 |
 | 3. LLM-Ready Markdown Packaging | 1/1 | Complete | 2026-08-10 |
-| 4. Fixtures, SPEC, and Release Lock | 0/TBD | Not started | - |
+| 4. Fixtures, SPEC, and Release Lock | 3/3 | Complete | 2026-08-10 |
 
 ## Coverage
 

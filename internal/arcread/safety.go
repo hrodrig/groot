@@ -10,9 +10,9 @@ import (
 // Default safety caps for hostile .tar.gz input (D-03).
 // Named constants keep production defaults discoverable; tests may use OpenWithCaps with smaller Caps.
 const (
-	DefaultMaxMemberBytes       int64 = 64 << 20  // 64 MiB = 67108864
-	DefaultMaxRegularFiles            = 100_000   // max regular file members per archive
-	DefaultMaxDecompressedBytes int64 = 16 << 30  // 16 GiB decompressed total (Pass-1 index)
+	DefaultMaxMemberBytes       int64 = 64 << 20 // 64 MiB = 67108864
+	DefaultMaxRegularFiles            = 100_000  // max regular file members per archive
+	DefaultMaxDecompressedBytes int64 = 16 << 30 // 16 GiB decompressed total (Pass-1 index)
 )
 
 // Caps limits Open Pass-1 indexing and selective reads.

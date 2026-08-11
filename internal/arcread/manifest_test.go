@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/hrodrig/groot/internal/arcread"
 )
 
@@ -43,26 +44,30 @@ func TestDecodeManifest_goldenLayout1(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DecodeManifest: %v", err)
 	}
-	if m.ArchiveLayoutVersion != arcread.ArchiveLayoutVersion {
-		t.Fatalf("archive_layout_version=%d want %d", m.ArchiveLayoutVersion, arcread.ArchiveLayoutVersion)
+
+	want := arcread.Manifest{
+		GrootVersion:         "1.0.6",
+		GrootCommit:          "abc123",
+		ConfigVersion:        2,
+		ArchiveLayoutVersion: arcread.ArchiveLayoutVersion,
+		RunID:                "run-1",
+		ArchiveSHA256:        "deadbeef",
+		CollectedAt:          "2026-01-02T15:04:05Z",
+		DurationSeconds:      2.5,
+		SessionBase:          "groot-capture-20260102-150405",
+		ArchiveBasename:      "groot-capture-20260102-150405-cluster",
+		FilePrefix:           "groot-capture",
+		Cluster: arcread.ManifestCluster{
+			Context: "kind-kind",
+			Cluster: "kind",
+			User:    "kind-user",
+			Server:  "https://127.0.0.1:6443",
+		},
+		Jobs:  arcread.ManifestJobs{Total: 3, Success: 2, Failed: 1},
+		Paths: []string{"extras/kubeconfig.txt", "extras/manifest.json"},
 	}
-	if m.GrootVersion != "1.0.6" || m.GrootCommit != "abc123" || m.ConfigVersion != 2 {
-		t.Fatalf("identity fields: %+v", m)
-	}
-	if m.RunID != "run-1" || m.ArchiveSHA256 != "deadbeef" {
-		t.Fatalf("run fields: %+v", m)
-	}
-	if m.SessionBase == "" || m.ArchiveBasename == "" || m.FilePrefix != "groot-capture" {
-		t.Fatalf("path fields: %+v", m)
-	}
-	if m.Cluster.Cluster != "kind" || m.Cluster.Server == "" {
-		t.Fatalf("cluster: %+v", m.Cluster)
-	}
-	if m.Jobs.Total != 3 || m.Jobs.Success != 2 || m.Jobs.Failed != 1 {
-		t.Fatalf("jobs: %+v", m.Jobs)
-	}
-	if len(m.Paths) != 2 {
-		t.Fatalf("paths=%v", m.Paths)
+	if diff := cmp.Diff(want, m); diff != "" {
+		t.Fatalf("manifest mismatch (-want +got):\n%s", diff)
 	}
 }
 

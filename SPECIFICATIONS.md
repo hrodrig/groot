@@ -530,5 +530,7 @@ Opens a local `groot collect` archive and emits evidence-backed heuristic **hint
 | Cluster/warning events logs | **2 MiB** |
 | TSV / `*/resources.txt` / pods-wide text | **32 MiB** |
 
+**Golden fixture corpus:** The committed source-tree corpus under `testing/fixtures/archives/` covers healthy, CrashLoopBackOff, OOMKilled, ImagePullBackOff, and missing-manifest degrade scenarios. CI golden tests lock executive and LLM Markdown output for these fixtures so heuristic or rendering regressions fail the build.
+
 **Exit codes (see §3):** 0 success (including zero hints / healthy empty summary); 3 archive open/read failure (including §13.1 cap rejection). Invalid `--output` is an ordinary error (not exit 3).
 

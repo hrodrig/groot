@@ -31,10 +31,10 @@ Requirements for **v1.1.0** (`#69` + LLM-ready Markdown). Each maps to roadmap p
 
 ### Quality / Contract
 
-- [ ] **QUAL-01**: Golden fixtures under `testing/fixtures/archives/` cover healthy, CrashLoop, OOM, ImagePull, missing-manifest degrade
-- [ ] **QUAL-02**: Golden tests lock executive + LLM Markdown (or JSON) for fixtures; `make cover` / `release-check` gates hold
-- [ ] **QUAL-03**: SPEC + `docs/plan-1.1.0.md` + ROADMAP `#69` status updated for analyze contract
-- [ ] **QUAL-04**: CHANGELOG Unreleased bullets cite `(1.1.x #69)` before tag v1.1.0
+- [x] **QUAL-01**: Golden fixtures under `testing/fixtures/archives/` cover healthy, CrashLoop, OOM, ImagePull, missing-manifest degrade
+- [x] **QUAL-02**: Golden tests lock executive + LLM Markdown (or JSON) for fixtures; `make cover` / `release-check` gates hold
+- [x] **QUAL-03**: SPEC + `docs/plan-1.1.0.md` + ROADMAP `#69` status updated for analyze contract
+- [x] **QUAL-04**: CHANGELOG Unreleased bullets cite `(1.1.x #69)` before tag v1.1.0
 
 ## v2 Requirements
 
@@ -100,10 +100,10 @@ Deferred after 1.1.0 validation.
 | LLM-01 | Phase 3 | Complete |
 | LLM-02 | Phase 3 | Complete |
 | LLM-03 | Phase 3 | Complete |
-| QUAL-01 | Phase 4 | Pending |
-| QUAL-02 | Phase 4 | Pending |
-| QUAL-03 | Phase 4 | Pending |
-| QUAL-04 | Phase 4 | Pending |
+| QUAL-01 | Phase 4 | Complete |
+| QUAL-02 | Phase 4 | Complete |
+| QUAL-03 | Phase 4 | Complete |
+| QUAL-04 | Phase 4 | Complete |
 
 **Coverage:**
 

@@ -1,0 +1,27 @@
+{
+  "groot_version": "dev",
+  "archive_layout_version": 1,
+  "run_id": "run-imagepull-001",
+  "archive_sha256": "imgpullsha0123456789abcdef012345",
+  "collected_at": "2026-08-10T12:00:00Z",
+  "duration_seconds": 1.0,
+  "session_base": "imagepull",
+  "archive_basename": "imagepull.tar.gz",
+  "file_prefix": "imagepull",
+  "cluster": {
+    "context": "kind-demo",
+    "cluster": "kind-demo",
+    "user": "kind-demo",
+    "server": "https://127.0.0.1:6443"
+  },
+  "jobs": {
+    "total": 1,
+    "success": 1,
+    "failed": 0
+  },
+  "paths": [
+    "extras/manifest.json",
+    "extras/all-cluster-events.log",
+    "default/resources.txt"
+  ]
+}

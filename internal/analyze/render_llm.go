@@ -336,53 +336,73 @@ func headTailOmit(s string, maxBytes int) string {
 		return s
 	}
 
-	// Reserve space using the widest plausible marker (N = len(s)).
 	probe := fmt.Sprintf(llmOmitMarkerFmt, len(s))
 	remain := maxBytes - len(probe)
 	if remain < 0 {
-		marker := fmt.Sprintf(llmOmitMarkerFmt, len(s))
-		if len(marker) <= maxBytes {
-			return marker
-		}
-		return cutPrefixBytes(marker, maxBytes)
+		return fitMarker(len(s), maxBytes)
 	}
 
+	head, tail := initialHeadTail(s, remain)
+	head, tail = ensureOmittedMiddle(s, head, tail)
+
+	omitted := len(s) - len(head) - len(tail)
+	if omitted < 1 {
+		return fitMarker(len(s), maxBytes)
+	}
+	return fitOutput(s, head, tail, maxBytes)
+}
+
+func fitMarker(omitted, maxBytes int) string {
+	marker := fmt.Sprintf(llmOmitMarkerFmt, omitted)
+	if len(marker) <= maxBytes {
+		return marker
+	}
+	return cutPrefixBytes(marker, maxBytes)
+}
+
+func initialHeadTail(s string, remain int) (string, string) {
 	headBudget := remain * 60 / 100
 	tailBudget := remain - headBudget
 	head := cutPrefixBytes(s, headBudget)
 	tail := cutSuffixBytes(s, tailBudget)
 	head = snapHeadNewline(head, headBudget)
 	tail = snapTailNewline(tail, tailBudget)
+	return head, tail
+}
 
-	// Ensure a non-empty omitted middle when head+tail would cover the whole string.
+func ensureOmittedMiddle(s, head, tail string) (string, string) {
 	for len(head)+len(tail) >= len(s) && (len(head) > 0 || len(tail) > 0) {
 		if len(head) >= len(tail) && len(head) > 0 {
-			_, size := utf8.DecodeLastRuneInString(head)
-			head = head[:len(head)-size]
+			head = trimLastRune(head)
 		} else if len(tail) > 0 {
-			_, size := utf8.DecodeRuneInString(tail)
-			tail = tail[size:]
+			tail = trimFirstRune(tail)
 		}
 	}
+	return head, tail
+}
 
+func trimLastRune(s string) string {
+	_, size := utf8.DecodeLastRuneInString(s)
+	return s[:len(s)-size]
+}
+
+func trimFirstRune(s string) string {
+	_, size := utf8.DecodeRuneInString(s)
+	return s[size:]
+}
+
+func fitOutput(s, head, tail string, maxBytes int) string {
 	omitted := len(s) - len(head) - len(tail)
-	if omitted < 1 {
-		omitted = len(s)
-		head, tail = "", ""
-	}
 	marker := fmt.Sprintf(llmOmitMarkerFmt, omitted)
 	out := head + marker + tail
 	if len(out) <= maxBytes {
 		return out
 	}
-	// Marker shrank vs probe — spend leftover on head; still enforce ceiling.
+
 	extra := maxBytes - len(out)
 	if extra > 0 {
 		head = cutPrefixBytes(s, len(head)+extra)
-		for len(head)+len(tail) >= len(s) && len(head) > 0 {
-			_, size := utf8.DecodeLastRuneInString(head)
-			head = head[:len(head)-size]
-		}
+		head, tail = ensureOmittedMiddle(s, head, tail)
 		omitted = len(s) - len(head) - len(tail)
 		marker = fmt.Sprintf(llmOmitMarkerFmt, omitted)
 		out = head + marker + tail
@@ -390,10 +410,7 @@ func headTailOmit(s string, maxBytes int) string {
 			return out
 		}
 	}
-	if len(marker) <= maxBytes {
-		return marker
-	}
-	return cutPrefixBytes(s, maxBytes)
+	return fitMarker(omitted, maxBytes)
 }
 
 func cutPrefixBytes(s string, maxBytes int) string {

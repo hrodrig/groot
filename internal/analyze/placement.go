@@ -24,8 +24,8 @@ func parsePlacementTSV(body []byte) map[string]placementRow {
 	r.FieldsPerRecord = -1
 	r.LazyQuotes = true
 
-	header := true
 	nsIdx, podIdx, nodeIdx, logIdx := 0, 1, 2, 3
+	headerSeen := false
 	for {
 		rec, err := r.Read()
 		if err == io.EOF {
@@ -34,38 +34,47 @@ func parsePlacementTSV(body []byte) map[string]placementRow {
 		if err != nil || len(rec) == 0 {
 			continue
 		}
-		if header {
-			header = false
-			for i, col := range rec {
-				switch strings.TrimSpace(col) {
-				case "namespace":
-					nsIdx = i
-				case "pod":
-					podIdx = i
-				case "node":
-					nodeIdx = i
-				case "pod_log_file":
-					logIdx = i
-				}
-			}
-			// Skip header row even if columns were unrecognized.
+		if !headerSeen {
+			nsIdx, podIdx, nodeIdx, logIdx = parsePlacementHeader(rec)
+			headerSeen = true
 			if strings.EqualFold(strings.TrimSpace(rec[0]), "namespace") {
 				continue
 			}
 		}
-		ns := fieldAt(rec, nsIdx)
-		pod := fieldAt(rec, podIdx)
-		if ns == "" || pod == "" {
-			continue
-		}
-		out[ns+"/"+pod] = placementRow{
-			Namespace: ns,
-			Pod:       pod,
-			Node:      fieldAt(rec, nodeIdx),
-			LogFile:   fieldAt(rec, logIdx),
-		}
+		storePlacementRow(rec, nsIdx, podIdx, nodeIdx, logIdx, out)
 	}
 	return out
+}
+
+func parsePlacementHeader(rec []string) (nsIdx, podIdx, nodeIdx, logIdx int) {
+	nsIdx, podIdx, nodeIdx, logIdx = 0, 1, 2, 3
+	for i, col := range rec {
+		switch strings.TrimSpace(col) {
+		case "namespace":
+			nsIdx = i
+		case "pod":
+			podIdx = i
+		case "node":
+			nodeIdx = i
+		case "pod_log_file":
+			logIdx = i
+		}
+	}
+	return nsIdx, podIdx, nodeIdx, logIdx
+}
+
+func storePlacementRow(rec []string, nsIdx, podIdx, nodeIdx, logIdx int, out map[string]placementRow) {
+	ns := fieldAt(rec, nsIdx)
+	pod := fieldAt(rec, podIdx)
+	if ns == "" || pod == "" {
+		return
+	}
+	out[ns+"/"+pod] = placementRow{
+		Namespace: ns,
+		Pod:       pod,
+		Node:      fieldAt(rec, nodeIdx),
+		LogFile:   fieldAt(rec, logIdx),
+	}
 }
 
 func fieldAt(rec []string, i int) string {

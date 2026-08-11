@@ -87,41 +87,19 @@ func (a *Archive) indexPass(r io.Reader) error {
 			return fmt.Errorf("tar read: %w", err)
 		}
 
-		name, err := normalizeMemberName(hdr.Name)
+		name, skip, err := a.validateHeader(hdr)
 		if err != nil {
 			return err
 		}
-		if err := checkTypeflag(hdr.Typeflag, name); err != nil {
-			return err
-		}
-
-		if hdr.Typeflag == tar.TypeDir {
+		if skip {
 			continue
 		}
 
-		if hdr.Size > a.caps.MaxMemberBytes {
-			return fmt.Errorf("%w: %q size %d", ErrMemberTooLarge, name, hdr.Size)
-		}
-		if len(a.members)+1 > a.caps.MaxRegularFiles {
-			return ErrTooManyFiles
-		}
-
 		lr := io.LimitReader(tr, a.caps.MaxMemberBytes+1)
-		var n int64
-		var manifestBody []byte
-		if isManifestName(name) {
-			manifestBody, err = io.ReadAll(lr)
-			if err != nil {
-				return fmt.Errorf("read member %q: %w", name, err)
-			}
-			n = int64(len(manifestBody))
-		} else {
-			n, err = io.Copy(io.Discard, lr)
-			if err != nil {
-				return fmt.Errorf("drain member %q: %w", name, err)
-			}
+		n, manifestBody, err := drainMember(lr, isManifestName(name))
+		if err != nil {
+			return fmt.Errorf("drain member %q: %w", name, err)
 		}
-
 		if n > a.caps.MaxMemberBytes {
 			return fmt.Errorf("%w: %q", ErrMemberTooLarge, name)
 		}
@@ -141,6 +119,38 @@ func (a *Archive) indexPass(r io.Reader) error {
 			a.manifestCache = manifestBody
 		}
 	}
+}
+
+func (a *Archive) validateHeader(hdr *tar.Header) (name string, skip bool, err error) {
+	name, err = normalizeMemberName(hdr.Name)
+	if err != nil {
+		return "", false, err
+	}
+	if err := checkTypeflag(hdr.Typeflag, name); err != nil {
+		return "", false, err
+	}
+	if hdr.Typeflag == tar.TypeDir {
+		return name, true, nil
+	}
+	if hdr.Size > a.caps.MaxMemberBytes {
+		return "", false, fmt.Errorf("%w: %q size %d", ErrMemberTooLarge, name, hdr.Size)
+	}
+	if len(a.members)+1 > a.caps.MaxRegularFiles {
+		return "", false, ErrTooManyFiles
+	}
+	return name, false, nil
+}
+
+func drainMember(lr io.Reader, isManifest bool) (n int64, manifestBody []byte, err error) {
+	if isManifest {
+		manifestBody, err = io.ReadAll(lr)
+		if err != nil {
+			return 0, nil, err
+		}
+		return int64(len(manifestBody)), manifestBody, nil
+	}
+	n, err = io.Copy(io.Discard, lr)
+	return n, nil, err
 }
 
 // Close releases resources. Safe to call multiple times.

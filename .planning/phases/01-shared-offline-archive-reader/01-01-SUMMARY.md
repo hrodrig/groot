@@ -147,6 +147,7 @@ d9a97c8 feat(01-01): implement arcread Open and InspectArchive wrapper
 048c4be test(01-01): add Manifest golden and round-trip tests
 e7aff82 feat(01-01): share arcread.Manifest with collect writer
 f0f7bcb docs(01-01): complete shared offline archive reader plan
+a36e40e docs(01-01): record plan metadata hash in SUMMARY
 ```
 
 ## Files Created/Modified

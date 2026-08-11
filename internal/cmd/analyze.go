@@ -13,7 +13,10 @@ import (
 // newAnalyzeCmd builds `groot analyze <archive>` (Phase 2 — offline heuristics).
 // No kubeconfig or cluster access is required.
 func newAnalyzeCmd() *cobra.Command {
-	var outputForm string
+	var (
+		outputForm      string
+		maxDecompressed int64
+	)
 
 	cmd := &cobra.Command{
 		Use:   "analyze <archive.tar.gz>",
@@ -25,12 +28,16 @@ executive Markdown by default. No cluster connection or kubeconfig is required.
 Findings are hints and hypotheses based on offline evidence — not a definitive
 root-cause diagnosis.
 
+Archive open enforces arcread safety caps (default max decompressed total 16GiB).
+Override with --max-decompressed when indexing a larger capture.
+
 Exit codes follow #82:
   0  success (including zero hints / healthy empty summary)
   3  archive open or read failure`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			arc, err := arcread.Open(args[0])
+			caps := archiveCapsFromMaxDecompressed(maxDecompressed)
+			arc, err := arcread.OpenWithCaps(args[0], caps)
 			if err != nil {
 				return NewExitErrorf(ExitCollectAborted, "analyze archive: %v", err)
 			}
@@ -45,6 +52,7 @@ Exit codes follow #82:
 	}
 
 	cmd.Flags().StringVar(&outputForm, "output", "text", "Output format: text (executive Markdown), json, or llm")
+	cmd.Flags().Int64Var(&maxDecompressed, "max-decompressed", 0, "Max total decompressed archive bytes during index (0 = default 16GiB)")
 	return cmd
 }
 

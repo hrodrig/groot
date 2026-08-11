@@ -206,4 +206,28 @@ func TestAnalyze_HelpMentionsExit3(t *testing.T) {
 	if !strings.Contains(out, "text") || !strings.Contains(out, "json") || !strings.Contains(out, "llm") {
 		t.Fatalf("analyze help should list text|json|llm:\n%s", out)
 	}
+	if !strings.Contains(out, "max-decompressed") {
+		t.Fatalf("analyze help should list --max-decompressed:\n%s", out)
+	}
+}
+
+func TestAnalyze_MaxDecompressedOverrideExit3(t *testing.T) {
+	resetPersistentFlags(t)
+	arcPath := packAnalyzeFixture(t, "crashloop")
+
+	rootCmd.SetOut(bytes.NewBuffer(nil))
+	rootCmd.SetErr(bytes.NewBuffer(nil))
+	// Tiny cap forces Pass-1 to fail closed on a real fixture archive.
+	rootCmd.SetArgs([]string{"analyze", "--max-decompressed", "64", arcPath})
+
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Fatal("expected decompressed cap error")
+	}
+	if got := ExitCodeOf(err); got != ExitCollectAborted {
+		t.Fatalf("exit code = %d, want %d", got, ExitCollectAborted)
+	}
+	if !strings.Contains(err.Error(), "decompressed byte cap") {
+		t.Fatalf("error = %v", err)
+	}
 }

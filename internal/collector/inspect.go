@@ -24,7 +24,13 @@ type InspectInfo struct {
 // The archive path is resolved relative to the current working directory.
 // Inventory uses the shared offline reader (arcread); UX stays inventory-only.
 func InspectArchive(archivePath string) (InspectInfo, error) {
-	arc, err := arcread.Open(archivePath)
+	return InspectArchiveWithCaps(archivePath, arcread.DefaultCaps())
+}
+
+// InspectArchiveWithCaps is InspectArchive with explicit arcread safety caps
+// (e.g. CLI --max-decompressed override).
+func InspectArchiveWithCaps(archivePath string, caps arcread.Caps) (InspectInfo, error) {
+	arc, err := arcread.OpenWithCaps(archivePath, caps)
 	if err != nil {
 		return InspectInfo{}, err
 	}

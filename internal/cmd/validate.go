@@ -113,7 +113,10 @@ Exit codes follow #82:
 // newInspectCmd builds `groot inspect <archive>` (ROADMAP #31 minimum — 0.9.x).
 // Prints the manifest, the sorted file tree, and total counts. No cluster access.
 func newInspectCmd() *cobra.Command {
-	var outputForm string
+	var (
+		outputForm      string
+		maxDecompressed int64
+	)
 
 	cmd := &cobra.Command{
 		Use:   "inspect <archive.tar.gz>",
@@ -121,10 +124,14 @@ func newInspectCmd() *cobra.Command {
 		Long: `Inspect opens a ` + "`groot collect`" + ` archive (.tar.gz), reads the manifest if
 present, and lists the file tree with sizes. No cluster connection is required.
 
+Archive open enforces arcread safety caps (default max decompressed total 16GiB).
+Override with --max-decompressed when indexing a larger capture.
+
 Exit codes follow #82: 0 success, 3 archive read failure, 1 parse failure.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			info, err := collector.InspectArchive(args[0])
+			caps := archiveCapsFromMaxDecompressed(maxDecompressed)
+			info, err := collector.InspectArchiveWithCaps(args[0], caps)
 			if err != nil {
 				return NewExitErrorf(ExitCollectAborted, "inspect archive: %v", err)
 			}
@@ -138,6 +145,7 @@ Exit codes follow #82: 0 success, 3 archive read failure, 1 parse failure.`,
 	}
 
 	cmd.Flags().StringVar(&outputForm, "output", "text", "Output format: text or json")
+	cmd.Flags().Int64Var(&maxDecompressed, "max-decompressed", 0, "Max total decompressed archive bytes during index (0 = default 16GiB)")
 	return cmd
 }
 

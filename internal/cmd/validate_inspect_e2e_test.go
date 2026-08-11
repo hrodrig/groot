@@ -178,8 +178,12 @@ func TestInspect_helpMentionsCluster(t *testing.T) {
 	if err := rootCmd.Execute(); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(buf.String(), "No cluster connection") {
-		t.Fatalf("inspect help should note no cluster access:\n%s", buf.String())
+	out := buf.String()
+	if !strings.Contains(out, "No cluster connection") {
+		t.Fatalf("inspect help should note no cluster access:\n%s", out)
+	}
+	if !strings.Contains(out, "max-decompressed") {
+		t.Fatalf("inspect help should list --max-decompressed:\n%s", out)
 	}
 }
 

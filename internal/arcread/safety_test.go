@@ -292,8 +292,8 @@ func TestDefaultCaps_namedConstants(t *testing.T) {
 	if arcread.DefaultMaxRegularFiles != 100_000 {
 		t.Fatalf("DefaultMaxRegularFiles=%d want 100000", arcread.DefaultMaxRegularFiles)
 	}
-	if arcread.DefaultMaxDecompressedBytes != 512<<20 {
-		t.Fatalf("DefaultMaxDecompressedBytes=%d want 512 MiB", arcread.DefaultMaxDecompressedBytes)
+	if arcread.DefaultMaxDecompressedBytes != 16<<30 {
+		t.Fatalf("DefaultMaxDecompressedBytes=%d want 16 GiB", arcread.DefaultMaxDecompressedBytes)
 	}
 	c := arcread.DefaultCaps()
 	if c.MaxMemberBytes != arcread.DefaultMaxMemberBytes ||

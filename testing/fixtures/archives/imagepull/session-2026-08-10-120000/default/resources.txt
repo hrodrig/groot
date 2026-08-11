@@ -1,0 +1,25 @@
+== pods ==
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "badimg-0",
+        "namespace": "default"
+      },
+      "status": {
+        "phase": "Pending",
+        "containerStatuses": [
+          {
+            "name": "app",
+            "state": {
+              "waiting": {
+                "reason": "ImagePullBackOff",
+                "message": "Back-off pulling image \"missing/app:1\""
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

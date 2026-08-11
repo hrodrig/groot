@@ -9,9 +9,11 @@ set -euo pipefail
 SECONDS=0
 # Progress: prefer /dev/tty so lines appear immediately under `make` and IDE runners
 # (merged subprocess stdout/stderr can still be fully block-buffered).
+# Probe must be grouped: bare `: >/dev/tty 2>/dev/null` still prints
+# "No such device or address" when the node exists but there is no controlling TTY (CI).
 step() {
 	local line="==> [${SECONDS}s] $*"
-	if [[ -e /dev/tty ]] && : >/dev/tty 2>/dev/null; then
+	if { : >/dev/tty; } 2>/dev/null; then
 		printf '%s\n' "$line" >/dev/tty
 	else
 		printf '%s\n' "$line" >&2
@@ -179,23 +181,34 @@ if [[ -z "$TAR" || ! -f "$TAR" ]]; then
 fi
 step "Verifying archive: $(basename "$TAR")"
 
-if ! tar -tzf "$TAR" | grep -q "e2e-groot/resources.txt"; then
+# Materialize the member list once. Do not pipe tar into grep -q under pipefail:
+# early grep exit → tar SIGPIPE → false "missing member" (seen on GitHub Actions).
+MEMBERS="$(tar -tzf "$TAR")" || {
+	echo "error: cannot list archive $(basename "$TAR")" >&2
+	exit 1
+}
+
+if ! grep -q 'e2e-groot/resources.txt' <<<"$MEMBERS"; then
 	echo "error: archive missing e2e-groot/resources.txt" >&2
-	tar -tzf "$TAR" | head -40 >&2
+	head -40 <<<"$MEMBERS" >&2
 	exit 1
 fi
 
-if ! tar -tzf "$TAR" | grep -E 'e2e-groot/.*\.log$' | head -1 | grep -q .; then
+LOG_MEMBER="$(grep -E 'e2e-groot/.*\.log$' <<<"$MEMBERS" | head -1 || true)"
+if [[ -z "$LOG_MEMBER" ]]; then
 	echo "error: archive missing pod log under e2e-groot/" >&2
-	tar -tzf "$TAR" | grep e2e-groot >&2 || true
+	grep e2e-groot <<<"$MEMBERS" >&2 || true
 	exit 1
 fi
 
-LOG_MEMBER="$(tar -tzf "$TAR" | grep -E 'e2e-groot/.*\.log$' | head -1)"
 step "Checking log content in: $LOG_MEMBER"
-if ! tar -xOzf "$TAR" "$LOG_MEMBER" | grep -q 'e2e-groot-marker'; then
+LOG_CONTENT="$(tar -xOzf "$TAR" "$LOG_MEMBER")" || {
+	echo "error: cannot extract $LOG_MEMBER from archive" >&2
+	exit 1
+}
+if ! grep -q 'e2e-groot-marker' <<<"$LOG_CONTENT"; then
 	echo "error: log file does not contain expected marker lines" >&2
-	tar -xOzf "$TAR" "$LOG_MEMBER" | tail -20 >&2
+	tail -20 <<<"$LOG_CONTENT" >&2
 	exit 1
 fi
 

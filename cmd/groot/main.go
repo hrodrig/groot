@@ -1,3 +1,4 @@
+// Package main is the groot CLI entrypoint. Logic lives in internal/cmd.
 package main
 
 import (

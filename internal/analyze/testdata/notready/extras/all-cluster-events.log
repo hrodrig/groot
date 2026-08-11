@@ -1,0 +1,2 @@
+LAST SEEN   TYPE      REASON      OBJECT            MESSAGE
+5m          Normal    Scheduled   pod/web-0         Successfully assigned default/web-0 to worker-1

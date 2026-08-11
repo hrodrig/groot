@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-10
+
+### Added
+
+- **offline `groot analyze` (1.1.x #69):** heuristic hints (CrashLoopBackOff, OOMKilled, ImagePullBackOff, NotReady, Evicted) from a collected `.tar.gz` without kubeconfig or cluster access; emits executive Markdown, structured JSON, or a budgeted LLM-ready paste pack.
+- **golden fixture corpus (1.1.x #69):** committed source-tree scenarios under `testing/fixtures/archives/` (healthy, crashloop, oom, imagepull, missing-manifest) with CI golden tests locking executive and LLM Markdown output.
+- **`--max-decompressed` flag (1.1.x #69):** override the default 16GiB total decompressed archive cap on `groot analyze` and `groot inspect`.
+
+### Changed
+
+- **arcread / analyze / inspect (1.1.x #69):** raise default max decompressed archive total from 512MiB to **16GiB** so typical large collects can be indexed.
+- **analyze evidence (1.1.x #69):** raise analyze-local read cap for TSV / `resources.txt` / pods-wide from 2MiB to **32MiB** (still under the 64MiB per-member arcread cap) so large namespace inventories are not skipped.
+- **README / BSD ports / man pages:** version badge and package pins synced to **1.1.0**.
+
+### Fixed
+
+- **kind E2E archive check:** avoid `tar | grep -q` under `pipefail` (SIGPIPE false negative for `e2e-groot/resources.txt` on GitHub Actions); silence `/dev/tty` probe noise when there is no controlling TTY.
+
 ## [1.0.6] - 2026-08-04
 
 Packaging + docs patch — man(1)/nfpm/BSD, CONTRIBUTING collector guide, expanded examples. No CLI or config contract changes.

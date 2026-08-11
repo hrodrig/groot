@@ -51,6 +51,8 @@ contrib/man/man1/*.1.gz
 internal/cmd/out/
 !docs/
 !docs/**
+!.planning/
+!.planning/**
 
 # Build output dir: keep directory in git with a placeholder only (see Makefile → bin/)
 !bin/

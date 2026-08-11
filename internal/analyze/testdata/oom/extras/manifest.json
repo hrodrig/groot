@@ -1,0 +1,28 @@
+{
+  "groot_version": "dev",
+  "archive_layout_version": 1,
+  "run_id": "run-oom-001",
+  "archive_sha256": "oomsha0123456789abcdef0123456789",
+  "collected_at": "2026-08-10T13:00:00Z",
+  "duration_seconds": 1.0,
+  "session_base": "oom",
+  "archive_basename": "oom.tar.gz",
+  "file_prefix": "oom",
+  "cluster": {
+    "context": "kind-demo",
+    "cluster": "kind-demo",
+    "user": "kind-demo",
+    "server": "https://127.0.0.1:6443"
+  },
+  "jobs": {
+    "total": 1,
+    "success": 1,
+    "failed": 0
+  },
+  "paths": [
+    "extras/manifest.json",
+    "extras/all-cluster-events.log",
+    "extras/all-pod-node-placement.tsv",
+    "default/resources.txt"
+  ]
+}

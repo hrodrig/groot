@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hrodrig/groot/internal/arcread"
 	"github.com/hrodrig/groot/internal/config"
 	"github.com/hrodrig/groot/internal/kubetest"
 )
@@ -32,7 +33,7 @@ func TestWriteManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var m captureManifest
+	var m arcread.Manifest
 	if err := json.Unmarshal(raw, &m); err != nil {
 		t.Fatal(err)
 	}
@@ -41,5 +42,8 @@ func TestWriteManifest(t *testing.T) {
 	}
 	if m.ArchiveLayoutVersion != ArchiveLayoutVersion {
 		t.Fatalf("archive_layout_version=%d want %d", m.ArchiveLayoutVersion, ArchiveLayoutVersion)
+	}
+	if ArchiveLayoutVersion != arcread.ArchiveLayoutVersion {
+		t.Fatalf("collector.ArchiveLayoutVersion=%d want arcread alias %d", ArchiveLayoutVersion, arcread.ArchiveLayoutVersion)
 	}
 }

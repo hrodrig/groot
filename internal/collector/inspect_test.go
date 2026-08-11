@@ -49,16 +49,17 @@ func makeMinimalArchive(t *testing.T, dest string, manifestJSON string, extra st
 }
 
 func TestInspectArchive_listsFilesAndReadsManifest(t *testing.T) {
+	// Bare-prefix members (no session root) — arcread LookupSuffix + inventory wrapper.
 	dir := t.TempDir()
 	path := filepath.Join(dir, "out.tar.gz")
-	makeMinimalArchive(t, path, `{"groot_version":"test","cluster":{"cluster":"kind"}}`, "nodes/n1.log=line1\nline2\n")
+	makeMinimalArchive(t, path, `{"groot_version":"test","archive_layout_version":1,"cluster":{"cluster":"kind"}}`, "nodes/n1.log=line1\nline2\n")
 
 	info, err := InspectArchive(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.FileCount == 0 {
-		t.Fatal("expected > 0 files")
+	if info.FileCount != 2 {
+		t.Fatalf("FileCount=%d want 2 (arcread regular members)", info.FileCount)
 	}
 	if info.ArchiveSize <= 0 {
 		t.Fatalf("expected archive size > 0, got %d", info.ArchiveSize)
@@ -69,8 +70,18 @@ func TestInspectArchive_listsFilesAndReadsManifest(t *testing.T) {
 	if !strings.Contains(info.ManifestJSON, "kind") {
 		t.Fatalf("manifest not echoed back: %q", info.ManifestJSON)
 	}
-	if len(info.Files) < 2 {
-		t.Fatalf("expected at least 2 file entries, got %d", len(info.Files))
+	if info.ParseErr != "" {
+		t.Fatalf("ParseErr=%q", info.ParseErr)
+	}
+	found := false
+	for _, line := range info.Files {
+		if strings.HasPrefix(line, "nodes/n1.log (") && strings.HasSuffix(line, " bytes)") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("Files missing inventory line: %v", info.Files)
 	}
 }
 

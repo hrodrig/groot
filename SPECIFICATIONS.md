@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-`groot` is a Go CLI that **collects read-only Kubernetes logs and cluster context** into a single **`.tar.gz`** archive for incident response, troubleshooting, and root cause analysis (RCA). It does not analyze the cluster or produce a diagnosis.
+`groot` is a Go CLI that **collects read-only Kubernetes logs and cluster context** into a single **`.tar.gz`** archive for incident response, troubleshooting, and root cause analysis (RCA). Offline **`groot analyze`** emits evidence-backed **hints** from an existing archive (not a live-cluster diagnosis and not a definitive root-cause claim).
 
 This document is the source of truth for **observable behavior** and test expectations. Planned work and gaps live in **[ROADMAP.md](ROADMAP.md)**; shipped releases in **[CHANGELOG.md](../CHANGELOG.md)**.
 
@@ -10,7 +10,8 @@ This document is the source of truth for **observable behavior** and test expect
 
 ### In scope
 
-- One primary command: **`groot collect`** (plus global flags and **`--test-connection`**).
+- Primary command: **`groot collect`** (plus global flags and **`--test-connection`**).
+- Offline archive commands: **`groot inspect`**, **`groot analyze`** (no kubeconfig / API).
 - YAML configuration (`groot.yml` or `--config`) with **`GROOT_*`** environment overrides (Viper).
 - Parallel collection jobs against the Kubernetes API via **client-go** and **metrics** clients—**no `kubectl` binary** at runtime.
 - Timestamped capture directory, then **`.tar.gz`** archive beside `output_dir`; ephemeral capture folder removed after archiving.
@@ -54,6 +55,9 @@ This document is the source of truth for **observable behavior** and test expect
 | `groot --print-sample-config` | Writes sample YAML to **stdout** and exits (root or `collect`). |
 | `groot --test-connection` | Loads config, lists one namespace via API, prints connection OK (root or `collect`). |
 | `groot notify test` | Sends a synthetic summary to all enabled notify channels (see §15). Does **not** run collect or contact the cluster. |
+| `groot validate` | Preflight checks without writing an archive (see §12). |
+| `groot inspect <archive>` | Offline inventory of a collect `.tar.gz` (see §13). |
+| `groot analyze <archive>` | Offline heuristic hints from a collect `.tar.gz` (see §16). |
 
 ### Persistent flags (root + collect)
 
@@ -85,7 +89,7 @@ This document is the source of truth for **observable behavior** and test expect
 | 0 | Success (collect completed; notify succeeded when enabled and not skipped) |
 | 1 | Config validation (YAML load, `--since`, missing config file) |
 | 2 | Kubernetes client / API error (auth, list, handshake) |
-| 3 | Collect aborted (timeout, archive failure) |
+| 3 | Collect aborted (timeout, archive failure); also **archive open/read failure** for `inspect` / `analyze` |
 | 4 | Notify delivery failed |
 | 5 | Reserved — partial failures ≥ threshold in opt-in `--strict` mode (`--strict` flag, default threshold 1; see [plan-0.9.0.md](docs/plan-0.9.0.md)) |
 
@@ -436,15 +440,32 @@ Validates the environment before a collect run. All checks are independent; fail
 
 **Exit codes (see §3):** 0 on pass (warnings allowed), 1 on config/disk/RBAC failure, 2 on Kubernetes-API failure.
 
-## 13. `groot inspect <archive>` — archive analysis (0.9.x #31)
+## 13. `groot inspect <archive>` — archive inventory (0.9.x #31)
 
 ```
-groot inspect <archive.tar.gz> [--output text|json]
+groot inspect <archive.tar.gz> [--output text|json] [--max-decompressed <bytes>]
 ```
 
-Analyzes an existing `.tar.gz` produced by `groot collect`. Does **not** require cluster access. Reads `extras/manifest.json` when present, lists all files with sizes, and reports the archive size and file count.
+Inventories an existing `.tar.gz` produced by `groot collect`. Does **not** require cluster access. Reads `extras/manifest.json` when present, lists all files with sizes, and reports the archive size and file count.
 
-**Exit codes (see §3):** 0 success, 3 archive read failure, 1 manifest parse failure (non-fatal).
+| Flag | Default | Effect |
+|------|---------|--------|
+| `--output <text\|json>` | `text` | Human inventory or JSON `InspectInfo`. |
+| `--max-decompressed <bytes>` | `0` (= default cap) | Override total decompressed-byte cap for Pass-1 index (see §13.1). |
+
+**Exit codes (see §3):** 0 success, 3 archive open/read failure (including safety-cap rejection). Missing/unparseable manifest is non-fatal inventory degrade (reported in output; does not force exit 1 in current CLI).
+
+### 13.1 Offline archive reader caps (`arcread`)
+
+`inspect` and `analyze` open archives through the shared offline reader. Pass-1 indexes the `.tar.gz` **without extracting to disk** and fails closed on hostile or oversized input.
+
+| Cap | Default | Notes |
+|-----|---------|-------|
+| Max member size | **64 MiB** | Single regular-file member. |
+| Max regular files | **100_000** | Count of regular-file members. |
+| Max decompressed total | **16 GiB** | Sum of member bodies drained during Pass-1 index. |
+
+Exceeding a cap → open error → CLI exit **3**. Operators may raise only the decompressed total via `--max-decompressed` on `inspect` / `analyze` (raw byte count; `0` keeps the default). Path traversal, absolute member names, and symlink/hardlink members are rejected.
 
 ## 14. Config profiles and examples (0.9.x #86, 1.1.x #46)
 
@@ -482,4 +503,34 @@ Loads `notify.*` from config and posts a **synthetic** `collector.Summary` to ev
 **Exit codes (see §3):** 0 on delivery success; **1** when config is invalid, no channel is enabled, or `--event` is unknown; **4** when any enabled channel returns a delivery error.
 
 **Operator use:** verify Slack/Teams/webhooks, Mailgun SMTP (`GROOT_NOTIFY_EMAIL_*`), PagerDuty routing keys, etc., before scheduling cron/Helm collects. Step-by-step Mailgun/SMTP runbook: [docs/notify-smoke-test.md](docs/notify-smoke-test.md); sample config: [examples/notify/mailgun-smoke.yml](examples/notify/mailgun-smoke.yml).
+
+## 16. `groot analyze <archive>` — offline heuristic hints (1.1.x #69)
+
+```
+groot analyze <archive.tar.gz> [--output text|json|llm] [--max-decompressed <bytes>]
+```
+
+Opens a local `groot collect` archive and emits evidence-backed heuristic **hints** (CrashLoopBackOff, OOMKilled, ImagePullBackOff, NotReady, Evicted when supported by archive evidence). Does **not** require kubeconfig or cluster API access. Findings are hypotheses from offline evidence — not a definitive root-cause diagnosis.
+
+| Flag | Default | Effect |
+|------|---------|--------|
+| `--output <text\|json\|llm>` | `text` | Executive Markdown, structured Report JSON, or budgeted LLM-ready paste Markdown. |
+| `--max-decompressed <bytes>` | `0` (= default cap) | Override Pass-1 decompressed total (see §13.1). |
+
+**Output notes:**
+
+- `text` — executive Markdown; includes `run_id` / `archive_sha256` when present in manifest.
+- `json` — same findings model (`Report`) as Markdown renderers.
+- `llm` — paste pack with assistant instructions, ranked findings, head/tail omit markers under a **32 KiB** byte budget, and an explicit secrets warning (collect-time redaction may not cover all cited member types).
+
+**Analyze-local member read caps** (after open; optional members degrade with Notes, not exit 3):
+
+| Member class | Cap |
+|--------------|-----|
+| Cluster/warning events logs | **2 MiB** |
+| TSV / `*/resources.txt` / pods-wide text | **32 MiB** |
+
+**Golden fixture corpus:** The committed source-tree corpus under `testing/fixtures/archives/` covers healthy, CrashLoopBackOff, OOMKilled, ImagePullBackOff, and missing-manifest degrade scenarios. CI golden tests lock executive and LLM Markdown output for these fixtures so heuristic or rendering regressions fail the build.
+
+**Exit codes (see §3):** 0 success (including zero hints / healthy empty summary); 3 archive open/read failure (including §13.1 cap rejection). Invalid `--output` is an ordinary error (not exit 3).
 

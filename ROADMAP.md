@@ -241,7 +241,7 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 69 | 4 | 🚀 **`groot analyze <archive>`**: heuristics (OOM, CrashLoop, trends) + executive `.md` summary. | Pending |
+| 69 | 4 | 🚀 **`groot analyze <archive>`**: offline heuristics (CrashLoop, OOM, ImagePull, NotReady, Evicted) + executive/LLM Markdown; golden fixtures under `testing/fixtures/archives/`. | **Done (v1.1.0)** |
 | 56 | 4 | **`groot diff`**: compare two archives from the same cluster. | Pending |
 | 62 | 4 | **Post-collect analysis hooks** (Popeye, kubectl-debug). | Pending |
 

@@ -1,0 +1,40 @@
+== pods ==
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "web-0",
+        "namespace": "default"
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True"
+          },
+          {
+            "type": "Ready",
+            "status": "False",
+            "reason": "ContainersNotReady",
+            "message": "containers with unready status: [web]"
+          },
+          {
+            "type": "ContainersReady",
+            "status": "False"
+          }
+        ],
+        "containerStatuses": [
+          {
+            "name": "web",
+            "state": {
+              "running": {
+                "startedAt": "2026-08-10T13:10:00Z"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

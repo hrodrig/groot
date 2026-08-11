@@ -1,0 +1,27 @@
+{
+  "groot_version": "dev",
+  "archive_layout_version": 1,
+  "run_id": "run-notready-001",
+  "archive_sha256": "notreadysha0123456789abcdef01234",
+  "collected_at": "2026-08-10T13:15:00Z",
+  "duration_seconds": 1.0,
+  "session_base": "notready",
+  "archive_basename": "notready.tar.gz",
+  "file_prefix": "notready",
+  "cluster": {
+    "context": "kind-demo",
+    "cluster": "kind-demo",
+    "user": "kind-demo",
+    "server": "https://127.0.0.1:6443"
+  },
+  "jobs": {
+    "total": 1,
+    "success": 1,
+    "failed": 0
+  },
+  "paths": [
+    "extras/manifest.json",
+    "extras/all-cluster-events.log",
+    "default/resources.txt"
+  ]
+}

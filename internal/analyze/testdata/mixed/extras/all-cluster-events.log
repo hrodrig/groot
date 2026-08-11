@@ -1,0 +1,2 @@
+LAST SEEN   TYPE      REASON      OBJECT            MESSAGE
+90s         Warning   BackOff     pod/demo-0        Back-off restarting failed container demo in pod demo-0_default(uid): CrashLoopBackOff

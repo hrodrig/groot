@@ -1,0 +1,22 @@
+== pods ==
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "batch-0",
+        "namespace": "default"
+      },
+      "status": {
+        "phase": "Failed",
+        "reason": "Evicted",
+        "message": "The node was low on resource: ephemeral-storage.",
+        "conditions": [
+          {
+            "type": "Ready",
+            "status": "False"
+          }
+        ]
+      }
+    }
+  ]
+}

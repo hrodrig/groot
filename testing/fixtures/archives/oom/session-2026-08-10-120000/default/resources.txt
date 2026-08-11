@@ -1,0 +1,31 @@
+== pods ==
+{
+  "items": [
+    {
+      "metadata": {
+        "name": "memhog-0",
+        "namespace": "default"
+      },
+      "status": {
+        "phase": "Running",
+        "containerStatuses": [
+          {
+            "name": "memhog",
+            "state": {
+              "running": {
+                "startedAt": "2026-08-10T11:55:00Z"
+              }
+            },
+            "lastState": {
+              "terminated": {
+                "exitCode": 137,
+                "reason": "OOMKilled",
+                "message": "Memory limit exceeded"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

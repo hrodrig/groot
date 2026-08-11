@@ -1,0 +1,3 @@
+LAST SEEN   TYPE      REASON      OBJECT            MESSAGE
+2m          Normal    Scheduled   pod/demo-0        Successfully assigned default/demo-0 to worker-1
+90s         Warning   BackOff     pod/demo-0        Back-off restarting failed container demo in pod demo-0_default(uid): CrashLoopBackOff

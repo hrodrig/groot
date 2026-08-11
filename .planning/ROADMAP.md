@@ -100,7 +100,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Shared Offline Archive Reader | 2/2 | Complete | 2026-08-10 |
 | 2. Heuristic Analyze + Executive Markdown | 2/2 | Complete | 2026-08-10 |
-| 3. LLM-Ready Markdown Packaging | 1/1 | Complete | 03-01-SUMMARY.md (commit pending) |
+| 3. LLM-Ready Markdown Packaging | 1/1 | Complete | 2026-08-10 |
 | 4. Fixtures, SPEC, and Release Lock | 0/TBD | Not started | - |
 
 ## Coverage

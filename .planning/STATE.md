@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1.0
 milestone_name: milestone
-current_phase: 3
-current_phase_name: LLM-Ready Markdown Packaging
-status: Phase 3 executed — awaiting human commit approval
-stopped_at: Completed 03-01-PLAN.md (uncommitted; awaiting human commit approval)
-last_updated: "2026-08-11T00:12:30Z"
+current_phase: 4
+current_phase_name: Fixtures, SPEC, and Release Lock
+status: Phase 3 complete — verified; next Phase 4
+stopped_at: Phase 3 verification passed (goal-backward)
+last_updated: "2026-08-11T00:20:00Z"
 last_activity: 2026-08-10
-last_activity_desc: Phase 3 executed — RenderLLM + --output llm (staged, uncommitted)
+last_activity_desc: Phase 3 verified (RenderLLM + --output llm); ROADMAP marked complete
 progress:
   total_phases: 4
   completed_phases: 3
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-10)
 
 **Core value:** Ticket-ready evidence archive — freeze cluster state into one reproducible bundle operators can attach, inspect offline, and summarize for RCA / LLM paste.
-**Current focus:** Phase 3 — LLM-Ready Markdown Packaging (v1.1.0 `#69`)
+**Current focus:** Phase 4 — Fixtures, SPEC, and Release Lock (v1.1.0 `#69`)
 
 ## Current Position
 
-Phase: 3 of 4 (LLM-Ready Markdown Packaging)
-Plan: 1 of 1 in current phase (SUMMARY written)
-Status: Phase 3 executed; staged, awaiting human commit approval
-Last activity: 2026-08-10 — Phase 3 RenderLLM + CLI --output llm implemented
+Phase: 4 of 4 (Fixtures, SPEC, and Release Lock)
+Plan: 0 of TBD in current phase
+Status: Phase 3 complete — verified; ready to plan/execute Phase 4
+Last activity: 2026-08-10 — Phase 3 goal-backward verification PASSED
 
-Progress: [██████████] 100%
+Progress: [███████████████░░░░░] 75%
 
 ## Performance Metrics
 
@@ -49,7 +49,7 @@ Progress: [██████████] 100%
 |-------|-------|--------|
 | 1 Shared Offline Archive Reader | 2/2 | Complete |
 | 2 Heuristic Analyze + Executive Markdown | 2/2 | Complete (verified) |
-| 3 LLM-Ready Markdown Packaging | 1/1 | Executed (commit pending) |
+| 3 LLM-Ready Markdown Packaging | 1/1 | Complete (verified) |
 | 4 Fixtures, SPEC, and Release Lock | 0/TBD | Pending |
 
 **Per-Plan Metrics:**
@@ -58,25 +58,17 @@ Progress: [██████████] 100%
 |------|----------|-------|-------|
 | Phase 02 P01 | 2min | 2 tasks | 16 files |
 | Phase 02 P02 | 3min | 2 tasks | 19 files |
-| Phase 03 P01 | 12min | 2 tasks | 5 files |
-
-## Session Continuity
-
-**Last session:** 2026-08-11T00:11:45.598Z
-**Stopped at:** Completed 03-01-PLAN.md (uncommitted; awaiting human commit approval)
-**Resume file:** None
-
-Next: Human-approve commit for 03-01, then `/gsd-verify-work` / Phase 4 planning
-
----
-*Updated: 2026-08-10 after Phase 3 execution (uncommitted)*
+| Phase 03 P01 | ~5min | 2 tasks | ~8 files |
 
 ## Decisions
 
-- [Phase 2]: D-01: internal/analyze + newAnalyzeCmd for offline heuristics
-- [Phase 2]: D-04: five heuristic scanners (CrashLoop/OOM/ImagePull/NotReady/Evicted)
-- [Phase 2]: D-07: archive I/O → exit 3; healthy zero hints → exit 0
-- [Phase 2]: OOM requires OOMKilled text; exit 137 alone → open_question Note only
-- [Phase 2]: D-08 missing-extras: Notes + zero invented hints + err nil
-- [Phase 3]: DefaultLLMBudgetBytes=32768 constant-only; llmExcerptMaxRunes=256; omit marker … [omitted N bytes] …
-- [Phase 3]: RenderLLM is pure over Report; CLI --output llm; keep ≥1 hint before head/tail omit
+See phase CONTEXT files. Phase 3 batch-locked: `--output llm`, 32 KiB budget, omit markers, secrets warning, no `#45` / tiktoken.
+
+## Blockers / Notes
+
+- None for Phase 3.
+- Phase 4 owns full `docs/plan-1.1.0.md`, SPEC analyze section, golden corpus under `testing/fixtures/archives/`, CHANGELOG, `make release-check` → v1.1.0.
+
+## Next
+
+`/gsd-discuss-phase 4` or rudo batch CONTEXT → research → plan → execute Phase 4.

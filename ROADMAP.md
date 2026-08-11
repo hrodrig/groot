@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-08-11 (**v1.1.0** shipped — `#69` offline analyze + LLM Markdown + goldens; Band 4 continues with `#32` / `#56`; backlog **`#97`** WebDAV/Nextcloud upload)
+**Last reviewed:** 2026-08-11 (**v1.1.1** patch — kubeconfig `~` expansion, unique `sessionBase` short, S3 credential trim; Band 4 continues with `#32` / `#56`; backlog **`#97`** WebDAV/Nextcloud)
 
 ### Versioning note
 

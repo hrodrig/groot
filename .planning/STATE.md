@@ -4,15 +4,15 @@ milestone: v1.1.0
 milestone_name: milestone
 current_phase: 3
 current_phase_name: LLM-Ready Markdown Packaging
-status: Phase 3 research complete — ready for planning
-stopped_at: Phase 3 RESEARCH.md written; next /gsd-plan-phase planner
-last_updated: "2026-08-10T23:56:00Z"
+status: Phase 3 planned — ready for execution
+stopped_at: Phase 3 PLAN.md written; next /gsd-execute-phase 3
+last_updated: "2026-08-11T00:05:00Z"
 last_activity: 2026-08-10
-last_activity_desc: Phase 3 RESEARCH complete (RenderLLM, 32 KiB budget, --output llm)
+last_activity_desc: Phase 3 plan complete (03-01 RenderLLM + budget + --output llm)
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 4
+  total_plans: 5
   completed_plans: 4
   percent: 50
 ---
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-08-10)
 ## Current Position
 
 Phase: 3 of 4 (LLM-Ready Markdown Packaging)
-Plan: 0 of TBD in current phase
-Status: Phase 3 RESEARCH complete; next plan
-Last activity: 2026-08-10 — Phase 3 domain research (LLM Markdown packaging)
+Plan: 0 of 1 in current phase
+Status: Phase 3 planned; ready to execute 03-01
+Last activity: 2026-08-10 — Phase 3 plan (RenderLLM + CLI --output llm)
 
 Progress: [██████████░░░░░░░░░░] 50%
 
@@ -49,7 +49,7 @@ Progress: [██████████░░░░░░░░░░] 50%
 |-------|-------|--------|
 | 1 Shared Offline Archive Reader | 2/2 | Complete |
 | 2 Heuristic Analyze + Executive Markdown | 2/2 | Complete (verified) |
-| 3 LLM-Ready Markdown Packaging | 0/TBD | Pending |
+| 3 LLM-Ready Markdown Packaging | 0/1 | Planned |
 | 4 Fixtures, SPEC, and Release Lock | 0/TBD | Pending |
 
 **Per-Plan Metrics:**
@@ -61,14 +61,14 @@ Progress: [██████████░░░░░░░░░░] 50%
 
 ## Session Continuity
 
-**Last session:** 2026-08-10T23:56:00Z
-**Stopped at:** Phase 3 RESEARCH.md complete
-**Resume file:** `.planning/phases/03-llm-ready-markdown-packaging/03-RESEARCH.md`
+**Last session:** 2026-08-11T00:05:00Z
+**Stopped at:** Phase 3 PLAN complete (03-01)
+**Resume file:** `.planning/phases/03-llm-ready-markdown-packaging/03-01-PLAN.md`
 
-Next: Plan Phase 3 (`RenderLLM`, `--output llm`, budget + omit markers)
+Next: Execute Phase 3 (`/gsd-execute-phase 3`)
 
 ---
-*Updated: 2026-08-10 after Phase 2 verification*
+*Updated: 2026-08-10 after Phase 3 planning*
 
 ## Decisions
 

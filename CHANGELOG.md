@@ -14,7 +14,8 @@ Patch — path expansion, concurrent-safe capture naming, S3 credential trim.
 ### Changed
 
 - **Capture / archive naming:** `sessionBase` is now `<file_prefix>-<short>-<timestamp>[…]` where `<short>` is the lowercase random suffix from `run_id`, so concurrent collects in the same second do not collide on a shared `output_dir`.
-- **README / man pages:** version badge and packaging pins synced to **1.1.1**.
+- **README / man pages / BSD ports:** version badge and packaging pins synced to **1.1.1**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.1.1**.
 
 ### Fixed
 

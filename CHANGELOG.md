@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`kubeconfig` path expansion:** `~` and `${VAR}` now expand for `kubeconfig` (YAML), `KUBECONFIG`, and `--kubeconfig` — same rules as `output_dir`. Multipath lists expand per entry. SFTP `identity_file` / `known_hosts_file` paths expand too.
+
 ## [1.1.0] - 2026-08-10
 
 ### Added

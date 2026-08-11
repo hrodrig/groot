@@ -65,9 +65,7 @@ var rootCmd = &cobra.Command{
 			if err != nil {
 				return NewExitError(ExitConfigError, fmt.Errorf("load config: %w", err))
 			}
-			if kubeconfigOverride != "" {
-				cfg.Kubeconfig = kubeconfigOverride
-			}
+			applyKubeconfigFlag(&cfg)
 			meta, err := runConnectionTest(cmd.Context(), cfg)
 			if err != nil {
 				// runConnectionTest wraps kubernetes.NewForConfig / list-namespaces;
@@ -112,9 +110,7 @@ var collectCmd = &cobra.Command{
 			}
 			cfg.Collection.PodLogsSince = norm
 		}
-		if kubeconfigOverride != "" {
-			cfg.Kubeconfig = kubeconfigOverride
-		}
+		applyKubeconfigFlag(&cfg)
 		if testConnection {
 			meta, err := runConnectionTest(cmd.Context(), cfg)
 			if err != nil {
@@ -321,6 +317,13 @@ type connMeta struct {
 	Context string
 	Cluster string
 	Server  string
+}
+
+func applyKubeconfigFlag(cfg *config.Config) {
+	if cfg == nil || kubeconfigOverride == "" {
+		return
+	}
+	cfg.Kubeconfig = config.ExpandKubeconfig(kubeconfigOverride)
 }
 
 func runConnectionTest(ctx context.Context, cfg config.Config) (connMeta, error) {

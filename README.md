@@ -568,7 +568,7 @@ notify:
 
 | Key | What it does |
 |-----|----------------|
-| **`kubeconfig`** | Path to the kubeconfig file used to build the **client-go** REST config (same discovery rules as **client-go** / **`clientcmd`**). Empty: use **`KUBECONFIG`** if set, then the default kubeconfig locations (for example **`~/.kube/config`**), or in-cluster credentials when Groot runs as a pod. **`groot --kubeconfig`** overrides this for a single run (see [Resolution and precedence](#resolution-and-precedence)). |
+| **`kubeconfig`** | Path to the kubeconfig file used to build the **client-go** REST config (same discovery rules as **client-go** / **`clientcmd`**). Empty: use **`KUBECONFIG`** if set, then the default kubeconfig locations (for example **`~/.kube/config`**), or in-cluster credentials when Groot runs as a pod. Supports **`~`** and **`${VAR}`** expansion (YAML, `KUBECONFIG`, and **`--kubeconfig`**). **`groot --kubeconfig`** overrides this for a single run (see [Resolution and precedence](#resolution-and-precedence)). |
 | **`cluster_name`** | Optional label for the **`<cluster>`** segment in archive basenames. When empty, Groot resolves: kubeconfig cluster name → **`kube-public/cluster-info`** → API server host → **`unknown-cluster`**. Set explicitly for in-cluster pods without kubeconfig context. Env: **`GROOT_CLUSTER_NAME`**. |
 | **`output_dir`** | Base directory: each run creates **`<file_prefix>-<timestamp>[-since-<slug>]/`**, then **`<sessionBase>-<cluster>[-<message>].tar.gz`** beside it. Supports **`~`** and **`${VAR}`** expansion. |
 | **`file_prefix`** | Prefix for capture directory and archive basename (default **`groot-capture`**). Example session: **`groot-capture-20260606-120000-my-cluster.tar.gz`**. |

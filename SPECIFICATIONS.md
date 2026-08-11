@@ -106,14 +106,14 @@ Partial job failures inside collect remain **non-fatal** by default; they are co
 
 **Not auto-loaded:** `/etc/groot/groot.yml.sample` (packaged documentation only).
 
-`KUBECONFIG` environment variable overrides `kubeconfig` after unmarshal.
+`KUBECONFIG` environment variable overrides `kubeconfig` after unmarshal. Both the YAML value and `KUBECONFIG` are expanded (`~` / `${VAR}`; multipath lists per entry).
 
 ### Top-level keys
 
 | Key | Type | Default (if omitted) | Notes |
 |-----|------|----------------------|-------|
 | `config_version` | int | `0` (legacy) | **1.0.0+:** use `1` for new configs. Absent or `0` = legacy pre-1.0 behavior. Loader rejects unknown future versions. |
-| `kubeconfig` | string | `""` | Empty → client-go default rules + in-cluster when applicable. |
+| `kubeconfig` | string | `""` | Empty → client-go default rules + in-cluster when applicable. Supports `~` / `${VAR}` expansion (same as `output_dir`). Multipath values use `os.PathListSeparator` (same as `KUBECONFIG`). |
 | `cluster_name` | string | `""` | Optional archive basename cluster label. When empty, resolved from kubeconfig → `kube-public/cluster-info` → API server host. |
 | `output_dir` | string | `./out` | Supports `~` and `${VAR}` expansion. |
 | `file_prefix` | string | `groot-capture` | **Used** in capture directory and archive basename (ROADMAP **0.4.x #12**). |
@@ -377,9 +377,9 @@ Optional upload of the finished **`.tar.gz`** after notify on the success path.
 | `upload.sftp.port` | int | `22` | SSH port; env `GROOT_UPLOAD_SFTP_PORT`. |
 | `upload.sftp.user` | string | — | SSH user; env `GROOT_UPLOAD_SFTP_USER`. |
 | `upload.sftp.remote_dir` | string | — | Remote target directory; env `GROOT_UPLOAD_SFTP_REMOTE_DIR`. |
-| `upload.sftp.known_hosts_file` | string | — | Path to `known_hosts`; env `GROOT_UPLOAD_SFTP_KNOWN_HOSTS`. **Required** when SFTP is enabled unless `allow_insecure_host_key: true`. |
+| `upload.sftp.known_hosts_file` | string | — | Path to `known_hosts`; env `GROOT_UPLOAD_SFTP_KNOWN_HOSTS`. Supports `~` / `${VAR}`. **Required** when SFTP is enabled unless `allow_insecure_host_key: true`. |
 | `upload.sftp.allow_insecure_host_key` | bool | `false` | Testing only — skips host key verification (MITM risk). |
-| `upload.sftp.identity_file` | string | — | **Env only** (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`); never in YAML. |
+| `upload.sftp.identity_file` | string | — | **Env only** (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`); never in YAML. Supports `~` / `${VAR}`. |
 
 - Credentials: **AWS** via standard `AWS_*` env vars; **GCS** via `GOOGLE_APPLICATION_CREDENTIALS` (or workload identity in-cluster); **SFTP** via SSH key (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`). When **`STORAGE_EMULATOR_HOST`** is set (local emulator / fake GCS), Groot uses that endpoint with no auth (standard client-go emulator path).
 - SFTP auth: **public-key only** (BatchMode — password/keyboard-interactive rejected). Host key verified against `known_hosts_file`; **required** unless `allow_insecure_host_key: true` (testing only).

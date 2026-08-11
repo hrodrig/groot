@@ -1,6 +1,9 @@
 # Post-collect upload over SFTP (public-key only).
 # Secrets: GROOT_UPLOAD_SFTP_IDENTITY_FILE (and host/user if not set below).
-# Production: set known_hosts_file. Relay playbook → groot-selfhosted airgapped-relay.
+# Production: set known_hosts_file.
+# Operator playbooks (groot-selfhosted):
+#   Storage VPS + FileZilla → run/examples/sftp-vps/
+#   Airgapped → rclone OneDrive/SharePoint → run/examples/airgapped-relay/
 # Run: groot collect --config examples/upload/sftp.yml
 
 config_version: 1

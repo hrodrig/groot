@@ -55,6 +55,11 @@ internal/cmd/out/
 !.planning/
 !.planning/**
 
+# Local GSD/research noise (re-ignore after .planning whitelist)
+.planning/research/.cache/
+.planning/**/.??-*-start-epoch
+.planning/**/.??-*-start-time
+
 # Build output dir: keep directory in git with a placeholder only (see Makefile → bin/)
 !bin/
 !bin/.keep

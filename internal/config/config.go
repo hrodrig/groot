@@ -215,6 +215,8 @@ func applyLoadedConfig(cfg *Config) error {
 	if envKubeconfig := os.Getenv("KUBECONFIG"); envKubeconfig != "" {
 		cfg.Kubeconfig = envKubeconfig
 	}
+	// Same ~ / ${VAR} rules as output_dir (YAML, KUBECONFIG env, multipath lists).
+	cfg.Kubeconfig = ExpandKubeconfig(cfg.Kubeconfig)
 
 	if cfg.Collection.WorkerConcurrency < 1 {
 		cfg.Collection.WorkerConcurrency = 4
@@ -241,7 +243,7 @@ func applyLoadedConfig(cfg *Config) error {
 	if err := validateConfigVersion(cfg.ConfigVersion); err != nil {
 		return err
 	}
-	cfg.OutputDir = expandPath(cfg.OutputDir)
+	cfg.OutputDir = ExpandPath(cfg.OutputDir)
 	resolveNotificationSecrets(cfg)
 	resolveUploadSecrets(cfg)
 	if err := validateNotificationConfig(*cfg); err != nil {
@@ -561,7 +563,9 @@ func validateConfigVersion(v int) error {
 	return fmt.Errorf("unsupported config_version %d (supported: %d)", v, SupportedConfigVersion)
 }
 
-func expandPath(value string) string {
+// ExpandPath expands ${ENV} and a leading ~/ (or bare ~) in a filesystem path.
+// Used for output_dir, kubeconfig entries, and other path-like config values.
+func ExpandPath(value string) string {
 	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {
 		return value
@@ -584,6 +588,20 @@ func expandPath(value string) string {
 	return expanded
 }
 
+// ExpandKubeconfig expands each path in a kubeconfig value the same way as
+// ExpandPath. Supports client-go multipath lists (os.PathListSeparator).
+func ExpandKubeconfig(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return value
+	}
+	parts := filepath.SplitList(trimmed)
+	for i, p := range parts {
+		parts[i] = ExpandPath(p)
+	}
+	return strings.Join(parts, string(filepath.ListSeparator))
+}
+
 func normalizeUpload(cfg *Config) {
 	u := &cfg.Upload
 	if u.Timeout <= 0 {
@@ -603,8 +621,8 @@ func resolveUploadSecrets(cfg *Config) {
 	u.SFTP.Host = firstNonEmpty(u.SFTP.Host, os.Getenv("GROOT_UPLOAD_SFTP_HOST"))
 	u.SFTP.User = firstNonEmpty(u.SFTP.User, os.Getenv("GROOT_UPLOAD_SFTP_USER"))
 	u.SFTP.RemoteDir = firstNonEmpty(u.SFTP.RemoteDir, os.Getenv("GROOT_UPLOAD_SFTP_REMOTE_DIR"))
-	u.SFTP.IdentityFile = firstNonEmpty(u.SFTP.IdentityFile, os.Getenv("GROOT_UPLOAD_SFTP_IDENTITY_FILE"))
-	u.SFTP.KnownHostsFile = firstNonEmpty(u.SFTP.KnownHostsFile, os.Getenv("GROOT_UPLOAD_SFTP_KNOWN_HOSTS"))
+	u.SFTP.IdentityFile = ExpandPath(firstNonEmpty(u.SFTP.IdentityFile, os.Getenv("GROOT_UPLOAD_SFTP_IDENTITY_FILE")))
+	u.SFTP.KnownHostsFile = ExpandPath(firstNonEmpty(u.SFTP.KnownHostsFile, os.Getenv("GROOT_UPLOAD_SFTP_KNOWN_HOSTS")))
 	if port := os.Getenv("GROOT_UPLOAD_SFTP_PORT"); port != "" {
 		if p, err := strconv.Atoi(port); err == nil && p > 0 {
 			u.SFTP.Port = p

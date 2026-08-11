@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-11
+
+Patch — path expansion, concurrent-safe capture naming, S3 credential trim.
+
+### Changed
+
+- **Capture / archive naming:** `sessionBase` is now `<file_prefix>-<short>-<timestamp>[…]` where `<short>` is the lowercase random suffix from `run_id`, so concurrent collects in the same second do not collide on a shared `output_dir`.
+- **README / man pages / BSD ports:** version badge and packaging pins synced to **1.1.1**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.1.1**.
+
+### Fixed
+
+- **`kubeconfig` path expansion:** `~` and `${VAR}` now expand for `kubeconfig` (YAML), `KUBECONFIG`, and `--kubeconfig` — same rules as `output_dir`. Multipath lists expand per entry. SFTP `identity_file` / `known_hosts_file` paths expand too.
+- **S3 credentials trim:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` are trimmed before signing (avoids Contabo/S3-compatible `SignatureDoesNotMatch` from trailing spaces when pasting keys).
+
+### Docs
+
+- Link `examples/upload/s3.yml` to groot-selfhosted Contabo Object Storage playbook (`run/examples/s3-contabo/`).
+- ROADMAP backlog **#97** WebDAV/Nextcloud; ignore local GSD research cache under `.planning/`.
+
 ## [1.1.0] - 2026-08-10
 
 ### Added

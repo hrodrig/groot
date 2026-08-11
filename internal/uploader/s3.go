@@ -90,13 +90,18 @@ func (u *s3Uploader) Upload(ctx context.Context, archivePath string, summary col
 }
 
 func (u *s3Uploader) s3Client(ctx context.Context) (*s3.Client, error) {
-	region := firstNonEmpty(strings.TrimSpace(u.cfg.Region), os.Getenv("AWS_REGION"), os.Getenv("AWS_DEFAULT_REGION"), "us-east-1")
+	region := firstNonEmpty(
+		strings.TrimSpace(u.cfg.Region),
+		strings.TrimSpace(os.Getenv("AWS_REGION")),
+		strings.TrimSpace(os.Getenv("AWS_DEFAULT_REGION")),
+		"us-east-1",
+	)
 	opts := []func(*awscfg.LoadOptions) error{
 		awscfg.WithRegion(region),
 	}
-	if id, secret := os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"); id != "" && secret != "" {
+	if id, secret, token, ok := awsCredsFromEnv(); ok {
 		opts = append(opts, awscfg.WithCredentialsProvider(
-			credentials.NewStaticCredentialsProvider(id, secret, os.Getenv("AWS_SESSION_TOKEN")),
+			credentials.NewStaticCredentialsProvider(id, secret, token),
 		))
 	}
 	loaded, err := awscfg.LoadDefaultConfig(ctx, opts...)
@@ -109,6 +114,16 @@ func (u *s3Uploader) s3Client(ctx context.Context) (*s3.Client, error) {
 			o.UsePathStyle = true
 		}
 	}), nil
+}
+
+// awsCredsFromEnv reads static AWS credentials from the environment and trims
+// surrounding whitespace (common when pasting secrets from a control panel).
+func awsCredsFromEnv() (id, secret, token string, ok bool) {
+	id = strings.TrimSpace(os.Getenv("AWS_ACCESS_KEY_ID"))
+	secret = strings.TrimSpace(os.Getenv("AWS_SECRET_ACCESS_KEY"))
+	token = strings.TrimSpace(os.Getenv("AWS_SESSION_TOKEN"))
+	ok = id != "" && secret != ""
+	return id, secret, token, ok
 }
 
 func firstNonEmpty(values ...string) string {

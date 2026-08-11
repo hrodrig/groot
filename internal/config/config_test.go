@@ -674,3 +674,78 @@ func TestValidateUploadConfig_sftpUserRequired(t *testing.T) {
 		t.Fatalf("err=%v", err)
 	}
 }
+
+func TestExpandPath_tildeAndEnv(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("GROOT_TEST_KC_DIR", "kc-dir")
+
+	got := ExpandPath("~/kube/config")
+	want := filepath.Join(home, "kube", "config")
+	if got != want {
+		t.Fatalf("tilde: got %q want %q", got, want)
+	}
+	got = ExpandPath("~/${GROOT_TEST_KC_DIR}/config")
+	want = filepath.Join(home, "kc-dir", "config")
+	if got != want {
+		t.Fatalf("tilde+env: got %q want %q", got, want)
+	}
+	if ExpandPath("") != "" {
+		t.Fatal("empty should stay empty")
+	}
+}
+
+func TestExpandKubeconfig_multipath(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	list := strings.Join([]string{"~/a", "~/b"}, string(filepath.ListSeparator))
+	got := ExpandKubeconfig(list)
+	want := strings.Join([]string{
+		filepath.Join(home, "a"),
+		filepath.Join(home, "b"),
+	}, string(filepath.ListSeparator))
+	if got != want {
+		t.Fatalf("got %q want %q", got, want)
+	}
+}
+
+func TestLoad_kubeconfigTilde(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("KUBECONFIG", "")
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "cfg.yaml")
+	content := "kubeconfig: \"~/.kube/config\"\noutput_dir: \"./out\"\n"
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	want := filepath.Join(home, ".kube", "config")
+	if cfg.Kubeconfig != want {
+		t.Fatalf("kubeconfig: got %q want %q", cfg.Kubeconfig, want)
+	}
+}
+
+func TestLoad_kubeconfigFromEnvTilde(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("KUBECONFIG", "~/.kube/env-config")
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "cfg.yaml")
+	if err := os.WriteFile(path, []byte("kubeconfig: \"/ignored\"\noutput_dir: \"./out\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	want := filepath.Join(home, ".kube", "env-config")
+	if cfg.Kubeconfig != want {
+		t.Fatalf("kubeconfig from KUBECONFIG: got %q want %q", cfg.Kubeconfig, want)
+	}
+}

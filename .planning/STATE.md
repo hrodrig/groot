@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1.0
 milestone_name: milestone
-current_phase: 4
-current_phase_name: Fixtures, SPEC, and Release Lock
-status: Phase 4 complete — release-check green; tag pending human step
-stopped_at: Phase 4 done; waiting for develop → main merge and annotated tag v1.1.0
-last_updated: "2026-08-11T04:17:00Z"
-last_activity: 2026-08-10
-last_activity_desc: Phase 4 executed (fixtures, goldens, SPEC, docs, VERSION, CHANGELOG); make release-check passed
+current_phase: —
+current_phase_name: —
+status: Milestone v1.1.0 SHIPPED — tag on main; next Band 4 backlog
+stopped_at: v1.1.0 tagged on main (0a23c6e); develop at 7be4ab4
+last_updated: "2026-08-11T13:50:00Z"
+last_activity: 2026-08-11
+last_activity_desc: Status sync morning-after — Phase 4 + release confirmed shipped overnight
 progress:
   total_phases: 4
   completed_phases: 4
@@ -24,22 +24,26 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-10)
 
 **Core value:** Ticket-ready evidence archive — freeze cluster state into one reproducible bundle operators can attach, inspect offline, and summarize for RCA / LLM paste.
-**Current focus:** Phase 4 complete — v1.1.0 release lock
+**Current focus:** Milestone **v1.1.0 (`#69`)** shipped — next product picks from Band 4 backlog (`#32`, `#56`, …)
 
 ## Current Position
 
-Phase: 4 of 4 (Fixtures, SPEC, and Release Lock)
-Plan: 3 of 3 in current phase
-Status: Phase 4 complete; `make release-check` green; human maintainer step remains (merge develop → main, annotated tag v1.1.0)
-Last activity: 2026-08-10 — Phase 4 executed; QUAL-01..04 closed
+Milestone: **v1.1.0 SHIPPED**
+- Tag: `v1.1.0` → `main` @ `0a23c6e` (merge + GNUmakefile hotfix)
+- `develop` @ `7be4ab4` (synced with `origin/develop`)
+- `VERSION` = **1.1.0**
+- GSD phases 1–4 complete (QUAL-01…04 closed)
 
-Progress: [████████████████████] 100%
+Status: Overnight work closed Phase 4 (fixtures, goldens, SPEC, plan-1.1.0, CHANGELOG) + release hygiene; human merge/tag done.
+Last activity: 2026-08-11 — morning status sync
+
+Progress: [████████████████████] 100% (milestone)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 8 (Phase 1 ×2 + Phase 2 ×2 + Phase 3 ×1 + Phase 4 ×3)
+- Total plans completed: 8 (P1×2 + P2×2 + P3×1 + P4×3)
 - Average duration: —
 - Total execution time: —
 
@@ -50,29 +54,18 @@ Progress: [████████████████████] 100%
 | 1 Shared Offline Archive Reader | 2/2 | Complete |
 | 2 Heuristic Analyze + Executive Markdown | 2/2 | Complete (verified) |
 | 3 LLM-Ready Markdown Packaging | 1/1 | Complete (verified) |
-| 4 Fixtures, SPEC, and Release Lock | 3/3 | Complete (release-check green) |
-
-**Per-Plan Metrics:**
-
-| Plan | Duration | Tasks | Files |
-|------|----------|-------|-------|
-| Phase 02 P01 | 2min | 2 tasks | 16 files |
-| Phase 02 P02 | 3min | 2 tasks | 19 files |
-| Phase 03 P01 | ~5min | 2 tasks | ~8 files |
-| Phase 04 P01 | — | 2 tasks | ~35 files |
-| Phase 04 P02 | — | 3 tasks | ~4 files |
-| Phase 04 P03 | — | 2 tasks | ~8 files |
+| 4 Fixtures, SPEC, and Release Lock | 3/3 | Complete — shipped |
 
 ## Decisions
 
-Phase 4 batch-locked: fixtures as source trees under `testing/fixtures/archives/`, golden tests lock executive + LLM Markdown, docs/spec/roadmap updated, VERSION 1.1.0, CHANGELOG [1.1.0], release-check green. Tag/push remains human.
+See phase CONTEXT files. Caps locked in SPEC: arcread decompress **16 GiB**, analyze text/resources **32 MiB**, `--max-decompressed` on analyze/inspect.
 
 ## Blockers / Notes
 
-- No code blockers. Phase 4 release-check passed.
-- Remaining human step: merge `develop` → `main`, create annotated tag `v1.1.0`, push tag (per `.cursor/rules/git-flow.mdc`).
-- Grype DB update warned about low disk space but security step still reported OK; no vulnerabilities found.
+- None for v1.1.0.
+- Untracked local noise: `.planning/.../start-epoch`, research `.cache/` — not part of ship.
+- Product `ROADMAP.md` “Current focus” still listed `#69` as Next until status sync commit.
 
 ## Next
 
-Human maintainer runs the release checklist from `docs/plan-1.1.0.md` and completes the git-flow tag step.
+Pick next Band 4 item (candidates: `#32` multi-cluster, `#56` diff, `#43` context). Or dogfood / GH Release notes if not yet published on GitHub Releases UI.

@@ -54,9 +54,7 @@ Exit codes follow #82:
 			if err != nil {
 				return NewExitError(ExitConfigError, fmt.Errorf("load config: %w", err))
 			}
-			if kubeconfigOverride != "" {
-				cfg.Kubeconfig = kubeconfigOverride
-			}
+			applyKubeconfigFlag(&cfg)
 			if minDisk > 0 {
 				cfg.Collection.MinFreeBytes = minDisk
 			}
@@ -66,12 +64,9 @@ Exit codes follow #82:
 			if strings.TrimSpace(cfg.OutputDir) == "" {
 				cfg.OutputDir = "./groot-out"
 			}
-			// Resolve "~" if the user left a shell-style home path. Mostly a
-			// courtesy for the disk preflight — config.Load does not expand it.
+			// Load already expands ~/ and ${VAR}; keep abs resolution for preflight.
 			if strings.HasPrefix(cfg.OutputDir, "~/") {
-				if home, herr := os.UserHomeDir(); herr == nil {
-					cfg.OutputDir = filepath.Join(home, cfg.OutputDir[2:])
-				}
+				cfg.OutputDir = config.ExpandPath(cfg.OutputDir)
 			}
 			if !filepath.IsAbs(cfg.OutputDir) {
 				if cwd, cerr := os.Getwd(); cerr == nil {

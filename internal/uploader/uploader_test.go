@@ -96,6 +96,19 @@ func TestS3Uploader_upload_httptest(t *testing.T) {
 	}
 }
 
+func TestAWSCredsFromEnv_trimsWhitespace(t *testing.T) {
+	t.Setenv("AWS_ACCESS_KEY_ID", "  AKID  ")
+	t.Setenv("AWS_SECRET_ACCESS_KEY", " secret\n")
+	t.Setenv("AWS_SESSION_TOKEN", " tok ")
+	id, secret, token, ok := awsCredsFromEnv()
+	if !ok {
+		t.Fatal("expected ok")
+	}
+	if id != "AKID" || secret != "secret" || token != "tok" {
+		t.Fatalf("got id=%q secret=%q token=%q", id, secret, token)
+	}
+}
+
 type stubUploader struct {
 	provider string
 	res      *Result

@@ -324,20 +324,25 @@ func TestControlPlanePodLogArgs(t *testing.T) {
 }
 
 func TestCaptureSessionBase(t *testing.T) {
-	if got := captureSessionBase("groot-capture", "20260102-150405", ""); got != "groot-capture-20260102-150405" {
+	if got := captureSessionBase("groot-capture", "7kqv2xy", "20260102-150405", ""); got != "groot-capture-7kqv2xy-20260102-150405" {
 		t.Fatalf("empty since: %q", got)
 	}
-	if got := captureSessionBase("groot-capture", "20260102-150405", "12h"); got != "groot-capture-20260102-150405-since-12h" {
+	if got := captureSessionBase("groot-capture", "7kqv2xy", "20260102-150405", "12h"); got != "groot-capture-7kqv2xy-20260102-150405-since-12h" {
 		t.Fatalf("12h: %q", got)
 	}
-	if got := captureSessionBase("", "20260102-150405", "45m"); got != "groot-capture-20260102-150405-since-45m" {
+	if got := captureSessionBase("", "abc1234", "20260102-150405", "45m"); got != "groot-capture-abc1234-20260102-150405-since-45m" {
 		t.Fatalf("45m: %q", got)
+	}
+	a := captureSessionBase("groot-capture", "aaaaaaa", "20260102-150405", "")
+	b := captureSessionBase("groot-capture", "bbbbbbb", "20260102-150405", "")
+	if a == b {
+		t.Fatalf("same timestamp different shorts must not collide: %q", a)
 	}
 }
 
 func TestArchiveBasename(t *testing.T) {
-	got := archiveBasename("groot-capture-20260102-150405", "prod", "RCA run")
-	if !strings.Contains(got, "groot-capture-20260102-150405-prod") {
+	got := archiveBasename("groot-capture-7kqv2xy-20260102-150405", "prod", "RCA run")
+	if !strings.Contains(got, "groot-capture-7kqv2xy-20260102-150405-prod") {
 		t.Fatalf("got %q", got)
 	}
 }

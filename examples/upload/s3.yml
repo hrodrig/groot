@@ -1,6 +1,7 @@
 # Post-collect upload to S3 (or S3-compatible endpoint).
 # Enable upload + fill bucket/region; credentials via AWS SDK default chain
 # or GROOT_UPLOAD_S3_* env (see SPEC / sample config).
+# Operator playbook (Contabo): groot-selfhosted run/examples/s3-contabo/
 # Run: groot collect --config examples/upload/s3.yml
 
 config_version: 1

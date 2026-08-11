@@ -134,7 +134,8 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	s.archiveSHA256 = ""
 
 	timestamp := time.Now().Format("20060102-150405")
-	sessionBase := captureSessionBase(s.cfg.FilePrefix, timestamp, s.cfg.Collection.PodLogsSince)
+	short := strings.ToLower(runIDShort(s.RunID))
+	sessionBase := captureSessionBase(s.cfg.FilePrefix, short, timestamp, s.cfg.Collection.PodLogsSince)
 	captureDir := filepath.Join(s.cfg.OutputDir, sessionBase)
 	if err := os.MkdirAll(captureDir, 0o755); err != nil {
 		return Summary{}, fmt.Errorf("create output dir: %w", err)
@@ -523,9 +524,15 @@ func (s *Service) runJobs(ctx context.Context, captureDir string, jobs []job) Su
 }
 
 // captureSessionBase is the capture folder name and the leading part of the archive basename.
-// Format: "<file_prefix>-<timestamp>" or "<file_prefix>-<timestamp>-since-<slug>" when pod_logs_since is set.
-func captureSessionBase(filePrefix, timestamp, podLogsSince string) string {
-	base := sanitizeFilePrefix(filePrefix) + "-" + timestamp
+// Format: "<file_prefix>-<short>-<timestamp>" or
+// "<file_prefix>-<short>-<timestamp>-since-<slug>" when pod_logs_since is set.
+// <short> is the lowercase random suffix from run_id (concurrent-collect uniqueness).
+func captureSessionBase(filePrefix, short, timestamp, podLogsSince string) string {
+	short = strings.TrimSpace(short)
+	if short == "" {
+		short = strings.ToLower(newRunIDShort())
+	}
+	base := sanitizeFilePrefix(filePrefix) + "-" + short + "-" + timestamp
 	s := strings.TrimSpace(podLogsSince)
 	if s == "" {
 		return base

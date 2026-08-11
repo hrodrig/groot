@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-08-04 (**v1.0.6** packaging/docs — man/nfpm/BSD #96, CONTRIBUTING #47, examples #46; **Band 4** next)
+**Last reviewed:** 2026-08-11 (**v1.1.1** patch — kubeconfig `~` expansion, unique `sessionBase` short, S3 credential trim; Band 4 continues with `#32` / `#56`; backlog **`#97`** WebDAV/Nextcloud)
 
 ### Versioning note
 
@@ -26,20 +26,22 @@ Bands group semver minors into planning horizons. Individual items carry **globa
 | **0.9** | 0.9.x | Operator wins (validate/inspect/plugin) | ✅ Shipped | **2026-06-29** (v0.9.2) |
 | **3** | 1.0.0 | Contract freeze | ✅ Shipped | **2026-07-03** (v1.0.0) |
 | **3 maint.** | 1.0.1–1.0.6 | Security + audit hygiene + docs/packaging | ✅ Shipped | **2026-08-04** (v1.0.6) |
-| **4** | 1.1.x+ | Multi-cluster, analyze, triggered watch, addons | 📋 Active backlog | — |
+| **4** | 1.1.x+ | Multi-cluster, analyze, triggered watch, addons | 📋 Active backlog | **2026-08-10** (`v1.1.0` = `#69` analyze) |
 
 ### Current focus (in flight)
 
 | Priority | Item | Theme | Notes |
 |----------|------|-------|-------|
-| **Next** | **#69** `groot analyze <archive>` | Analysis | Offline RCA; builds on inspect + golden fixtures (#87). Prefer as first **1.1.0** feature if RCA value > multi-cluster. |
-| **Next** | **#32** multi-cluster collect | Multi-cluster | [plan-1.0.0.md](docs/plan-1.0.0.md) post-1.0 order listed #32 before #69 — pick by product priority. |
+| **Shipped** | **#69** `groot analyze <archive>` | Analysis | **Done (v1.1.0)** — offline heuristics + executive/LLM Markdown + goldens. |
+| **Next** | **#32** multi-cluster collect | Multi-cluster | [plan-1.0.0.md](docs/plan-1.0.0.md) post-1.0 order; first open Band 4 theme after analyze. |
+| **Next** | **#56** `groot diff` | Analysis | Shared `arcread` reader; natural follow-on to `#69`. |
 | Then | **#43** kubeconfig / `--context` | Multi-cluster | Operator ergonomics. |
 | Then | **#33** CI kind matrix | Platform | Documented minimum cluster version. |
 | Later | **#65** addon system | Ecosystem | After multi-cluster + plugin maturity. |
+| Later | **#97** WebDAV / Nextcloud upload | Ecosystem | Post-collect `upload.webdav` for Nextcloud (and generic WebDAV); complements S3/GCS/SFTP. FileZilla/SFTP VPS remains supported today without this. |
 | Later | **#55** event-driven watch | Triggered collect | Critical services → collect → S3/GCS/SFTP + notify (not live log tail). |
 
-Open a **`docs/plan-1.1.0.md`** when Band 4 scope locks for the first feature release.
+Ship lock for analyze: **[`docs/plan-1.1.0.md`](docs/plan-1.1.0.md)**.
 
 ### Strategic direction
 
@@ -212,7 +214,7 @@ Themes (labels for contribute/vote — item IDs unchanged):
 | **Analysis** | Offline heuristics on archives | #69, #56, #62 |
 | **Platform** | Managed clouds, CI matrix, edge | #33, #58, #49, #59 |
 | **Collector / UX** | Progress, flags, redaction, TUI | #44–#45, #54, #66–#68, #70–#72, #77–#78 |
-| **Ecosystem** | Packages, hooks, dashboards, community | #46–#53, #61, #63, #65, #73–#76, **#96** |
+| **Ecosystem** | Packages, hooks, dashboards, community, upload sinks | #46–#53, #61, #63, #65, #73–#76, **#96**, **#97** |
 
 **Explicitly out of philosophy:** live **`groot stream`** / continuous log tail (#41) — see Known gaps / Non-goals. Prefer shippers or `kubectl` for that job.
 
@@ -225,7 +227,7 @@ Themes (labels for contribute/vote — item IDs unchanged):
 
 ### Theme: Triggered collect (watch → archive)
 
-Event-driven **full collect** (not log streaming): watch critical workloads/services; on signal (CrashLoop, OOM, Warning threshold, probe fail), run the same collect pipeline, then **upload** (S3/GCS/SFTP) and **notify**. Complements CronJob schedule in groot-selfhosted with incident-triggered captures.
+Event-driven **full collect** (not log streaming): watch critical workloads/services; on signal (CrashLoop, OOM, Warning threshold, probe fail), run the same collect pipeline, then **upload** (S3/GCS/SFTP; WebDAV/Nextcloud → **#97**) and **notify**. Complements CronJob schedule in groot-selfhosted with incident-triggered captures.
 
 | # | Band | Item | Status |
 |---|------|------|--------|
@@ -289,6 +291,7 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 | 74 | 4 | **Embedded web dashboard** (`groot serve`) — prefer groot-selfhosted + Grafana (#51). | Pending |
 | 75 | 4 | **Alternate formats** (SQLite, Parquet export). | Pending |
 | 76 | 4 | **`groot cleanup`** retention policy for `output_dir`. | Pending |
+| 97 | 4 | 🤝 **WebDAV / Nextcloud post-collect upload** (`upload.webdav`): PUT archive to Nextcloud (or any WebDAV endpoint) after collect; basic auth / app-password via env; path prefix; honor `--no-upload` / `upload.continue_on_error`. Complements S3/GCS/SFTP. Operators who only need FileZilla can keep using **SFTP** to a storage VPS without this item. | Pending |
 
 **Out of scope (long-term):** mutating cluster operations; full OpenTelemetry agent; managed SaaS; native Windows GUI.
 

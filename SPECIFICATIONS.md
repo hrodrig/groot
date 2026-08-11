@@ -382,7 +382,7 @@ Optional upload of the finished **`.tar.gz`** after notify on the success path.
 | `upload.sftp.allow_insecure_host_key` | bool | `false` | Testing only — skips host key verification (MITM risk). |
 | `upload.sftp.identity_file` | string | — | **Env only** (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`); never in YAML. Supports `~` / `${VAR}`. |
 
-- Credentials: **AWS** via standard `AWS_*` env vars; **GCS** via `GOOGLE_APPLICATION_CREDENTIALS` (or workload identity in-cluster); **SFTP** via SSH key (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`). When **`STORAGE_EMULATOR_HOST`** is set (local emulator / fake GCS), Groot uses that endpoint with no auth (standard client-go emulator path).
+- Credentials: **AWS** via standard `AWS_*` env vars (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / optional `AWS_SESSION_TOKEN` are **trimmed** of surrounding whitespace before use); **GCS** via `GOOGLE_APPLICATION_CREDENTIALS` (or workload identity in-cluster); **SFTP** via SSH key (`GROOT_UPLOAD_SFTP_IDENTITY_FILE`). When **`STORAGE_EMULATOR_HOST`** is set (local emulator / fake GCS), Groot uses that endpoint with no auth (standard client-go emulator path).
 - SFTP auth: **public-key only** (BatchMode — password/keyboard-interactive rejected). Host key verified against `known_hosts_file`; **required** unless `allow_insecure_host_key: true` (testing only).
 - Object key: `<key_prefix>/<archive-basename>` (prefix optional). SFTP remote path: `<remote_dir>/<archive-basename>`.
 - Runs **after** archive write and success notify; **upload errors do not fail** the collect command (logged at ERROR).

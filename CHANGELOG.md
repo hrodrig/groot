@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **`kubeconfig` path expansion:** `~` and `${VAR}` now expand for `kubeconfig` (YAML), `KUBECONFIG`, and `--kubeconfig` — same rules as `output_dir`. Multipath lists expand per entry. SFTP `identity_file` / `known_hosts_file` paths expand too.
+- **S3 credentials trim:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` are trimmed before signing (avoids Contabo/S3-compatible `SignatureDoesNotMatch` from trailing spaces when pasting keys).
 
 ## [1.1.0] - 2026-08-10
 

@@ -319,11 +319,11 @@ func TestRunner_Run_top_with_metrics_fake(t *testing.T) {
 		},
 	}
 	mc := metricsfake.NewSimpleClientset()
-	mc.Fake.PrependReactor("list", "pods", func(action ktesting.Action) (bool, runtime.Object, error) {
+	mc.PrependReactor("list", "pods", func(action ktesting.Action) (bool, runtime.Object, error) {
 		_ = action
 		return true, &metricsv1beta1api.PodMetricsList{Items: []metricsv1beta1api.PodMetrics{*pm}}, nil
 	})
-	mc.Fake.PrependReactor("get", "nodes", func(action ktesting.Action) (bool, runtime.Object, error) {
+	mc.PrependReactor("get", "nodes", func(action ktesting.Action) (bool, runtime.Object, error) {
 		ga, ok := action.(ktesting.GetAction)
 		if !ok || ga.GetName() != "node1" {
 			return false, nil, nil
@@ -508,7 +508,6 @@ func TestRunner_Run_get_extended(t *testing.T) {
 	ctx := context.Background()
 
 	type seedFn func() runtime.Object
-	type expectFn func(*testing.T, string)
 
 	cases := []struct {
 		name    string

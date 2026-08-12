@@ -89,7 +89,7 @@ func TestTally_runningContainersIgnoresOldTerminated(t *testing.T) {
 	}
 	// Container currently with a previous OOMKilled but no Waiting state —
 	// we do not count it as currently OOMKilled; that surfaces via summary
-	// only on restart-loop policies. Document the behaviour here.
+	// only on restart-loop policies. Document the behavior here.
 	_ = mkOOMTerminated // silence unused when no test body relies on the constructor
 	pod := []corev1.Pod{{
 		Status: corev1.PodStatus{

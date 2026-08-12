@@ -1,0 +1,62 @@
+# Conservative golangci-lint v2 config for groot (audit M2).
+# Keep noise low: correctness + a few style checks. Complexity stays in `make gocyclo`.
+# Docs: https://golangci-lint.run/docs/configuration/file/
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - ineffassign
+    - misspell
+    - revive
+    - unused
+  settings:
+    misspell:
+      locale: US
+    revive:
+      # Minimal set — expand later if clean.
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+          disabled: true # handler tables use (r, ctx, args); reorder is M3/k8srunner debt
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+          disabled: true # noisy for internal/ until API docs catch up
+        - name: if-return
+        - name: increment-decrement
+        - name: var-declaration
+        - name: package-comments
+          disabled: true
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+          disabled: true # internal helpers intentionally return unexported types
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unused-parameter
+          disabled: true
+        - name: unreachable-code
+        - name: redefines-builtin-id
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 10

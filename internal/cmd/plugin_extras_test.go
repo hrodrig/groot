@@ -95,7 +95,7 @@ func TestValueOrUnknown(t *testing.T) {
 }
 
 // Ensure file path printing in error messages does not exceed reasonable
-// lengths; this is a behavioural smoke so error formatting regressions don't
+// lengths; this is a behavioral smoke so error formatting regressions don't
 // flood user logs.
 func TestSampleYAMLPath_safeToPrint(t *testing.T) {
 	tmp := filepath.Join(t.TempDir(), "config.yml")

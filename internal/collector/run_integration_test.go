@@ -372,7 +372,7 @@ func TestService_Run_invalidKubeconfig(t *testing.T) {
 
 func TestService_buildJobs_nodeListFails(t *testing.T) {
 	cs := fake.NewSimpleClientset()
-	cs.Fake.PrependReactor("list", "nodes", func(_ ktesting.Action) (bool, runtime.Object, error) {
+	cs.PrependReactor("list", "nodes", func(_ ktesting.Action) (bool, runtime.Object, error) {
 		return true, &corev1.NodeList{}, fmt.Errorf("simulated node list failure")
 	})
 	svc := New(config.Config{

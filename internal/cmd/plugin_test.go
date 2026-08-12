@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -29,13 +28,7 @@ func TestIsPluginInvocation_basenameMatch(t *testing.T) {
 		t.Fatal("/opt/krew/bin/kubectl-groot must be flagged as plugin invocation")
 	}
 
-	// Someone on Windows running `kubectl-groot.exe` directly (after PATH
-	// lookup strips the suffix); we do not strip extensions ourselves but
-	// .exe is the only realistic case on Windows.
-	if filepath.Ext(filepath.Base(os.Args[0])) == ".exe" {
-		// covered separately in TestIsPluginInvocation_windowsExe below;
-		// keep this branch as a no-op so the table stays self-explanatory.
-	}
+	// Windows `.exe` basename covered in TestIsPluginInvocation_windowsExe.
 }
 
 func TestIsPluginInvocation_envOverride(t *testing.T) {

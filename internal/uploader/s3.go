@@ -75,7 +75,9 @@ func (u *s3Uploader) Upload(ctx context.Context, archivePath string, summary col
 	}
 	input.Metadata = mergeMetadata(u.cfg.Metadata, summary.RunID)
 
+	//nolint:staticcheck // SA1019: manager.Uploader still the supported path until transfermanager migration.
 	up := manager.NewUploader(client)
+	//nolint:staticcheck // SA1019: see NewUploader note above.
 	out, err := up.Upload(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("put object: %w", err)

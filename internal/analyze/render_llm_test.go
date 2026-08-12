@@ -253,10 +253,7 @@ func TestRenderLLM_NoArcreadImport(t *testing.T) {
 	if strings.Contains(string(src), "arcread") {
 		t.Fatal("render_llm.go must not import or reference arcread")
 	}
-	if strings.Contains(string(src), "analyze.Run") || strings.Contains(string(src), "\tRun(") {
-		// Soft check: file should not call Run.
-	}
-	// Ensure no call to Run as a bare identifier import pattern — package is analyze itself.
+	// Soft check: file should not call Run / open archives.
 	if strings.Contains(string(src), "Run(") && strings.Contains(string(src), "arcread.Open") {
 		t.Fatal("render_llm.go must remain pure over Report")
 	}

@@ -26,6 +26,9 @@ check-docker = @docker info >/dev/null 2>&1 || { echo "Error: Docker is not runn
 GRYPE_FAIL_ON ?= high
 GRYPE_DIR_EXCLUDES := --exclude './bin/**' --exclude './work/**' --exclude './dist/**'
 
+# Pin golangci-lint for reproducible `make lint` / CI (config is v2).
+GOLANGCI_LINT_VERSION ?= v2.5.0
+
 # Release: optional strict image scan (see release-check).
 STRICT_RELEASE ?= 0
 
@@ -94,7 +97,7 @@ help:
 	@echo "  $(GREEN)fmt$(RESET)                      gofmt -w . (no simplify; use lint-fix for gofmt -s)"
 	@echo "  $(GREEN)fmt-check$(RESET)                Fail if gofmt -s would change any file (same as CI)"
 	@echo "  $(GREEN)lint-fix$(RESET)                 gofmt -s -w ."
-	@echo "  $(GREEN)lint$(RESET)                     Run go vet"
+	@echo "  $(GREEN)lint$(RESET)                     golangci-lint run (govet/staticcheck/…; pin GOLANGCI_LINT_VERSION=$(GOLANGCI_LINT_VERSION))"
 	@echo "  $(GREEN)vet$(RESET)                      go vet ./..."
 	@echo "  $(GREEN)gocyclo$(RESET)                  Fail if any function has cyclomatic complexity >= 15"
 	@echo "  $(GREEN)govulncheck$(RESET)              govulncheck via go run (no install)"
@@ -108,7 +111,7 @@ help:
 	@echo "  $(GREEN)scan$(RESET)                     Build amd64/arm64 images and scan both with Grype"
 	@echo ""
 	@echo "$(YELLOW)Release:$(RESET)"
-	@echo "  $(GREEN)release-check$(RESET)            VERSION semver + goreleaser + fmt-check + vet + cover + security"
+	@echo "  $(GREEN)release-check$(RESET)            VERSION semver + goreleaser + fmt-check + golangci-lint + cover + security"
 	@echo "  $(GREEN)snapshot$(RESET)                 Goreleaser snapshot to $(DIST)/ (no tag)"
 	@echo "  $(GREEN)dist-freebsd$(RESET)             Tarball for FreeBSD ports (default FREEBSD_ARCH=$(FREEBSD_ARCH))"
 	@echo "  $(GREEN)dist-openbsd$(RESET)             Tarball for OpenBSD ports (default OPENBSD_ARCH=$(OPENBSD_ARCH))"
@@ -170,8 +173,13 @@ fmt-check:
 		exit 1; \
 	fi
 
+# golangci-lint v2 (.golangci.yml). Prefer binary on PATH; else go run pinned module.
 lint:
-	go vet ./...
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run ./...; \
+	else \
+		go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run ./...; \
+	fi
 
 vet:
 	go vet ./...
@@ -241,7 +249,7 @@ govulncheck:
 vulncheck: govulncheck
 
 ci: fmt-check lint gocyclo test
-	@echo "OK: ci (fmt-check, vet, gocyclo, test)"
+	@echo "OK: ci (fmt-check, golangci-lint, gocyclo, test)"
 
 gocyclo:
 	go run github.com/fzipp/gocyclo/cmd/gocyclo@latest -over 14 .
@@ -269,7 +277,7 @@ test-e2e-kind: build
 
 e2e-kind: test-e2e-kind
 
-# Semver + goreleaser + fmt-check (CI parity) + vet + cover + security (+ optional docker-scan when STRICT_RELEASE=1).
+# Semver + goreleaser + fmt-check (CI parity) + golangci-lint + cover + security (+ optional docker-scan when STRICT_RELEASE=1).
 release-check:
 	@test -f VERSION || { echo "VERSION file is required"; exit 1; }
 	@echo "Release version: $(VERSION) (tag: $(TAG))"

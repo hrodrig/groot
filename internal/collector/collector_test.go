@@ -266,7 +266,7 @@ func TestHelmMatches(t *testing.T) {
 	}
 
 	// Belt-and-braces: matchesTargetsByLabels must use helmMatches when
-	// helm_releases is populated, so the rejection behaviour above flows
+	// helm_releases is populated, so the rejection behavior above flows
 	// through end-to-end. A Kustomize-owned pod with a matching instance must
 	// NOT be considered a Helm target by the umbrella helper.
 	nonHelm := map[string]string{

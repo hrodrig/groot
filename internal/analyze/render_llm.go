@@ -229,24 +229,20 @@ func buildLLMView(r Report) llmView {
 		vm.Hints = append(vm.Hints, hv)
 	}
 	for _, n := range r.Notes {
-		vm.Notes = append(vm.Notes, llmNoteView{
-			Code:    n.Code,
-			Message: n.Message,
-			Path:    n.Path,
-		})
+		vm.Notes = append(vm.Notes, llmNoteView(n))
 	}
 	return vm
 }
 
-func clipRunes(s string, max int) string {
-	if max <= 0 || s == "" {
+func clipRunes(s string, maxRunes int) string {
+	if maxRunes <= 0 || s == "" {
 		return ""
 	}
 	r := []rune(s)
-	if len(r) <= max {
+	if len(r) <= maxRunes {
 		return s
 	}
-	return string(r[:max]) + "…"
+	return string(r[:maxRunes]) + "…"
 }
 
 // shrinkLLMView drops lowest-value content. Returns false when nothing left to

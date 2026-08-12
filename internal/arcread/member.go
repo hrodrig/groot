@@ -56,7 +56,7 @@ func (a *Archive) ReadMemberLimit(name string, limit int64) ([]byte, error) {
 			return nil, fmt.Errorf("tar read: %w", err)
 		}
 		switch hdr.Typeflag {
-		case tar.TypeReg, tar.TypeRegA:
+		case tar.TypeReg:
 			ordinal++
 		default:
 			continue

@@ -953,7 +953,7 @@ func matchesTargetsByLabels(labels map[string]string, targets config.NamespaceTa
 //
 // Helm-canonical labels are app.kubernetes.io/instance + app.kubernetes.io/name,
 // usually paired with app.kubernetes.io/managed-by=Helm. Legacy Helm 2 used
-// heritage=Tiller + chart=NAME. We honour the modern labels first and fall back
+// heritage=Tiller + chart=NAME. We honor the modern labels first and fall back
 // to the legacy pair, while refusing to match non-Helm workloads that happen to
 // carry app.kubernetes.io/instance (e.g. Kustomize, Operators): if a managed-by
 // label is present and identifies a non-Helm owner, the pod is excluded even

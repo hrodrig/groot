@@ -164,11 +164,11 @@ func writeWorkloadResourcesTSV(captureDir string, rows []containerResourceRow) e
 		if row.InitContainer {
 			initFlag = "true"
 		}
-		b.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(&b, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			row.Namespace, row.Pod, row.Node, row.Container, initFlag,
 			row.CPURequest, row.CPULimit, row.MemoryRequest, row.MemoryLimit,
 			row.OwnerKind, row.OwnerName,
-		))
+		)
 	}
 	target := filepath.Join(captureDir, "extras", "workload-resources.tsv")
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {

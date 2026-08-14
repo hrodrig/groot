@@ -709,8 +709,8 @@ func (s *Service) writePodRCATable(captureDir string, podResources map[string]po
 				memReq, memLim = totals.MemoryRequest, totals.MemoryLimit
 			}
 		}
-		b.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			ns, pod, node, cpu, mem, cpuReq, cpuLim, memReq, memLim, logFile))
+		_, _ = fmt.Fprintf(&b, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			ns, pod, node, cpu, mem, cpuReq, cpuLim, memReq, memLim, logFile)
 	}
 
 	target := filepath.Join(captureDir, "extras", "all-pods-rca.tsv")
@@ -735,7 +735,7 @@ func (s *Service) writePodNodePlacement(ctx context.Context, captureDir string) 
 		if p, ok := logPaths[ref.Namespace+"/"+ref.Name]; ok {
 			logRel = p
 		}
-		b.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\n", ref.Namespace, ref.Name, ref.Node, logRel))
+		_, _ = fmt.Fprintf(&b, "%s\t%s\t%s\t%s\n", ref.Namespace, ref.Name, ref.Node, logRel)
 	}
 
 	target := filepath.Join(captureDir, "extras", "all-pod-node-placement.tsv")

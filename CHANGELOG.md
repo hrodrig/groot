@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **CI / lint:** `make lint` and the GitHub Actions lint job now run **golangci-lint** v2 (`.golangci.yml`: govet, staticcheck, ineffassign, misspell, revive, unused) instead of bare `go vet`. Cyclomatic complexity remains a separate `make gocyclo` gate.
+- **CI / lint:** `make lint` and the GitHub Actions lint job now run **golangci-lint** v2 (`.golangci.yml`: govet, staticcheck, ineffassign, misspell, revive, unused) instead of bare `go vet`. Cyclomatic complexity remains a separate `make gocyclo` gate. Pin bumped to **v2.12.2** (Go **1.26**-built binary; v2.5.0 failed CI with exit 3 against `go 1.26.5`).
 
 ### Docs
 

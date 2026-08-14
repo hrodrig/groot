@@ -12,7 +12,7 @@ analysis_date: 2026-08-10
 **Runner:**
 - Go `testing` package (stdlib)
 - Config: Makefile targets (`test`, `cover`, `ci`, `release-check`); CI in `.github/workflows/ci.yml`
-- Go version from `go.mod` (`go 1.26.5`) via `actions/setup-go` `go-version-file`
+- Go version from `go.mod` (`go 1.26.6`) via `actions/setup-go` `go-version-file`
 
 **Assertion Library:**
 - Stdlib only (`t.Fatal`, `t.Fatalf`, `t.Errorf`, `t.Error`)

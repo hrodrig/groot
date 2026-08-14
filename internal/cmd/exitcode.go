@@ -76,7 +76,7 @@ func (e *ExitError) ExitCode() int {
 		return ExitSuccess
 	}
 	if e.Code < 0 || e.Code > 255 {
-		// os.Exit masks to 8 bits; clamp to keep behaviour predictable and
+		// os.Exit masks to 8 bits; clamp to keep behavior predictable and
 		// avoid stderr/logs that lie about the configured code.
 		return ExitSuccess
 	}

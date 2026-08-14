@@ -15,7 +15,7 @@ on:
 
 jobs:
   lint:
-    name: gofmt + go vet + gocyclo
+    name: gofmt + golangci-lint + gocyclo
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -38,8 +38,12 @@ jobs:
             exit 1
           fi
 
-      - name: go vet
-        run: make lint
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          # Keep in sync with GOLANGCI_LINT_VERSION in GNUmakefile (≥ v2.9.0 for Go 1.26).
+          version: v2.12.2
+          args: ./...
 
       - name: Cyclomatic complexity (gocyclo)
         run: make gocyclo

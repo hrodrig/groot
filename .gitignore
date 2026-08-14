@@ -6,6 +6,7 @@
 !.gitignore
 !.dockerignore
 !.goreleaser.yaml
+!.golangci.yml
 !.github/
 !.github/**
 

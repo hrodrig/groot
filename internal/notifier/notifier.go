@@ -161,14 +161,14 @@ func cloneStringMap(in map[string]string) map[string]string {
 
 // discordWebhookContent truncates text to Discord's incoming-webhook "content" limit (2000 characters).
 func discordWebhookContent(text string) string {
-	const max = 2000
+	const maxRunes = 2000
 	r := []rune(text)
-	if len(r) <= max {
+	if len(r) <= maxRunes {
 		return text
 	}
 	const suffix = "..."
 	sr := []rune(suffix)
-	cut := max - len(sr)
+	cut := maxRunes - len(sr)
 	if cut < 0 {
 		cut = 0
 	}

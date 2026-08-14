@@ -29,7 +29,7 @@ On release: move `[Unreleased]` to a version section, add a **Shipped** row in R
 ## Before you open a PR
 
 1. **Format:** `make lint-fix` (applies `gofmt -s` across the tree).
-2. **Verify:** `make ci` runs **`fmt-check`** (same `gofmt -s` gate as CI), **`go vet`**, **`gocyclo`**, and **`go test -race`** — it matches the GitHub Actions **lint** and **test** jobs.
+2. **Verify:** `make ci` runs **`fmt-check`** (same `gofmt -s` gate as CI), **`golangci-lint`** (`.golangci.yml`), **`gocyclo`**, and **`go test -race`** — it matches the GitHub Actions **lint** and **test** jobs.
 3. **Broader check (optional):** `make all` adds merged coverage and a build; maintainers run **`make release-check`** before tagging a release (GoReleaser config, **`fmt-check`**, **`lint`**, **`cover`** with `COVER_MIN`, **`security`**, and optionally **`STRICT_RELEASE=1`** for **`docker-scan`**).
 
 Keep commits scoped and messages understandable.

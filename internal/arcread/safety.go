@@ -53,7 +53,7 @@ func normalizeMemberName(name string) (string, error) {
 
 func checkTypeflag(typeflag byte, name string) error {
 	switch typeflag {
-	case tar.TypeReg, tar.TypeRegA, tar.TypeDir:
+	case tar.TypeReg, tar.TypeDir:
 		return nil
 	case tar.TypeSymlink, tar.TypeLink:
 		return fmt.Errorf("%w: %q", ErrUnsupportedType, name)

@@ -709,8 +709,8 @@ func (s *Service) writePodRCATable(captureDir string, podResources map[string]po
 				memReq, memLim = totals.MemoryRequest, totals.MemoryLimit
 			}
 		}
-		b.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			ns, pod, node, cpu, mem, cpuReq, cpuLim, memReq, memLim, logFile))
+		_, _ = fmt.Fprintf(&b, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			ns, pod, node, cpu, mem, cpuReq, cpuLim, memReq, memLim, logFile)
 	}
 
 	target := filepath.Join(captureDir, "extras", "all-pods-rca.tsv")
@@ -735,7 +735,7 @@ func (s *Service) writePodNodePlacement(ctx context.Context, captureDir string) 
 		if p, ok := logPaths[ref.Namespace+"/"+ref.Name]; ok {
 			logRel = p
 		}
-		b.WriteString(fmt.Sprintf("%s\t%s\t%s\t%s\n", ref.Namespace, ref.Name, ref.Node, logRel))
+		_, _ = fmt.Fprintf(&b, "%s\t%s\t%s\t%s\n", ref.Namespace, ref.Name, ref.Node, logRel)
 	}
 
 	target := filepath.Join(captureDir, "extras", "all-pod-node-placement.tsv")
@@ -953,7 +953,7 @@ func matchesTargetsByLabels(labels map[string]string, targets config.NamespaceTa
 //
 // Helm-canonical labels are app.kubernetes.io/instance + app.kubernetes.io/name,
 // usually paired with app.kubernetes.io/managed-by=Helm. Legacy Helm 2 used
-// heritage=Tiller + chart=NAME. We honour the modern labels first and fall back
+// heritage=Tiller + chart=NAME. We honor the modern labels first and fall back
 // to the legacy pair, while refusing to match non-Helm workloads that happen to
 // carry app.kubernetes.io/instance (e.g. Kustomize, Operators): if a managed-by
 // label is present and identifies a non-Helm owner, the pod is excluded even

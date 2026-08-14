@@ -38,8 +38,5 @@ func scanEventBodies(ev evidence, match func(string) bool) *lineHit {
 	if h := scanLines(ev.warningEvents, ev.warningPath, match); h != nil {
 		return h
 	}
-	if h := scanLines(ev.podsWide, ev.podsWidePath, match); h != nil {
-		return h
-	}
-	return nil
+	return scanLines(ev.podsWide, ev.podsWidePath, match)
 }

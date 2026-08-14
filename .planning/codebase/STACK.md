@@ -10,7 +10,7 @@ analysis_date: 2026-08-10
 ## Languages
 
 **Primary:**
-- Go 1.26.5 - All application code (`cmd/`, `internal/`); module `github.com/hrodrig/groot` in `go.mod`
+- Go 1.26.6 - All application code (`cmd/`, `internal/`); module `github.com/hrodrig/groot` in `go.mod`
 
 **Secondary:**
 - YAML - Operator config (`configs/groot.yml.sample`, `examples/`)
@@ -21,7 +21,7 @@ analysis_date: 2026-08-10
 ## Runtime
 
 **Environment:**
-- Go toolchain 1.26.5 (pinned in `go.mod`; Docker builder `golang:1.26.5-alpine`)
+- Go toolchain 1.26.6 (pinned in `go.mod`; Docker builder `golang:1.26.6-alpine`)
 - CGO disabled for release binaries (`CGO_ENABLED=0` in `.goreleaser.yaml` and `Dockerfile`)
 - No Node/Python/browser runtime — pure CLI process
 
@@ -84,7 +84,7 @@ analysis_date: 2026-08-10
 ## Platform Requirements
 
 **Development:**
-- Go 1.26.5+ matching `go.mod`
+- Go 1.26.6+ matching `go.mod`
 - Optional: Docker/buildx, kind + kubectl for E2E (`make test-e2e-kind`)
 - Optional: `bc` when enforcing `COVER_MIN` > 0; goreleaser for `make snapshot` / `release-check`
 - Any OS with a Go toolchain; releases also target FreeBSD/OpenBSD via contrib ports

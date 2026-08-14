@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Go 1.26.5 → 1.26.6** in `go.mod` and **`Dockerfile`** builder image (stdlib CVEs cleared by govulncheck): **GO-2026-6087** (`net/url`), **GO-2026-6091** (`html/template`), **GO-2026-6090** (`crypto/tls`), **GO-2026-6089** / **GO-2026-5026** (`net/http`), **GO-2026-6088** (`encoding/xml`), **GO-2026-5972** (`encoding/asn1`).
+
 ### Changed
 
-- **CI / lint:** `make lint` and the GitHub Actions lint job now run **golangci-lint** v2 (`.golangci.yml`: govet, staticcheck, ineffassign, misspell, revive, unused) instead of bare `go vet`. Cyclomatic complexity remains a separate `make gocyclo` gate. Pin bumped to **v2.12.2** (Go **1.26**-built binary; v2.5.0 failed CI with exit 3 against `go 1.26.5`).
+- **CI / lint:** `make lint` and the GitHub Actions lint job now run **golangci-lint** v2 (`.golangci.yml`: govet, staticcheck, ineffassign, misspell, revive, unused) instead of bare `go vet`. Cyclomatic complexity remains a separate `make gocyclo` gate. Pin bumped to **v2.12.2** (Go **1.26**-built binary; v2.5.0 failed CI with exit 3 against older `go 1.26.5`).
+- **README:** Go version badge synced to **1.26.6**.
 
 ### Docs
 

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-GROOT is a **read-only Kubernetes log and context collector CLI** (Go). One `groot collect` produces a timestamped `.tar.gz` with pod logs, events, API snapshots, RCA TSVs, and `extras/manifest.json` for incident response, tickets, and postmortems. Companion deploy lives in **groot-selfhosted**; team inbox/web is planned as **groot-share** (separate repo). Not a live log agent, not a public Go SDK (`internal/` since 1.0.0).
+GROOT is a **read-only Kubernetes log and context collector CLI** (Go). One `groot collect` produces a timestamped `.tar.gz` with pod logs, events, API snapshots, RCA TSVs, and `extras/manifest.json` for incident response, tickets, and postmortems. Companion deploy lives in **groot-selfhosted**; on-demand collect in **groot-trigger**; VPS archive door in **groot-share** (**gfs**), deployed via **groot-share-selfhosted**. Not a live log agent, not a public Go SDK (`internal/` since 1.0.0).
 
 ## Core Value
 

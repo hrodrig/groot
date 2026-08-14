@@ -15,7 +15,7 @@
 [![Article on DEV](https://img.shields.io/badge/dev.to-article-0A0A0A?logo=devdotto&logoColor=white)](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/hrodrig/groot/)
 
-**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Spec:** [SPECIFICATIONS.md](SPECIFICATIONS.md) · **Operator:** [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [ROADMAP.md](ROADMAP.md) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
+**Repo:** [github.com/hrodrig/groot](https://github.com/hrodrig/groot) · **Releases:** [GitHub Releases](https://github.com/hrodrig/groot/releases) · **Spec:** [SPECIFICATIONS.md](SPECIFICATIONS.md) · **Operator:** [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) · **On-demand:** [groot-trigger](https://github.com/hrodrig/groot-trigger) · **Share (gfs):** [groot-share](https://github.com/hrodrig/groot-share) · **Share deploy:** [groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted) · **Changelog:** [CHANGELOG.md](CHANGELOG.md) · **Roadmap:** [ROADMAP.md](ROADMAP.md) · **Article:** [GROOT on DEV — one archive for cluster diagnostics](https://dev.to/hrodrig/groot-one-archive-for-cluster-diagnostics-2d76)
 
 <p align="center">
   <img src="docs/assets/groot-readme-hero.png" alt="GROOT — Kubernetes log collector CLI · v1.0 stable contract" width="100%" />
@@ -31,7 +31,19 @@ GROOT is a **read-only Kubernetes log and context collector**: a single **`groot
 
 That workflow supports **incident response**, **troubleshooting**, and **root cause analysis (RCA)**: one reproducible bundle replaces scattered `kubectl` copy-paste, so you can reconstruct *what the cluster looked like* when you ran collect and shorten postmortems.
 
-> **Operator deployment** (bastion, cron, `docker run`, Helm CronJob, flat manifests): **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** — this repo ships the CLI binary, packages, and container image only.
+> **Operator deployment** (bastion, cron, `docker run`, Helm CronJob, flat manifests): **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** — this repo ships the CLI binary, packages, and container image only. On-demand in-cluster collect: **[groot-trigger](https://github.com/hrodrig/groot-trigger)**. Archive catalog on a VPS: **[groot-share](https://github.com/hrodrig/groot-share)** (**gfs**); deploy playbooks: **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)**.
+
+<a id="groot-family"></a>
+
+**Groot family** (companion repos — collect stays in this CLI):
+
+| Repo | Role |
+|------|------|
+| **groot** (this repo) | CLI: `collect` / validate / inspect / analyze → `.tar.gz`; optional `upload.s3` / `upload.gcs` / `upload.sftp` |
+| **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** | Operator deploy for **groot**: CronJob, bastion, Helm; S3-only and SFTP-VPS playbooks |
+| **[groot-trigger](https://github.com/hrodrig/groot-trigger)** | In-cluster HTTP → Job `groot collect`; fire-and-forget; optional post-collect upload |
+| **[groot-share](https://github.com/hrodrig/groot-share)** (**gfs**) | VPS web + API: auth, HTTP ingest, list, download, audit, retention (`vps` and `vps-s3`) |
+| **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)** | Operator deploy for **gfs**: VPS, `vps-s3`, systemd, Docker, Helm |
 
 **Related tools (same maintainer):**
 - **[pgwd](https://github.com/hrodrig/pgwd)** — PostgreSQL connection watchdog ([live traffic](https://gghstats.hermesrodriguez.com/hrodrig/pgwd); deploy: [pgwd-selfhosted](https://github.com/hrodrig/pgwd-selfhosted))
@@ -44,6 +56,7 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 - [README badge reference](docs/badges.md)
 - [Specifications (behavior contract)](SPECIFICATIONS.md)
 - [Roadmap (planned work)](docs/ROADMAP.md)
+- [Groot family](#groot-family)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Install or update](#install-or-update)
@@ -941,14 +954,16 @@ This repository ships the **CLI**, **packages**, and **`ghcr.io/hrodrig/groot`**
 | Helm CronJob (in-cluster) | [run/deploy/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/deploy) · **`helm repo add groot https://hrodrig.github.io/groot-selfhosted`** |
 | Flat CronJob YAML | [run/deploy/k8s/cronjob.yaml](https://github.com/hrodrig/groot-selfhosted/blob/main/run/deploy/k8s/cronjob.yaml) |
 | cron / systemd (Releases binary) | [run/standalone/](https://github.com/hrodrig/groot-selfhosted/tree/main/run/standalone) |
+| On-demand collect (HTTP → Job) | **[groot-trigger](https://github.com/hrodrig/groot-trigger)** |
+| Archive catalog on a VPS (**gfs**) | **[groot-share](https://github.com/hrodrig/groot-share)** — deploy: **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)** |
 
-Pull the image from here (pin to the [version badge](#readme-top) — currently **`1.0.6`**):
+Pull the image from here (pin to the [version badge](#readme-top) — currently **`v1.1.1`**):
 
 ```bash
-docker pull ghcr.io/hrodrig/groot:1.0.6
+docker pull ghcr.io/hrodrig/groot:v1.1.1
 ```
 
-In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](SPECIFICATIONS.md#8-runtime-and-kubernetes-access).
+In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](SPECIFICATIONS.md#8-runtime-and-kubernetes-access). See [Groot family](#groot-family) for the full companion map.
 
 [↑ Back to top](#readme-top)
 

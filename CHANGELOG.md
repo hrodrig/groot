@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CI / lint:** `make lint` and the GitHub Actions lint job now run **golangci-lint** v2 (`.golangci.yml`: govet, staticcheck, ineffassign, misspell, revive, unused) instead of bare `go vet`. Cyclomatic complexity remains a separate `make gocyclo` gate.
 
+### Docs
+
+- **Groot family:** README, SPEC, and AGENTS now point at companion repos **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**, **[groot-trigger](https://github.com/hrodrig/groot-trigger)**, **[groot-share](https://github.com/hrodrig/groot-share)** (**gfs**), and **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)**.
+
 ## [1.1.1] - 2026-08-11
 
 Patch — path expansion, concurrent-safe capture naming, S3 credential trim.

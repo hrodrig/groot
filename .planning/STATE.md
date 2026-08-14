@@ -6,9 +6,9 @@ current_phase: —
 current_phase_name: —
 status: Milestone v1.1.1 SHIPPED — tag on main; next Band 4 backlog
 stopped_at: v1.1.1 tagged on main (549f78c); develop at 549f78c
-last_updated: "2026-08-12T14:04:00Z"
-last_activity: 2026-08-12
-last_activity_desc: Status sync — align STATE with v1.1.1 / HEAD 549f78c after Hermes audit review
+last_updated: "2026-08-14T02:54:00Z"
+last_activity: 2026-08-13
+last_activity_desc: Docs — README/SPEC/AGENTS/ROADMAP link groot family (selfhosted, trigger, share/gfs, share-selfhosted)
 progress:
   total_phases: 4
   completed_phases: 4

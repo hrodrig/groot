@@ -23,6 +23,8 @@ This document is the source of truth for **observable behavior** and test expect
 
 - Mutating cluster resources (scale, delete, patch, apply).
 - Continuous monitoring or in-cluster controller beyond a **CronJob** schedule (no Operator).
+- Long-lived HTTP inside this CLI (on-demand collect API: **[groot-trigger](https://github.com/hrodrig/groot-trigger)**).
+- Archive catalog / VPS door (**[groot-share](https://github.com/hrodrig/groot-share)** / **gfs**); gfs deploy playbooks live in **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)**.
 - Arbitrary non-JSON webhook bodies.
 - Multi-cluster capture in one archive (see ROADMAP **1.0.0 #32**).
 

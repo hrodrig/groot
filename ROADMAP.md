@@ -47,7 +47,7 @@ Ship lock for analyze: **[`docs/plan-1.1.0.md`](docs/plan-1.1.0.md)**.
 
 GROOT is a **read-only log and context collector**: one **`groot collect`** produces a **timestamped `.tar.gz`** for incident response and RCA. The runtime path is **client-go** end-to-end (no `kubectl` binary). Configuration is **YAML + env**; optional **notify** fan-out fires after a **successful** collect and, when configured, on **abort** or **partial job failure** (#19).
 
-**Product positioning:** groot = **ticket-ready bundle** (`.tar.gz` + manifest + RCA TSVs + notify/upload). Tools like [kubectl-gather](https://github.com/nirs/kubectl-gather) optimize for **multi-cluster YAML trees and manual diff** — complementary, not identical (#60).
+**Product positioning:** groot = **ticket-ready bundle** (`.tar.gz` + manifest + RCA TSVs + notify/upload). Scheduled / bastion runbooks: **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)**. On-demand in-cluster collect: **[groot-trigger](https://github.com/hrodrig/groot-trigger)**. VPS archive catalog: **[groot-share](https://github.com/hrodrig/groot-share)** (**gfs**); deploy: **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)**. Tools like [kubectl-gather](https://github.com/nirs/kubectl-gather) optimize for **multi-cluster YAML trees and manual diff** — complementary, not identical (#60).
 
 **Target architecture:** **0.9.x** shipped operator wins. **1.0.0** froze **config + archive layout** and moved code to **`internal/`**. **1.1.x+** (Band 4) adds multi-cluster, analyze, triggered collect-on-signal, and addons — only after that contract.
 
@@ -66,6 +66,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 - Not **live log streaming / tail** (`groot stream`) — outside product philosophy (use `kubectl logs -f`, stern, or a log shipper). Continuous value for groot is **triggered collect → archive → upload → notify**, not a log agent.
 - Not **multi-cluster native** until Band 4 `#32`.
 - Not **mutating** cluster operations, full OpenTelemetry agent, managed SaaS, or native Windows GUI (long-term out of scope).
+- Not a long-lived **HTTP server** or **archive catalog** inside this CLI — on-demand collect is **[groot-trigger](https://github.com/hrodrig/groot-trigger)**; VPS door is **[groot-share](https://github.com/hrodrig/groot-share)** (**gfs**), deployed via **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)**.
 
 ### Community signals (Band 4)
 

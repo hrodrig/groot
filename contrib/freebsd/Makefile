@@ -1,5 +1,5 @@
 PORTNAME=	groot
-PORTVERSION=	1.1.1
+PORTVERSION=	1.1.2
 DISTVERSIONPREFIX=	v
 CATEGORIES=	sysutils
 # Local test before release: copy the tarball into DISTDIR (see `make -V DISTDIR`

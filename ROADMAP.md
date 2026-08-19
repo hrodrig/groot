@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-08-11 (**v1.1.1** patch — kubeconfig `~` expansion, unique `sessionBase` short, S3 credential trim; Band 4 continues with `#32` / `#56`; backlog **`#97`** WebDAV/Nextcloud)
+**Last reviewed:** 2026-08-18 (**v1.1.2** security patch — Go 1.26.6 stdlib CVEs, golangci-lint v2.12.2; Band 4 continues with `#32` / `#56`; backlog **`#97`** WebDAV/Nextcloud)
 
 ### Versioning note
 
@@ -103,6 +103,9 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **1.0.4** | 3 | **Security patch**: `grpc` **v1.82.1** (GHSA-hrxh-6v49-42gf); OpenTelemetry **v1.44.0** (GO-2026-5158); `-v` Usage dump fix; kubectl-groot Gatekeeper docs. |
 | **1.0.5** | 3 | **Docs**: Homebrew 6+ tap trust (`brew install --cask hrodrig/groot/groot`); README/BSD pins. |
 | **1.0.6** | 3 | **Packaging/docs**: man(1)+nfpm+BSD (#96), CONTRIBUTING collector guide (#47), examples beyond profiles (#46). |
+| **1.1.0** | 4 | **offline `groot analyze`** (#69): heuristics + executive/LLM Markdown + golden fixtures. |
+| **1.1.1** | 4 | Patch: kubeconfig `~` expansion, unique `sessionBase` short, S3 credential trim. |
+| **1.1.2** | 4 | **Security:** Go **1.26.6** stdlib CVEs (govulncheck); golangci-lint **v2.12.2**; family companion repo docs. |
 
 ---
 

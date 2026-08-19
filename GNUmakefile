@@ -24,7 +24,7 @@ check-docker = @docker info >/dev/null 2>&1 || { echo "Error: Docker is not runn
 
 # Grype directory scan exclusions (see anchore/grype catalog rules for globs).
 GRYPE_FAIL_ON ?= high
-GRYPE_DIR_EXCLUDES := --exclude './bin/**' --exclude './work/**' --exclude './dist/**'
+GRYPE_DIR_EXCLUDES := --exclude './bin/**' --exclude './work/**' --exclude './dist/**' --exclude './.tmp-go/**'
 
 # Pin golangci-lint for reproducible `make lint` / CI (config is v2).
 # Must be ≥ v2.9.0 so the published binary is built with Go ≥ 1.26 (matches go.mod).

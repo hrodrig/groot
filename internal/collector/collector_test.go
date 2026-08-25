@@ -3,7 +3,6 @@ package collector
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/hrodrig/groot/internal/config"
@@ -327,10 +326,10 @@ func TestCaptureSessionBase(t *testing.T) {
 	if got := captureSessionBase("groot-capture", "7kqv2xy", "20260102-150405", ""); got != "groot-capture-7kqv2xy-20260102-150405" {
 		t.Fatalf("empty since: %q", got)
 	}
-	if got := captureSessionBase("groot-capture", "7kqv2xy", "20260102-150405", "12h"); got != "groot-capture-7kqv2xy-20260102-150405-since-12h" {
+	if got := captureSessionBase("groot-capture", "7kqv2xy", "20260102-150405", "12h"); got != "groot-capture-7kqv2xy-since-12h-20260102-150405" {
 		t.Fatalf("12h: %q", got)
 	}
-	if got := captureSessionBase("", "abc1234", "20260102-150405", "45m"); got != "groot-capture-abc1234-20260102-150405-since-45m" {
+	if got := captureSessionBase("", "abc1234", "20260102-150405", "45m"); got != "groot-capture-abc1234-since-45m-20260102-150405" {
 		t.Fatalf("45m: %q", got)
 	}
 	a := captureSessionBase("groot-capture", "aaaaaaa", "20260102-150405", "")
@@ -341,9 +340,40 @@ func TestCaptureSessionBase(t *testing.T) {
 }
 
 func TestArchiveBasename(t *testing.T) {
+	// New order: message before timestamp, cluster last (positionally unambiguous).
 	got := archiveBasename("groot-capture-7kqv2xy-20260102-150405", "prod", "RCA run")
-	if !strings.Contains(got, "groot-capture-7kqv2xy-20260102-150405-prod") {
+	if got != "groot-capture-7kqv2xy-rca-run-20260102-150405-prod" {
 		t.Fatalf("got %q", got)
+	}
+	// No message: cluster still last.
+	if got := archiveBasename("groot-capture-7kqv2xy-20260102-150405", "prod", ""); got != "groot-capture-7kqv2xy-20260102-150405-prod" {
+		t.Fatalf("no message: got %q", got)
+	}
+	// Cluster with UUIDs/dots/dashes (DO-style) stays intact as the tail.
+	do := "e1359a66-dd34-49da-8740-519d490679b6.k8s.ondigitalocean.com-cluster"
+	got = archiveBasename("groot-capture-7kqv2xy-20260102-150405", do, "incident 42")
+	if got != "groot-capture-7kqv2xy-incident-42-20260102-150405-e1359a66-dd34-49da-8740-519d490679b6.k8s.ondigitalocean.com-cluster" {
+		t.Fatalf("DO cluster: got %q", got)
+	}
+	// With -since- BEFORE timestamp: message goes after since, then timestamp+cluster.
+	got = archiveBasename("groot-capture-7kqv2xy-since-12h-20260102-150405", "prod", "rca")
+	if got != "groot-capture-7kqv2xy-since-12h-rca-20260102-150405-prod" {
+		t.Fatalf("since: got %q", got)
+	}
+}
+
+func TestSplitSessionBase(t *testing.T) {
+	h, ts := splitSessionBase("groot-capture-7kqv2xy-20260102-150405")
+	if h != "groot-capture-7kqv2xy" || ts != "20260102-150405" {
+		t.Fatalf("got %q / %q", h, ts)
+	}
+	h, ts = splitSessionBase("groot-capture-7kqv2xy-since-12h-20260102-150405")
+	if h != "groot-capture-7kqv2xy-since-12h" || ts != "20260102-150405" {
+		t.Fatalf("since: got %q / %q", h, ts)
+	}
+	h, ts = splitSessionBase("no-timestamp-here")
+	if h != "no-timestamp-here" || ts != "" {
+		t.Fatalf("no ts: got %q / %q", h, ts)
 	}
 }
 

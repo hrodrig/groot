@@ -16,7 +16,10 @@ kubeconfig: ""
 # beside it. Supports ~ and ${VAR} expansion.
 output_dir: "./out"
 
-# Prefix for capture directory and archive basename: <file_prefix>-<timestamp>[-since-<slug>]-<cluster>
+# Prefix for capture directory and archive basename:
+#   <file_prefix>-<short>-<since?>-<message?>-<timestamp>-<cluster>
+# The cluster segment is always last (after the timestamp), so it can contain
+# any characters (DO-style hosts, UUIDs, dashes, dots) without ambiguity.
 file_prefix: "groot-capture"
 
 # Optional label for archive basename <cluster> segment. When empty, Groot resolves in order:

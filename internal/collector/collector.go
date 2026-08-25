@@ -525,23 +525,24 @@ func (s *Service) runJobs(ctx context.Context, captureDir string, jobs []job) Su
 
 // captureSessionBase is the capture folder name and the leading part of the archive basename.
 // Format: "<file_prefix>-<short>-<timestamp>" or
-// "<file_prefix>-<short>-<timestamp>-since-<slug>" when pod_logs_since is set.
+// "<file_prefix>-<short>-<since>-<timestamp>" when pod_logs_since is set.
+// The -since-<duration> is placed BEFORE the timestamp so the trailing
+// "<timestamp>-<cluster>" is a clean positional anchor: everything after the
+// timestamp is the cluster, everything before it is free-form metadata.
 // <short> is the lowercase random suffix from run_id (concurrent-collect uniqueness).
 func captureSessionBase(filePrefix, short, timestamp, podLogsSince string) string {
 	short = strings.TrimSpace(short)
 	if short == "" {
 		short = strings.ToLower(newRunIDShort())
 	}
-	base := sanitizeFilePrefix(filePrefix) + "-" + short + "-" + timestamp
+	base := sanitizeFilePrefix(filePrefix) + "-" + short
 	s := strings.TrimSpace(podLogsSince)
-	if s == "" {
-		return base
+	if s != "" {
+		if slug := sanitizeMessage(s); slug != "" {
+			base += "-since-" + slug
+		}
 	}
-	slug := sanitizeMessage(s)
-	if slug == "" {
-		return base
-	}
-	return base + "-since-" + slug
+	return base + "-" + timestamp
 }
 
 func sanitizeFilePrefix(p string) string {
@@ -553,11 +554,37 @@ func sanitizeFilePrefix(p string) string {
 }
 
 func archiveBasename(sessionBase, clusterName, message string) string {
-	name := fmt.Sprintf("%s-%s", sessionBase, clusterName)
+	// sessionBase = "<prefix>-<short>[-since-<duration>]-<timestamp>". Insert
+	// the free-form message BEFORE the timestamp, and put the cluster LAST
+	// (after the timestamp) so it is positionally unambiguous: downstream
+	// parsers read "everything after the timestamp" as the cluster, no matter
+	// what characters it contains (DO-style hosts, UUIDs, dashes, dots).
+	head, tsTail := splitSessionBase(sessionBase)
+	name := head
 	if suffix := sanitizeMessage(message); suffix != "" {
 		name += "-" + suffix
 	}
+	name += "-" + tsTail
+	name += "-" + clusterName
 	return name
+}
+
+// tsTailRegex matches the terminal timestamp slot of a session base:
+// "-<YYYYMMDD>-<HHMMSS>". The -since-<duration> (when present) sits BEFORE the
+// timestamp, so the timestamp is always the terminal slot.
+var tsTailRegex = regexp.MustCompile(`-\d{8}-\d{6}$`)
+
+// splitSessionBase splits "<prefix>-<short>[-since-<duration>]-<timestamp>"
+// into the leading head ("<prefix>-<short>[-since-<duration>]") and the
+// trailing timestamp ("<YYYYMMDD>-<HHMMSS>"), so a message can be intercalated
+// between. If the shape is unexpected it returns the input unchanged with an
+// empty tail (never splits a name we don't recognise).
+func splitSessionBase(sessionBase string) (head, tsTail string) {
+	loc := tsTailRegex.FindStringIndex(sessionBase)
+	if loc == nil || loc[0] == 0 {
+		return sessionBase, ""
+	}
+	return sessionBase[:loc[0]], sessionBase[loc[0]+1:]
 }
 
 func sanitize(value string) string {

@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-1.1.2-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-1.1.3-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.26.6-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -583,7 +583,7 @@ notify:
 |-----|----------------|
 | **`kubeconfig`** | Path to the kubeconfig file used to build the **client-go** REST config (same discovery rules as **client-go** / **`clientcmd`**). Empty: use **`KUBECONFIG`** if set, then the default kubeconfig locations (for example **`~/.kube/config`**), or in-cluster credentials when Groot runs as a pod. Supports **`~`** and **`${VAR}`** expansion (YAML, `KUBECONFIG`, and **`--kubeconfig`**). **`groot --kubeconfig`** overrides this for a single run (see [Resolution and precedence](#resolution-and-precedence)). |
 | **`cluster_name`** | Optional label for the **`<cluster>`** segment in archive basenames. When empty, Groot resolves: kubeconfig cluster name → **`kube-public/cluster-info`** → API server host → **`unknown-cluster`**. Set explicitly for in-cluster pods without kubeconfig context. Env: **`GROOT_CLUSTER_NAME`**. |
-| **`output_dir`** | Base directory: each run creates **`<file_prefix>-<short>-<timestamp>[-since-<slug>]/`**, then **`<sessionBase>-<cluster>[-<message>].tar.gz`** beside it. **`<short>`** is from **`run_id`** (concurrent-safe). Supports **`~`** and **`${VAR}`** expansion. |
+| **`output_dir`** | Base directory: each run creates **`<file_prefix>-<short>[-since-<slug>]-<timestamp>/`**, then **`<sessionBase>-<cluster>[-<message>].tar.gz`** beside it. **`<short>`** is from **`run_id`** (concurrent-safe). Supports **`~`** and **`${VAR}`** expansion. |
 | **`file_prefix`** | Prefix for capture directory and archive basename (default **`groot-capture`**). Example session: **`groot-capture-7kqv2xy-20260606-120000-my-cluster.tar.gz`**. |
 | **`collection`** | Tuning for timeouts, parallelism, namespaces, pod logs, optional **`extra_kubectl`** argv lines, redaction, etc. (see below). |
 | **`notify`** | Optional webhooks, email, and failure alerts after collect (see [Notifications](#notifications)). |
@@ -601,7 +601,7 @@ Pod ↔ node placement at capture start is in **`extras/all-pod-node-placement.t
 | **`include_pod_logs`** | When **`true`**, collects **pod logs** for workload and control-plane pods via the API (subject to **`targets`**, **`pod_log_tail_lines`**, **`pod_logs_since`**). When **`false`**, skips all pod log jobs. |
 | **`include_previous_logs`** | When **`true`**, also collects **previous-container** logs into **`*.previous.log`** (same semantics as **`--previous`** on pod logs; marked optional so a missing previous container does not fail the run). |
 | **`pod_log_tail_lines`** | When **`>0`**, passes **`--tail N`** to pod log commands. **`0`** means **no `--tail`** (full log stream — can be very large). |
-| **`pod_logs_since`** | When set, passes **`--since=…`** to **pod log** commands only (digits-only = **hours**, e.g. **`24`** → **`24h`**; otherwise a Go duration like **`24h`**, **`45m`**). **`groot collect --since`** overrides this when the flag is set. The capture directory and **`.tar.gz`** basename include **`since-<slug>`** after the timestamp so runs with a log window are identifiable on disk (see [Output naming](#output-naming)). |
+| **`pod_logs_since`** | When set, passes **`--since=…`** to **pod log** commands only (digits-only = **hours**, e.g. **`24`** → **`24h`**; otherwise a Go duration like **`24h`**, **`45m`**). **`groot collect --since`** overrides this when the flag is set. The capture directory and **`.tar.gz`** basename include **`since-<slug>`** before the timestamp so runs with a log window are identifiable on disk (see [Output naming](#output-naming)). |
 | **`include_node_details`** | When **`true`**, for each node writes **describe**-style summaries and **node metrics** (when the metrics API is available) under **`nodes/`**. |
 | **`include_node_logs`** | When **`true`**, for each node: (1) **GET** **`/api/v1/nodes/<node>/proxy/logs/messages`** → **`nodes/<node>.log`** (host **`/var/log/messages`** when the kubelet serves it — common on **AKS** and other managed nodes); (2) **GET** **`/api/v1/nodes/<node>/proxy/logs/?query=kubelet`** (optional **`&tailLines=N`**) → **`nodes/<node>-kubelet.log`** when the cluster exposes the **Node Log Query** API (Kubernetes **1.27+**; often **404 on AKS**). **Both** jobs are **optional** (failure does not fail the run). |
 | **`node_log_tail_lines`** | When **`>0`**, appends **`tailLines`** to the optional kubelet log query (**default `5000`**). **`0`** omits **`tailLines`** (server default limit). Does not apply to the **`messages`** proxy. |
@@ -702,6 +702,12 @@ Capture output names use **`file_prefix`** (default **`groot-capture`**):
 
 - **directory:** `<file_prefix>-<short>-<timestamp>` or `<file_prefix>-<short>-<timestamp>-since-<slug>` when **`pod_logs_since`** / **`--since`** is set (`<short>` = lowercase `run_id` suffix)
 - **archive:** `<sessionBase>-<cluster>[-<message>].tar.gz` (for example **`groot-capture-7kqv2xy-20260606-120000-my-cluster.tar.gz`**)
+
+The **`--message`** and the **`-since-<duration>`** marker both sit BEFORE the
+timestamp in the archive basename, so the **cluster** is always the LAST
+segment (everything after the `-<YYYYMMDD>-<HHMMSS>` anchor). This keeps the
+cluster positionally unambiguous: it may contain any characters (DO-style
+hosts, UUIDs, dashes, dots) without breaking downstream parsing.
 
 When **`pod_logs_since`** is set, **`<slug>`** is a filesystem-safe form of the duration (for example **`12h`**, **`45m`**).
 

@@ -578,7 +578,7 @@ var tsTailRegex = regexp.MustCompile(`-\d{8}-\d{6}$`)
 // into the leading head ("<prefix>-<short>[-since-<duration>]") and the
 // trailing timestamp ("<YYYYMMDD>-<HHMMSS>"), so a message can be intercalated
 // between. If the shape is unexpected it returns the input unchanged with an
-// empty tail (never splits a name we don't recognise).
+// empty tail (never splits a name we don't recognize).
 func splitSessionBase(sessionBase string) (head, tsTail string) {
 	loc := tsTailRegex.FindStringIndex(sessionBase)
 	if loc == nil || loc[0] == 0 {

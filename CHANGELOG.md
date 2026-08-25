@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-08-25
+
+Patch — positional archive naming (cluster anchored at the tail).
+
+### Changed
+
+- **Capture / archive naming:** the cluster is now the absolute tail of the
+  archive basename, anchored positionally by the terminal
+  `-YYYYMMDD-HHMMSS` timestamp. The free-form `--message` and the
+  `-since-<duration>` marker now precede the timestamp, so the cluster can
+  contain arbitrary characters (DO-style hosts, UUIDs, dashes, dots, even
+  `develop`) without downstream parsing ambiguity. The consuming gfs parser
+  (`groot-share`) reads the cluster by position (everything after the
+  timestamp), so both sides must ship together — pair with gfs `0.7.0`.
+- **README / man pages / BSD ports:** version badge and packaging pins synced
+  to **1.1.3**.
+
 ## [1.1.2] - 2026-08-18
 
 Security patch — Go 1.26.6 stdlib CVEs; golangci-lint v2.12.2.

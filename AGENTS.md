@@ -20,6 +20,12 @@ This repository is the **GROOT product**: CLI, collector engine, behavior contra
 
 For Helm, in-cluster CronJob, `docker run` with kubeconfig, and standalone scheduling, link to **[groot-selfhosted](https://github.com/hrodrig/groot-selfhosted)** (`run/README.md`). On-demand collect: **[groot-trigger](https://github.com/hrodrig/groot-trigger)**. VPS archive door: **[groot-share](https://github.com/hrodrig/groot-share)**; gfs deploy: **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)**.
 
+## Git flow
+
+- Work on **topic branches** opened from `develop`; merge via **PR into `develop`**. **Never** commit or push directly to `develop` or `main`.
+- Release: **PR `develop` → `main`**, then annotated tag on `main` (GoReleaser). After every merge into `main`, sync **`main` → `develop`** (see `.cursor/rules/git-flow.mdc`).
+- Do not merge to `main` or push a release tag without explicit operator approval in the current conversation.
+
 ## Language
 
 English only for all project artifacts.

@@ -10,9 +10,9 @@ Thanks for helping improve GROOT.
 ## How to contribute
 
 - **Bugs and ideas:** Open an [issue](https://github.com/hrodrig/groot/issues). Describe what you expected, what happened, and how to reproduce (commands, config snippets, cluster context if relevant).
-- **Code:** Open a pull request **against `develop`**. `main` is release-only; day-to-day work merges into `develop` first (see project git flow).
-
-Use focused branches, for example `fix/short-topic` or `feat/short-topic`.
+- **Code:** From an up-to-date `develop`, create a **topic branch** (`feat/…`, `fix/…`, `chore/…`, `security/…`, `docs/…`), push it, and open a pull request **into `develop`**. Wait for green CI, then merge.
+- **Branch policy:** `develop` is integration; `main` is stable releases. **No direct push** to `develop` or `main` (GitHub rulesets `protect-develop` / `protect-main` — same pattern as [pgwd](https://github.com/hrodrig/pgwd) / [gghstats](https://github.com/hrodrig/gghstats)).
+- **Release:** PR **`develop` → `main`**, then annotated tag `vX.Y.Z` on `main`. After every merge into `main`, sync **`main` → `develop`** so the next release PR is not **"out-of-date with the base branch"**.
 
 ## Planning docs (SPEC, ROADMAP, CHANGELOG)
 

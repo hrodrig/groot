@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Branch policy matches pgwd / gghstats: topic branch → PR into `develop`; no direct push to `develop` or `main`. After `develop` → `main`, sync `main` into `develop` so the next release PR is not out-of-date.
+- ROADMAP backlog **#98** Azure Blob post-collect upload (`upload.azure`); ships in **groot** before any gfs `vps-azure` topology.
 
 ### Security
 

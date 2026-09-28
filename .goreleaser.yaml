@@ -244,9 +244,10 @@ homebrew_casks:
       - share/man/man1/kubectl-groot.1
     # Generate the URL from the released .tar.gz artifact matching
     # the v-prefixed tag pattern (post 0.6.x).
+    # Do not set url.verified — Homebrew deprecated it; GoReleaser ≥2.18.1
+    # uses default URL verification (same as kzero).
     url:
       template: "https://github.com/hrodrig/groot/releases/download/{{ .Tag }}/groot_{{ .Tag }}_{{ .Os }}_{{ .Arch }}.tar.gz"
-      verified: "github.com/hrodrig/groot/"
     commit_author:
       name: Hermes Rodríguez
       email: hrodrig@usb.ve

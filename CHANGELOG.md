@@ -21,6 +21,7 @@ Security patch — gRPC, x/crypto, OpenTelemetry; branch-policy docs.
 - Branch policy matches pgwd / gghstats: topic branch → PR into `develop`; no direct push to `develop` or `main`. After `develop` → `main`, sync `main` into `develop` so the next release PR is not out-of-date.
 - ROADMAP backlog **#98** Azure Blob post-collect upload (`upload.azure`); ships in **groot** before any gfs `vps-azure` topology.
 - **README / man pages / BSD ports:** version badge and packaging pins synced to **1.1.4**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.1.4**.
 
 ## [1.1.3] - 2026-08-25
 

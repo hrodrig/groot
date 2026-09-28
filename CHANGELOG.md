@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **Dependencies:** bump `google.golang.org/grpc` to **v1.83.2** (Dependabot [#7](https://github.com/hrodrig/groot/pull/7) / gRPC 1.83.x security fixes; transitive via GCS client — groot does not expose a gRPC server) and `golang.org/x/crypto` to **v0.56.0** (**GO-2026-6354** / **GO-2026-6355** — DoS in `crypto/ssh`; used by SFTP upload).
+- **Dependencies:** bump `go.opentelemetry.io/otel` (and `metric`/`trace`/`sdk`/`sdk/metric`) to **v1.45.0** — Dependabot [#5](https://github.com/hrodrig/groot/security/dependabot/5) (exporter config may leak endpoint URLs in info logs; transitive via GCS).
 
 ## [1.1.3] - 2026-08-25
 

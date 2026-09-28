@@ -10,9 +10,9 @@ Thanks for helping improve GROOT.
 ## How to contribute
 
 - **Bugs and ideas:** Open an [issue](https://github.com/hrodrig/groot/issues). Describe what you expected, what happened, and how to reproduce (commands, config snippets, cluster context if relevant).
-- **Code:** Open a pull request **against `develop`**. `main` is release-only; day-to-day work merges into `develop` first (see project git flow).
-
-Use focused branches, for example `fix/short-topic` or `feat/short-topic`.
+- **Code:** From an up-to-date `develop`, create a **topic branch** (`feat/…`, `fix/…`, `chore/…`, `security/…`, `docs/…`), push it, and open a pull request **into `develop`**. Wait for green CI, then merge.
+- **Branch policy:** `develop` is integration; `main` is stable releases. **No direct push** to `develop` or `main` (GitHub rulesets `protect-develop` / `protect-main` — same pattern as [pgwd](https://github.com/hrodrig/pgwd) / [gghstats](https://github.com/hrodrig/gghstats)).
+- **Release:** PR **`develop` → `main`**, then annotated tag `vX.Y.Z` on `main`. After every merge into `main`, sync **`main` → `develop`** so the next release PR is not **"out-of-date with the base branch"**.
 
 ## Planning docs (SPEC, ROADMAP, CHANGELOG)
 
@@ -24,7 +24,7 @@ Behavior contract: **[SPECIFICATIONS.md](SPECIFICATIONS.md)**. Planned work: **[
 2. Mark the roadmap item **Done** in **ROADMAP** (reference global `#` IDs).
 3. Add a **CHANGELOG** bullet under `[Unreleased]` with **`(band #N)`** when applicable (e.g. `(0.4.x #12)`).
 
-On release: move `[Unreleased]` to a version section, add a **Shipped** row in ROADMAP, sync **VERSION** and README badges, run **`make man-sync`** (man `.TH`), **`make port-freebsd-sync`** / **`make port-openbsd-sync`**, refresh VHS if UX changed, then **`make release-check`** before tag.
+On release: move `[Unreleased]` to a version section, add a **Shipped** row in ROADMAP, sync **VERSION** and README badges, run **`make man-sync`** (man `.TH`), **`make port-freebsd-sync`** / **`make port-openbsd-sync`**, and **always** regenerate VHS (`docs/demo.gif`) so `groot --version` matches the new **VERSION** (not optional), then **`make release-check`** before tag.
 
 ## Before you open a PR
 

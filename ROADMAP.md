@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-08-18 (**v1.1.2** security patch — Go 1.26.6 stdlib CVEs, golangci-lint v2.12.2; Band 4 continues with `#32` / `#56`; backlog **`#97`** WebDAV/Nextcloud)
+**Last reviewed:** 2026-09-28 (security patch **v1.1.4** — grpc / x/crypto / otel; backlog **`#98`** Azure Blob remains Pending)
 
 ### Versioning note
 
@@ -38,7 +38,8 @@ Bands group semver minors into planning horizons. Individual items carry **globa
 | Then | **#43** kubeconfig / `--context` | Multi-cluster | Operator ergonomics. |
 | Then | **#33** CI kind matrix | Platform | Documented minimum cluster version. |
 | Later | **#65** addon system | Ecosystem | After multi-cluster + plugin maturity. |
-| Later | **#97** WebDAV / Nextcloud upload | Ecosystem | Post-collect `upload.webdav` for Nextcloud (and generic WebDAV); complements S3/GCS/SFTP. FileZilla/SFTP VPS remains supported today without this. |
+| Later | **#97** WebDAV / Nextcloud upload | Ecosystem | Post-collect `upload.webdav` for Nextcloud (and generic WebDAV); complements S3/GCS/SFTP. FileZilla/SFTP VPS remains supported today without this item. |
+| Later | **#98** Azure Blob upload | Ecosystem | Post-collect `upload.azure` (Blob Storage). **Before** any gfs `vps-azure` topology. Same order as S3: groot sink first, then catalog. |
 | Later | **#55** event-driven watch | Triggered collect | Critical services → collect → S3/GCS/SFTP + notify (not live log tail). |
 
 Ship lock for analyze: **[`docs/plan-1.1.0.md`](docs/plan-1.1.0.md)**.
@@ -106,6 +107,8 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **1.1.0** | 4 | **offline `groot analyze`** (#69): heuristics + executive/LLM Markdown + golden fixtures. |
 | **1.1.1** | 4 | Patch: kubeconfig `~` expansion, unique `sessionBase` short, S3 credential trim. |
 | **1.1.2** | 4 | **Security:** Go **1.26.6** stdlib CVEs (govulncheck); golangci-lint **v2.12.2**; family companion repo docs. |
+| **1.1.3** | 4 | Positional archive naming (cluster at tail); pair with gfs **0.7.0**. |
+| **1.1.4** | 4 | **Security:** grpc **v1.83.2**, x/crypto **v0.56.0**, OpenTelemetry **v1.45.0**; topic-branch → develop policy docs. |
 
 ---
 
@@ -218,7 +221,7 @@ Themes (labels for contribute/vote — item IDs unchanged):
 | **Analysis** | Offline heuristics on archives | #69, #56, #62 |
 | **Platform** | Managed clouds, CI matrix, edge | #33, #58, #49, #59 |
 | **Collector / UX** | Progress, flags, redaction, TUI | #44–#45, #54, #66–#68, #70–#72, #77–#78 |
-| **Ecosystem** | Packages, hooks, dashboards, community, upload sinks | #46–#53, #61, #63, #65, #73–#76, **#96**, **#97** |
+| **Ecosystem** | Packages, hooks, dashboards, community, upload sinks | #46–#53, #61, #63, #65, #73–#76, **#96**, **#97**, **#98** |
 
 **Explicitly out of philosophy:** live **`groot stream`** / continuous log tail (#41) — see Known gaps / Non-goals. Prefer shippers or `kubectl` for that job.
 
@@ -231,7 +234,7 @@ Themes (labels for contribute/vote — item IDs unchanged):
 
 ### Theme: Triggered collect (watch → archive)
 
-Event-driven **full collect** (not log streaming): watch critical workloads/services; on signal (CrashLoop, OOM, Warning threshold, probe fail), run the same collect pipeline, then **upload** (S3/GCS/SFTP; WebDAV/Nextcloud → **#97**) and **notify**. Complements CronJob schedule in groot-selfhosted with incident-triggered captures.
+Event-driven **full collect** (not log streaming): watch critical workloads/services; on signal (CrashLoop, OOM, Warning threshold, probe fail), run the same collect pipeline, then **upload** (S3/GCS/SFTP; WebDAV/Nextcloud → **#97**; Azure Blob → **#98**) and **notify**. Complements CronJob schedule in groot-selfhosted with incident-triggered captures.
 
 | # | Band | Item | Status |
 |---|------|------|--------|
@@ -296,6 +299,7 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 | 75 | 4 | **Alternate formats** (SQLite, Parquet export). | Pending |
 | 76 | 4 | **`groot cleanup`** retention policy for `output_dir`. | Pending |
 | 97 | 4 | 🤝 **WebDAV / Nextcloud post-collect upload** (`upload.webdav`): PUT archive to Nextcloud (or any WebDAV endpoint) after collect; basic auth / app-password via env; path prefix; honor `--no-upload` / `upload.continue_on_error`. Complements S3/GCS/SFTP. Operators who only need FileZilla can keep using **SFTP** to a storage VPS without this item. | Pending |
+| 98 | 4 | 🤝 **Azure Blob post-collect upload** (`upload.azure`): Put archive to an Azure Storage container after collect; credentials via standard Azure SDK / Managed Identity / env (never long-lived keys in YAML); container + prefix; honor `--no-upload` / `upload.continue_on_error`. Complements S3/GCS/SFTP for Azure-heavy shops. **Prerequisite** for any future gfs topology **`vps-azure`** (see [groot-share GFS-CONSENSUS](https://github.com/hrodrig/groot-share/blob/main/docs/GFS-CONSENSUS.md)) — same order as S3: ship the CLI sink first, then the catalog. Until then: gfs **`vps`**, SFTP+rclone→Blob, or Blob S3-compatible API if the tenant offers one. | Pending |
 
 **Out of scope (long-term):** mutating cluster operations; full OpenTelemetry agent; managed SaaS; native Windows GUI.
 

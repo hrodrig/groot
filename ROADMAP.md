@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-09-28 (security patch **v1.1.4** — grpc / x/crypto / otel; backlog **`#98`** Azure Blob remains Pending)
+**Last reviewed:** 2026-10-10 (minor **v1.2.0** — Go **1.27.2**, golangci-lint **v2.14.0**, `x/net` **v0.60.0**; backlog **`#98`** Azure Blob remains Pending)
 
 ### Versioning note
 
@@ -109,6 +109,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **1.1.2** | 4 | **Security:** Go **1.26.6** stdlib CVEs (govulncheck); golangci-lint **v2.12.2**; family companion repo docs. |
 | **1.1.3** | 4 | Positional archive naming (cluster at tail); pair with gfs **0.7.0**. |
 | **1.1.4** | 4 | **Security:** grpc **v1.83.2**, x/crypto **v0.56.0**, OpenTelemetry **v1.45.0**; topic-branch → develop policy docs. |
+| **1.2.0** | 4 | **Toolchain:** Go **1.27.2**; golangci-lint **v2.14.0**; `x/net` **v0.60.0** (govulncheck); client-go **0.32.5** kept. |
 
 ---
 

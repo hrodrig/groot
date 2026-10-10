@@ -28,8 +28,8 @@ GRYPE_DIR_EXCLUDES := --exclude './bin/**' --exclude './work/**' --exclude './di
 
 # Pin golangci-lint for reproducible `make lint` / CI (config is v2).
 # Must be ≥ v2.9.0 so the published binary is built with Go ≥ 1.26 (matches go.mod).
-# Family pin: groot-trigger / groot-share use v2.12.2.
-GOLANGCI_LINT_VERSION ?= v2.12.2
+# Family pin: bump with Go minor (v2.13+ required for go 1.27 modules).
+GOLANGCI_LINT_VERSION ?= v2.14.0
 
 # Release: optional strict image scan (see release-check).
 STRICT_RELEASE ?= 0

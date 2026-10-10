@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Go 1.26.6 → 1.27.2** in `go.mod` and **`Dockerfile`** builder image (`golang:1.27.2-alpine`). Dependency pins (client-go **0.32.5**, golangci-lint **v2.12.2**, etc.) unchanged. README Go badge synced to **1.27.2**.
+- **Go 1.26.6 → 1.27.2** in `go.mod` and **`Dockerfile`** builder image (`golang:1.27.2-alpine`). README Go badge synced to **1.27.2**.
+- **CI / lint:** golangci-lint pin **v2.12.2 → v2.14.0** (built with Go **1.27**; v2.12.2 exits 3 on `go 1.27.2` modules).
+- **Dependencies:** bump `golang.org/x/net` to **v0.60.0** (govulncheck: **GO-2026-6617** / **6612** / **6611** / **6610** / **6603** on `v0.58.0`). client-go **0.32.5** unchanged.
 
 ## [1.1.4] - 2026-09-28
 

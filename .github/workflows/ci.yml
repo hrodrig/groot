@@ -41,8 +41,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          # Keep in sync with GOLANGCI_LINT_VERSION in GNUmakefile (≥ v2.9.0 for Go 1.26+).
-          version: v2.12.2
+          # Keep in sync with GOLANGCI_LINT_VERSION in GNUmakefile (≥ v2.13.0 for Go 1.27).
+          version: v2.14.0
           args: ./...
 
       - name: Cyclomatic complexity (gocyclo)

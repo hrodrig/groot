@@ -1,6 +1,6 @@
 module github.com/hrodrig/groot
 
-go 1.26.6
+go 1.27.2
 
 require (
 	cloud.google.com/go/storage v1.62.3

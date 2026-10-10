@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Go 1.26.6 → 1.27.2** in `go.mod` and **`Dockerfile`** builder image (`golang:1.27.2-alpine`). Dependency pins (client-go **0.32.5**, golangci-lint **v2.12.2**, etc.) unchanged. README Go badge synced to **1.27.2**.
+
 ## [1.1.4] - 2026-09-28
 
 Security patch — gRPC, x/crypto, OpenTelemetry; branch-policy docs.

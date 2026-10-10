@@ -5,8 +5,8 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-1.1.4-blue)](https://github.com/hrodrig/groot/releases)
-[![Go](https://img.shields.io/badge/Go-1.26.6-00ADD8?logo=go)](https://go.dev/)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue)](https://github.com/hrodrig/groot/releases)
+[![Go](https://img.shields.io/badge/Go-1.27.2-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
 [![CI](https://github.com/hrodrig/groot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hrodrig/groot/actions/workflows/ci.yml)
@@ -109,7 +109,7 @@ That workflow supports **incident response**, **troubleshooting**, and **root ca
 
 - A valid **kubeconfig** (or in-cluster config) and network reachability to the Kubernetes API
 - RBAC permissions to read logs/resources
-- **Go 1.26+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go) for the CLI
+- **Go 1.27+** if you [build from source](#quick-start) (`make build`) or use [`go install`](#install-with-go) for the CLI
 
 [↑ Back to top](#readme-top)
 
@@ -224,7 +224,7 @@ Or use **System Settings → Privacy & Security → Open Anyway**. Same applies 
 
 ### Install with Go
 
-From any machine with Go **1.26+** (installs to `$(go env GOPATH)/bin`; ensure that directory is on your `PATH`):
+From any machine with Go **1.27+** (installs to `$(go env GOPATH)/bin`; ensure that directory is on your `PATH`):
 
 ```bash
 go install github.com/hrodrig/groot/cmd/groot@latest
@@ -963,10 +963,10 @@ This repository ships the **CLI**, **packages**, and **`ghcr.io/hrodrig/groot`**
 | On-demand collect (HTTP → Job) | **[groot-trigger](https://github.com/hrodrig/groot-trigger)** |
 | Archive catalog on a VPS (**gfs**) | **[groot-share](https://github.com/hrodrig/groot-share)** — deploy: **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)** |
 
-Pull the image from here (pin to the [version badge](#readme-top) — currently **`v1.1.4`**):
+Pull the image from here (pin to the [version badge](#readme-top) — currently **`v1.2.0`**):
 
 ```bash
-docker pull ghcr.io/hrodrig/groot:v1.1.4
+docker pull ghcr.io/hrodrig/groot:v1.2.0
 ```
 
 In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](SPECIFICATIONS.md#8-runtime-and-kubernetes-access). See [Groot family](#groot-family) for the full companion map.

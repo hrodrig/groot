@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-10
+
+Minor — Go **1.27.2** toolchain; golangci-lint **v2.14.0**; `x/net` **v0.60.0**.
+
+### Changed
+
+- **Go 1.26.6 → 1.27.2** in `go.mod` and **`Dockerfile`** builder image (`golang:1.27.2-alpine`). README Go badge synced to **1.27.2**.
+- **CI / lint:** golangci-lint pin **v2.12.2 → v2.14.0** (built with Go **1.27**; v2.12.2 exits 3 on `go 1.27.2` modules).
+- **Dependencies:** bump `golang.org/x/net` to **v0.60.0** (govulncheck: **GO-2026-6617** / **6612** / **6611** / **6610** / **6603** on `v0.58.0`). client-go **0.32.5** unchanged.
+- **README / man pages / BSD ports:** version badge and packaging pins synced to **1.2.0**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.2.0**.
+
 ## [1.1.4] - 2026-09-28
 
 Security patch — gRPC, x/crypto, OpenTelemetry; branch-policy docs.

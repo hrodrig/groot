@@ -424,7 +424,7 @@ Identity file from env: `GROOT_UPLOAD_SFTP_IDENTITY_FILE=/home/groot/.ssh/id_ed2
 |-------|-------------|
 | Unit | `go test -race ./...`; fake API via **`internal/kubetest`**; table-driven **`k8srunner`** tests. |
 | Coverage | Merged statement coverage ≥ **80%** (`COVER_MIN`, `make cover`). |
-| E2E | **`make test-e2e-kind`** (kind + Docker); **not** part of default `make ci` (ROADMAP **0.4.x #17**). |
+| E2E | **`make test-e2e-kind`** (kind + Docker). **`make ci`** runs it after fmt, lint, gocyclo, and `go test` (ROADMAP **1.3.x #49**). The GitHub Actions job **`test-e2e-kind`** fails the CI workflow when kind fails. |
 | Security | `make security` (govulncheck, gocyclo, grype) before release; CodeQL on GitHub. |
 
 When behavior in this document changes, update **SPEC**, **ROADMAP** item status, and **CHANGELOG** (`(band #N)` references) in the same change set or release.

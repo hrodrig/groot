@@ -16,7 +16,7 @@ Kind E2E on the PR is the cluster that proves collect still does that. There is 
 
 ## Merge order
 
-1. **#49** — `test-e2e-kind` fails the PR (`continue-on-error` removed).
+1. **#49** — `test-e2e-kind` fails the PR (`continue-on-error` removed). `make ci` runs the same harness.
 2. **#100** — redaction patterns, fail-closed pass, scope beyond `*.log`, default `redact_secrets: true`.
 3. **#101** — `config view` credential redaction.
 4. **#102** — `0700` directories, `0600` files and `.tar.gz`.
@@ -28,7 +28,7 @@ Kind E2E on the PR is the cluster that proves collect still does that. There is 
 
 ## Success criteria
 
-- [ ] **#49** A red `make test-e2e-kind` in GitHub Actions fails the workflow. The job still runs on pull requests to `develop` and `main`.
+- [x] **#49** A red `make test-e2e-kind` fails GitHub Actions and local `make ci`. The job still runs on pull requests to `develop` and `main`.
 - [ ] **#100** With the default config, `Authorization: Bearer eyJ…`, `{"token":"abc"}`, `password: "hunter2 extra"`, and `DB_PASSWORD=x` do not leave a usable secret. The key name survives (`DB_PASSWORD=[REDACTED]`). `resources.txt` does not keep `env[].value`. A redaction error aborts before archive and upload. `redact_secrets: false` still opts out.
 - [ ] **#101** `extra_kubectl` `config view` output in the capture has token, client key, client certificate, password, and exec secrets redacted.
 - [ ] **#102** New capture directories are `0700`. New capture files and the `.tar.gz` are `0600`.
@@ -51,7 +51,7 @@ Kind E2E on the PR is the cluster that proves collect still does that. There is 
 | #104 | Port 587 continues when STARTTLS is not advertised | Refuse cleartext AUTH |
 | #105 | LLM excerpts sit in a triple-backtick fence | Fence cannot be terminated by excerpt text |
 | #106 | Notify, then upload; upload errors stay exit 0 | Upload, then notify; upload failure is its own non-zero exit |
-| #49 | Kind job is `continue-on-error: true` | Job failure fails the workflow |
+| #49 | Kind job is `continue-on-error: true`; `make ci` skips kind | Job failure fails the workflow; `make ci` runs `test-e2e-kind` |
 
 ## Out of scope
 

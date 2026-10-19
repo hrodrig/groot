@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-10-10 (minor **v1.2.0** — Go **1.27.2**, golangci-lint **v2.14.0**, `x/net` **v0.60.0**; backlog **`#98`** Azure Blob remains Pending)
+**Last reviewed:** 2026-10-18 (opened **v1.3.0** archive-trust plan **`#49`**, **`#100`–`#107`**; **`#99`** archive MCP stays **v1.4.0**. Prior review 2026-10-10 was minor **v1.2.0** — Go **1.27.2**)
 
 ### Versioning note
 
@@ -33,16 +33,18 @@ Bands group semver minors into planning horizons. Individual items carry **globa
 | Priority | Item | Theme | Notes |
 |----------|------|-------|-------|
 | **Shipped** | **#69** `groot analyze <archive>` | Analysis | **Done (v1.1.0)** — offline heuristics + executive/LLM Markdown + goldens. |
-| **Next** | **#32** multi-cluster collect | Multi-cluster | [plan-1.0.0.md](docs/plan-1.0.0.md) post-1.0 order; first open Band 4 theme after analyze. |
-| **Next** | **#56** `groot diff` | Analysis | Shared `arcread` reader; natural follow-on to `#69`. |
+| **Next** | **v1.3.0** archive trust | Contract | [plan-1.3.0.md](docs/plan-1.3.0.md) — **#49**, **#100**–**#107**. Before **#32** / **#56**. |
+| **Then** | **#32** multi-cluster collect | Multi-cluster | [plan-1.0.0.md](docs/plan-1.0.0.md) post-1.0 order. |
+| **Then** | **#56** `groot diff` | Analysis | Shared `arcread` reader; natural follow-on to `#69`. |
 | Then | **#43** kubeconfig / `--context` | Multi-cluster | Operator ergonomics. |
 | Then | **#33** CI kind matrix | Platform | Documented minimum cluster version. |
 | Later | **#65** addon system | Ecosystem | After multi-cluster + plugin maturity. |
 | Later | **#97** WebDAV / Nextcloud upload | Ecosystem | Post-collect `upload.webdav` for Nextcloud (and generic WebDAV); complements S3/GCS/SFTP. FileZilla/SFTP VPS remains supported today without this item. |
 | Later | **#98** Azure Blob upload | Ecosystem | Post-collect `upload.azure` (Blob Storage). **Before** any gfs `vps-azure` topology. Same order as S3: groot sink first, then catalog. |
 | Later | **#55** event-driven watch | Triggered collect | Critical services → collect → S3/GCS/SFTP + notify (not live log tail). |
+| Later | **#99** archive MCP | Analysis | **v1.4.0.** Offline questions over collected logs. Not a live-cluster agent. |
 
-Ship lock for analyze: **[`docs/plan-1.1.0.md`](docs/plan-1.1.0.md)**.
+Ship lock for analyze: **[`docs/plan-1.1.0.md`](docs/plan-1.1.0.md)**. Ship lock for archive trust: **[`docs/plan-1.3.0.md`](docs/plan-1.3.0.md)**.
 
 ### Strategic direction
 
@@ -139,7 +141,7 @@ Ship **operator value** before the **1.0.0** compatibility promise. No `config_v
 | 64 | 0.9 | **kubectl plugin**: ship **`kubectl-groot`** binary; `kubectl groot collect` via plugin discovery. | **Done (v0.9.0)** |
 | 85 | 0.9 | **Krew + Makefile**: `make install-kubectl-plugin`; document Krew index submission. | **Done (v0.9.0)** |
 | 80 | 0.9 | **Shell completion**: `groot completion bash\|zsh\|fish\|powershell` (and `kubectl groot completion`). | **Done (v0.9.0)** |
-| 81 | 0.9 | **`run_id` + `archive_sha256`**: in `manifest.json`, notify text, upload metadata. | **Done (v0.9.0)** |
+| 81 | 0.9 | **`run_id` + `archive_sha256`**: in `manifest.json`, notify text, upload metadata. **Gap:** the post-archive manifest rewrite lives in the capture dir and is deleted with it, so the hash never ships inside the tar. Sidecar follow-up is **#107** (v1.3.0). | **Done (v0.9.0)** |
 | 82 | 0.9 | **Exit code taxonomy**: documented codes for config, API, abort, notify (see plan-0.9.0). | **Done (v0.9.0)** |
 | 31 | 0.9 | **`groot validate`** (config, API, RBAC, disk) and **`groot inspect <archive>`** (manifest + file tree minimum). | **Done (v0.9.0)** |
 | 83 | 0.9 | **Disk space preflight** (part of validate): fail/warn when `output_dir` lacks space. | **Done (v0.9.0)** |
@@ -219,12 +221,30 @@ Themes (labels for contribute/vote — item IDs unchanged):
 |-------|--------|------------|
 | **Multi-cluster** | Federated collect, context selection | #32, #43 |
 | **Triggered collect** | Watch critical signals → collect → upload → notify | #55 (reframed; not live tail) |
-| **Analysis** | Offline heuristics on archives | #69, #56, #62 |
+| **Analysis** | Offline heuristics on archives | #69, #56, #62, #99 |
 | **Platform** | Managed clouds, CI matrix, edge | #33, #58, #49, #59 |
-| **Collector / UX** | Progress, flags, redaction, TUI | #44–#45, #54, #66–#68, #70–#72, #77–#78 |
+| **Collector / UX** | Progress, flags, redaction, TUI | #44–#45, #54, #66–#68, #70–#72, #77–#78, #100–#103, #107 |
 | **Ecosystem** | Packages, hooks, dashboards, community, upload sinks | #46–#53, #61, #63, #65, #73–#76, **#96**, **#97**, **#98** |
 
 **Explicitly out of philosophy:** live **`groot stream`** / continuous log tail (#41) — see Known gaps / Non-goals. Prefer shippers or `kubectl` for that job.
+
+### 1.3.0 — archive trust
+
+**Plan:** [docs/plan-1.3.0.md](docs/plan-1.3.0.md). Contract cut before **#32** / **#56**. SPEC updates land with each item. Version bump is a later `chore/release-1.3.0` PR, not this plan.
+
+| # | Band | Item | Status |
+|---|------|------|--------|
+| 49 | 4 | **Kind E2E blocks the PR.** Remove `continue-on-error` from `test-e2e-kind`. | Pending (1.3.0) |
+| 100 | 4 | **Redaction contract:** fix patterns (Bearer leftover, JSON keys, spaced values, keep the key name); fail the collect if redaction is on and the pass fails; scan text captures including `resources.txt` (`env[].value`); default `collection.redact_secrets` **true**. | Pending (1.3.0) |
+| 101 | 4 | **`config view` redaction:** do not write token, client-key-data, client-certificate-data, password, or exec credentials into the capture. | Pending (1.3.0) |
+| 102 | 4 | **Private capture modes:** directories `0700`, capture files and the `.tar.gz` `0600`. | Pending (1.3.0) |
+| 103 | 4 | **`DirToTarGz` close errors:** surface `Close` failures instead of uploading a truncated archive. | Pending (1.3.0) |
+| 107 | 4 | **`archive_sha256` sidecar** next to the `.tar.gz` (reopens the **#81** gap; the hash cannot live inside the tar). | Pending (1.3.0) |
+| 104 | 4 | **SMTP STARTTLS required** on port 587. Do not authenticate in cleartext when STARTTLS is missing. | Pending (1.3.0) |
+| 105 | 4 | **LLM paste fence:** excerpts cannot break the Markdown code fence. | Pending (1.3.0) |
+| 106 | 4 | **Upload, then notify.** Non-zero exit if any upload fails (changes SPEC §10). Notify reports the upload outcome. | Pending (1.3.0) |
+
+**Out of 1.3.0 (rejected, not deferred):** `arcread` re-read performance, lowering the 16 GiB decompressed cap, CI action SHA pinning / `@latest` scanners / checksum-less `curl`. **#99** archive MCP is **v1.4.0**.
 
 ### Theme: Multi-cluster
 
@@ -254,13 +274,14 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 | 69 | 4 | 🚀 **`groot analyze <archive>`**: offline heuristics (CrashLoop, OOM, ImagePull, NotReady, Evicted) + executive/LLM Markdown; golden fixtures under `testing/fixtures/archives/`. | **Done (v1.1.0)** |
 | 56 | 4 | **`groot diff`**: compare two archives from the same cluster. | Pending |
 | 62 | 4 | **Post-collect analysis hooks** (Popeye, kubectl-debug). | Pending |
+| 99 | 4 | **Archive MCP** (target **v1.4.0**): MCP server over a groot `.tar.gz` so any agent can ask questions about collected log contents. Offline archive only (no kubeconfig, no live API). Distinct from `groot analyze --output llm` (one-shot bounded paste). Depends on archive redaction landing first, so agents do not read raw secrets. | Pending (1.4.0) |
 
 ### Theme: Platform
 
 | # | Band | Item | Status |
 |---|------|------|--------|
 | 33 | 4 | **CI matrix**: kind E2E against more than one Kubernetes minor; documented minimum cluster version. | Pending |
-| 49 | 4 | **Promote kind E2E** from `continue-on-error` to required/nightly. | Pending |
+| 49 | 4 | **Kind E2E blocks the PR** (v1.3.0): drop `continue-on-error` on `test-e2e-kind`. CI kind is the cluster that proves collect still works. Nightly-only does not meet this. | Pending (1.3.0) |
 | 58 | 4 | **Edge/K3s/MicroK8s** adjustments. | Pending |
 | 59 | 4 | **E2E matrix expansion** (minikube, OpenShift local). | Pending |
 
@@ -269,7 +290,7 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 | # | Band | Item | Status |
 |---|------|------|--------|
 | 44 | 4 | 🤝 **Progress bar / spinner** during collect. | Pending |
-| 45 | 4 | **Secret redaction enhancements**: JWT/AWS patterns, `--dry-run-redact`, extend to `.txt`/`.tsv`. | Pending |
+| 45 | 4 | **`--dry-run-redact`** only. Patterns, default-on, fail-closed, and scope beyond `*.log` (including `resources.txt`) are **#100** (v1.3.0). | Pending |
 | 66 | 4 | 🤝 **Label selector flag (`-l` / `--selector`)**. | Pending |
 | 67 | 4 | **Dynamic API rate limiting** (429 backoff). | Pending |
 | 68 | 4 | **Per-log `LimitBytes`**. | Pending |

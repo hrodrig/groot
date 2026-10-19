@@ -8,7 +8,7 @@
 
 ## How to test
 
-- [ ] `make lint-fix` then `make ci` (fmt-check + golangci-lint + gocyclo + tests; or `make all` for coverage too)
+- [ ] `make lint-fix` then `make ci` (fmt-check + golangci-lint + gocyclo + tests + kind E2E; or `make all` for coverage without kind)
 - [ ] `make security` (if your change touches deps, Docker, or security-sensitive paths)
 - [ ] Manual verification (if applicable)
 

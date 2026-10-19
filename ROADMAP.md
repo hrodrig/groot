@@ -234,7 +234,7 @@ Themes (labels for contribute/vote — item IDs unchanged):
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 49 | 4 | **Kind E2E blocks the PR.** Remove `continue-on-error` from `test-e2e-kind`. | Pending (1.3.0) |
+| 49 | 4 | **Kind E2E blocks the PR and `make ci`.** Remove `continue-on-error` from `test-e2e-kind`. Local `make ci` runs the same harness. | Pending (1.3.0) |
 | 100 | 4 | **Redaction contract:** fix patterns (Bearer leftover, JSON keys, spaced values, keep the key name); fail the collect if redaction is on and the pass fails; scan text captures including `resources.txt` (`env[].value`); default `collection.redact_secrets` **true**. | Pending (1.3.0) |
 | 101 | 4 | **`config view` redaction:** do not write token, client-key-data, client-certificate-data, password, or exec credentials into the capture. | Pending (1.3.0) |
 | 102 | 4 | **Private capture modes:** directories `0700`, capture files and the `.tar.gz` `0600`. | Pending (1.3.0) |
@@ -281,7 +281,7 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 | # | Band | Item | Status |
 |---|------|------|--------|
 | 33 | 4 | **CI matrix**: kind E2E against more than one Kubernetes minor; documented minimum cluster version. | Pending |
-| 49 | 4 | **Kind E2E blocks the PR** (v1.3.0): drop `continue-on-error` on `test-e2e-kind`. CI kind is the cluster that proves collect still works. Nightly-only does not meet this. | Pending (1.3.0) |
+| 49 | 4 | **Kind E2E blocks the PR and `make ci`** (v1.3.0): drop `continue-on-error` on `test-e2e-kind`. Local `make ci` runs the same harness. CI kind is the cluster that proves collect still works. | Pending (1.3.0) |
 | 58 | 4 | **Edge/K3s/MicroK8s** adjustments. | Pending |
 | 59 | 4 | **E2E matrix expansion** (minikube, OpenShift local). | Pending |
 
@@ -335,4 +335,4 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 - **Security:** run **`make security`** before tag; keep `govulncheck` / **grype** green; triage CodeQL on the Security tab.
 - **Coverage:** merged statement gate **80%** (`COVER_MIN`); `coverage.out` is gitignored—do not commit.
 - **client-go / k8s.io pin:** bump `k8s.io/*` modules together; document tested cluster minor in README when matrix lands (#33).
-- **E2E:** local kind test remains optional for contributors; CI job (#17) uses `continue-on-error` until flake budget stabilizes (#49 in Band 4 backlog).
+- **E2E:** `make ci` runs `test-e2e-kind` (Docker, kind, kubectl). The GitHub Actions job fails the CI workflow on error (**#49**).

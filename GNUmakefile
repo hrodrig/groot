@@ -93,6 +93,7 @@ help:
 	@echo "$(YELLOW)Test:$(RESET)"
 	@echo "  $(GREEN)test$(RESET)                     Run Go tests (-count=1 -race, same as CI)"
 	@echo "  $(GREEN)test-e2e-kind$(RESET)            E2E harness: Docker + kind + kubectl on host"
+	@echo "  $(GREEN)ci$(RESET)                       fmt-check + lint + gocyclo + test + test-e2e-kind"
 	@echo "  $(GREEN)cover$(RESET)                    Merged coverage (coverage.out); gate with COVER_MIN (default $(COVER_MIN); needs bc)"
 	@echo ""
 	@echo "$(YELLOW)Quality:$(RESET)"
@@ -250,8 +251,8 @@ govulncheck:
 
 vulncheck: govulncheck
 
-ci: fmt-check lint gocyclo test
-	@echo "OK: ci (fmt-check, golangci-lint, gocyclo, test)"
+ci: fmt-check lint gocyclo test test-e2e-kind
+	@echo "OK: ci (fmt-check, golangci-lint, gocyclo, test, test-e2e-kind)"
 
 gocyclo:
 	go run github.com/fzipp/gocyclo/cmd/gocyclo@latest -over 14 .

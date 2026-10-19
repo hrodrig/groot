@@ -29,7 +29,7 @@ On release: move `[Unreleased]` to a version section, add a **Shipped** row in R
 ## Before you open a PR
 
 1. **Format:** `make lint-fix` (applies `gofmt -s` across the tree).
-2. **Verify:** `make ci` runs **`fmt-check`** (same `gofmt -s` gate as CI), **`golangci-lint`** (`.golangci.yml`), **`gocyclo`**, and **`go test -race`** — it matches the GitHub Actions **lint** and **test** jobs.
+2. **Verify:** `make ci` runs **`fmt-check`**, **`golangci-lint`**, **`gocyclo`**, **`go test -race`**, and **`test-e2e-kind`**. That matches the GitHub Actions **lint**, **test**, and **E2E (kind)** jobs. Docker, kind, and kubectl must be on the host.
 3. **Broader check (optional):** `make all` adds merged coverage and a build; maintainers run **`make release-check`** before tagging a release (GoReleaser config, **`fmt-check`**, **`lint`**, **`cover`** with `COVER_MIN`, **`security`**, and optionally **`STRICT_RELEASE=1`** for **`docker-scan`**).
 
 Keep commits scoped and messages understandable.
@@ -75,7 +75,7 @@ Use a new built-in job only when the work needs multi-step client-go logic, stru
 | Unit | helpers, job plan order, allowlist, config rejects | `internal/collector/*_test.go`, `internal/config/*_test.go`, `internal/k8srunner/*_test.go` |
 | Fake API | `Run` / archive contents without a real cluster | `internal/collector/run_integration_test.go` + `internal/kubetest/` |
 | Golden | inspect / fixture layout (#87) | `internal/collector/inspect_golden_test.go` |
-| Kind E2E | optional smoke after deeper collect changes | `make test-e2e-kind` — [docs/e2e-kind.md](docs/e2e-kind.md), [testing/README.md](testing/README.md) |
+| Kind E2E | part of `make ci`; also `make test-e2e-kind` alone | [docs/e2e-kind.md](docs/e2e-kind.md), [testing/README.md](testing/README.md) |
 
 Local loop: `make lint-fix && make ci`. Coverage gate: `make cover` / `COVER_MIN` (default 80%).
 

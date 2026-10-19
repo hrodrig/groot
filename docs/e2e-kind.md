@@ -8,7 +8,7 @@ This flow proves **groot collect** against a real Kubernetes API. The canonical 
 make test-e2e-kind
 ```
 
-Alias: **`make e2e-kind`** (same target).
+Alias: **`make e2e-kind`** (same target). **`make ci`** runs this target after fmt, lint, gocyclo, and `go test`.
 
 **Note:** Groot uses **client-go**, not the `kubectl` binary, for collection. The E2E harness may still use host `kubectl` only to apply the test workload (see `testing/README.md`).
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Go 1.27.2 → 1.27.3** in `go.mod` and the **`Dockerfile`** builder image (`golang:1.27.3-alpine`). README Go badge synced to **1.27.3**. CI already reads the Go version from `go.mod`.
 - **Kind E2E blocks CI (`1.3.x #49`)**: the `test-e2e-kind` job no longer sets `continue-on-error`. A failed kind run fails the CI workflow. Local `make ci` runs the same kind harness after the Go tests.
 
 ## [1.2.0] - 2026-10-10

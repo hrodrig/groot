@@ -55,7 +55,7 @@ Legacy: `KIND_CLUSTER_NAME` is still honored if you run **`./scripts/e2e-kind.sh
 
 **Notes:**
 
-- Not part of default **`make ci`** (needs Docker + cluster + time). Optional GitHub Actions job can call **`make test-e2e-kind`** like pgwd’s `test-e2e-kube`.
+- **`make ci`** runs this harness after the Go tests (Docker, kind, and kubectl required). The GitHub Actions job **`test-e2e-kind`** runs on pull requests and fails the CI workflow if the kind run fails (ROADMAP **#49**).
 - Override binary with **`GROOT_BIN=/path/to/groot`**; otherwise the script builds **`./bin/groot`** if missing.
 
 More detail: [docs/e2e-kind.md](../docs/e2e-kind.md).

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-10-25
+
+Security patch — Go **1.27.3** rejects certificate chains that include compromised eMudhra intermediates (**CVE-2026-111943** / **GO-2026-6809**).
+
+### Security
+
+- **Go 1.27.2 → 1.27.3** in `go.mod` and the **`Dockerfile`** builder image (`golang:1.27.3-alpine`). `crypto/x509` **Certificate.Verify** drops chains containing those intermediates. Already published **v1.2.0** binaries do not pick this up until they are rebuilt. README Go badge synced to **1.27.3**.
+
+### Changed
+
+- **Kind E2E blocks CI (`1.3.x #49`)**: the `test-e2e-kind` job no longer sets `continue-on-error`. A failed kind run fails the CI workflow. Local `make ci` runs the same kind harness after the Go tests.
+- **README / man pages / BSD ports:** version badge and packaging pins synced to **1.2.1**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.2.1**.
+
 ## [1.2.0] - 2026-10-10
 
 Minor — Go **1.27.2** toolchain; golangci-lint **v2.14.0**; `x/net` **v0.60.0**.

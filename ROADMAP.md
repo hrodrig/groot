@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-10-18 (opened **v1.3.0** archive-trust plan **`#49`**, **`#100`–`#107`**; **`#99`** archive MCP stays **v1.4.0**. Prior review 2026-10-10 was minor **v1.2.0** — Go **1.27.2**)
+**Last reviewed:** 2026-10-25 (security patch **v1.2.1** — Go **1.27.3**, **CVE-2026-111943** / **GO-2026-6809**. **v1.3.0** archive-trust plan **`#49`**, **`#100`–`#107`** stays open; **`#99`** archive MCP stays **v1.4.0**)
 
 ### Versioning note
 
@@ -112,6 +112,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **1.1.3** | 4 | Positional archive naming (cluster at tail); pair with gfs **0.7.0**. |
 | **1.1.4** | 4 | **Security:** grpc **v1.83.2**, x/crypto **v0.56.0**, OpenTelemetry **v1.45.0**; topic-branch → develop policy docs. |
 | **1.2.0** | 4 | **Toolchain:** Go **1.27.2**; golangci-lint **v2.14.0**; `x/net` **v0.60.0** (govulncheck); client-go **0.32.5** kept. |
+| **1.2.1** | 4 | **Security:** Go **1.27.3** (`crypto/x509` denylist, **CVE-2026-111943** / **GO-2026-6809**). Kind E2E fails CI (`#49`). |
 
 ---
 
@@ -234,7 +235,7 @@ Themes (labels for contribute/vote — item IDs unchanged):
 
 | # | Band | Item | Status |
 |---|------|------|--------|
-| 49 | 4 | **Kind E2E blocks the PR and `make ci`.** Remove `continue-on-error` from `test-e2e-kind`. Local `make ci` runs the same harness. | Pending (1.3.0) |
+| 49 | 4 | **Kind E2E blocks the PR and `make ci`.** Remove `continue-on-error` from `test-e2e-kind`. Local `make ci` runs the same harness. | **Done (v1.2.1)** |
 | 100 | 4 | **Redaction contract:** fix patterns (Bearer leftover, JSON keys, spaced values, keep the key name); fail the collect if redaction is on and the pass fails; scan text captures including `resources.txt` (`env[].value`); default `collection.redact_secrets` **true**. | Pending (1.3.0) |
 | 101 | 4 | **`config view` redaction:** do not write token, client-key-data, client-certificate-data, password, or exec credentials into the capture. | Pending (1.3.0) |
 | 102 | 4 | **Private capture modes:** directories `0700`, capture files and the `.tar.gz` `0600`. | Pending (1.3.0) |
@@ -281,7 +282,7 @@ Event-driven **full collect** (not log streaming): watch critical workloads/serv
 | # | Band | Item | Status |
 |---|------|------|--------|
 | 33 | 4 | **CI matrix**: kind E2E against more than one Kubernetes minor; documented minimum cluster version. | Pending |
-| 49 | 4 | **Kind E2E blocks the PR and `make ci`** (v1.3.0): drop `continue-on-error` on `test-e2e-kind`. Local `make ci` runs the same harness. CI kind is the cluster that proves collect still works. | Pending (1.3.0) |
+| 49 | 4 | **Kind E2E blocks the PR and `make ci`.** Drop `continue-on-error` on `test-e2e-kind`. Local `make ci` runs the same harness. CI kind is the cluster that proves collect still works. | **Done (v1.2.1)** |
 | 58 | 4 | **Edge/K3s/MicroK8s** adjustments. | Pending |
 | 59 | 4 | **E2E matrix expansion** (minikube, OpenShift local). | Pending |
 

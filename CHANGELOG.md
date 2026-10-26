@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **GoReleaser:** drop the Homebrew cask quarantine hook. Rewriting the Ruby `post.install` as `install_steps` would keep the same unsigned-binary workaround, and GoReleaser **v2.19** rejects the old hook. The README keeps the manual `xattr` lines. Release workflow pins GoReleaser **v2.19.0** instead of `latest`.
+
 ## [1.2.1] - 2026-10-25
 
 Security patch — Go **1.27.3** rejects certificate chains that include compromised eMudhra intermediates (**CVE-2026-111943** / **GO-2026-6809**).

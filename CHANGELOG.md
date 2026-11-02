@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Dependencies:** bump `github.com/go-jose/go-jose/v4` **4.1.4 → 4.1.6** (indirect via GCS / gRPC / SPIFFE) — [GHSA-mgcc-cww5-fp2q](https://github.com/go-jose/go-jose/security/advisories/GHSA-mgcc-cww5-fp2q) (JWK RSA modulus DoS). Replaces Dependabot [#29](https://github.com/hrodrig/groot/pull/29) which targeted `main`.
+
+### Changed
+
+- **Dependabot:** add `.github/dependabot.yml` — weekly `gomod` updates open against **`develop`** (git-flow), not `main`.
+
 ### Fixed
 
 - **GoReleaser:** drop the Homebrew cask quarantine hook. Rewriting the Ruby `post.install` as `install_steps` would keep the same unsigned-binary workaround, and GoReleaser **v2.19** rejects the old hook. The README keeps the manual `xattr` lines. Release workflow pins GoReleaser **v2.19.0** instead of `latest`.

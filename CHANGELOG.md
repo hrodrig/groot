@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-11-02
+
+Security patch — transitive **go-jose** bump ([GHSA-mgcc-cww5-fp2q](https://github.com/go-jose/go-jose/security/advisories/GHSA-mgcc-cww5-fp2q)); Dependabot targets **`develop`**.
+
+### Security
+
+- **Dependencies:** bump `github.com/go-jose/go-jose/v4` **4.1.4 → 4.1.6** (indirect via GCS / gRPC / SPIFFE) — [GHSA-mgcc-cww5-fp2q](https://github.com/go-jose/go-jose/security/advisories/GHSA-mgcc-cww5-fp2q) (JWK RSA modulus DoS). Landed via [#30](https://github.com/hrodrig/groot/pull/30) on `develop` (Dependabot [#29](https://github.com/hrodrig/groot/pull/29) targeted `main` and was closed).
+
+### Changed
+
+- **Dependabot:** add `.github/dependabot.yml` — weekly `gomod` updates open against **`develop`** (git-flow), not `main`.
+- **README / man pages / BSD ports:** version badge and packaging pins synced to **1.2.2**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.2.2**.
+
 ### Fixed
 
 - **GoReleaser:** drop the Homebrew cask quarantine hook. Rewriting the Ruby `post.install` as `install_steps` would keep the same unsigned-binary workaround, and GoReleaser **v2.19** rejects the old hook. The README keeps the manual `xattr` lines. Release workflow pins GoReleaser **v2.19.0** instead of `latest`.

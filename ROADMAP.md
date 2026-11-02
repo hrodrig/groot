@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-10-25 (security patch **v1.2.1** — Go **1.27.3**, **CVE-2026-111943** / **GO-2026-6809**. **v1.3.0** archive-trust plan **`#49`**, **`#100`–`#107`** stays open; **`#99`** archive MCP stays **v1.4.0**)
+**Last reviewed:** 2026-11-02 (security patch **v1.2.2** — `go-jose/v4` **4.1.6** / **GHSA-mgcc-cww5-fp2q**; Dependabot → **`develop`**. **v1.3.0** archive-trust plan **`#49`**, **`#100`–`#107`** stays open; **`#99`** archive MCP stays **v1.4.0**)
 
 ### Versioning note
 
@@ -113,6 +113,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **1.1.4** | 4 | **Security:** grpc **v1.83.2**, x/crypto **v0.56.0**, OpenTelemetry **v1.45.0**; topic-branch → develop policy docs. |
 | **1.2.0** | 4 | **Toolchain:** Go **1.27.2**; golangci-lint **v2.14.0**; `x/net` **v0.60.0** (govulncheck); client-go **0.32.5** kept. |
 | **1.2.1** | 4 | **Security:** Go **1.27.3** (`crypto/x509` denylist, **CVE-2026-111943** / **GO-2026-6809**). Kind E2E fails CI (`#49`). |
+| **1.2.2** | 4 | **Security:** `go-jose/v4` **4.1.6** (**GHSA-mgcc-cww5-fp2q**); Dependabot `target-branch: develop`. |
 
 ---
 

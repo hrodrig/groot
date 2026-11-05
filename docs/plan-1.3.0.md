@@ -1,10 +1,10 @@
 # Plan 1.3.0 — archive trust
 
-**Status:** open  
-**Target release:** **`v1.3.0`**  
+**Status:** open (remaining items)  
+**Target band:** **`1.3.x`** (notify UX shipped in **`v1.3.0`**; archive-trust items below follow as **`1.3.1+`**)  
 **Roadmap:** **#49**, **#100**–**#107** — see [ROADMAP.md](../ROADMAP.md)  
 **Source:** audit `groot-all/groot/audits/auditoria-claude-20261015.txt` (static review of v1.2.0), plus the `archive_sha256` gap found while checking that review  
-**Delivery:** topic branch → PR into `develop` per item (or a tight pair). Do not mix the `VERSION` bump into these PRs. `chore/release-1.3.0` is a later, separate PR.
+**Delivery:** topic branch → PR into `develop` per item (or a tight pair). Do not mix the `VERSION` bump into these PRs. Version cuts are separate `chore/release-*` PRs.
 
 ---
 

@@ -19,6 +19,7 @@ Minor — notify attribution + Slack rich attachments (SPEC); archive-trust plan
 ### Security
 
 - **Dependencies:** bump `golang.org/x/net` **0.60.0 → 0.62.0** (GO-2026-6860 / GO-2026-6866) and `golang.org/x/crypto` **0.57.0 → 0.58.1** pre-release (GO-2026-5932; no tagged `v0.58.1` yet).
+- **Dependencies:** bump `github.com/klauspost/compress` **1.18.0 → 1.18.7** ([GHSA-259r-337f-4rfw](https://github.com/advisories/GHSA-259r-337f-4rfw)) so `make release-check STRICT_RELEASE=1` / grype pass.
 
 ### Changed
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`client_id` / `GROOT_CLIENT_ID`:** optional collector / bastion identity in notify summary (`client=<id>`), `{{client_id}}` template placeholder, and `extras/manifest.json` (omit when empty). Independent of `cluster_name`; not part of archive basename ([#37](https://github.com/hrodrig/groot/issues/37)).
+- **Slack rich notify:** webhook posts keep the plain `text` one-liner and add a color-bar attachment (`good` / `warning` / `danger`) with Cluster / Client / Time / Context / User / Mode / Duration / Jobs / Archive / Run ID and `groot vX.Y.Z` footer ([#38](https://github.com/hrodrig/groot/issues/38)).
 
 ### Security
 

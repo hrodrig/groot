@@ -38,6 +38,14 @@ type Summary struct {
 	Failures    []string      `json:"failures,omitempty"`
 	RunID       string        `json:"run_id,omitempty"`
 	ClientID    string        `json:"client_id,omitempty"`
+	// Identity / notify enrichment (Slack attachment, etc.).
+	Cluster    string    `json:"cluster,omitempty"`
+	Context    string    `json:"context,omitempty"`
+	User       string    `json:"user,omitempty"`
+	Server     string    `json:"server,omitempty"`
+	Mode       string    `json:"mode,omitempty"`
+	Version    string    `json:"version,omitempty"`
+	FinishedAt time.Time `json:"finished_at,omitempty"`
 }
 
 type job struct {
@@ -167,7 +175,7 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	if summary.RunID == "" {
 		summary.RunID = "unknown"
 	}
-	summary.ClientID = strings.TrimSpace(s.cfg.ClientID)
+	s.enrichSummary(ctx, &summary)
 
 	if s.cfg.Collection.RedactSecrets {
 		s.runRedactPass(captureDir)

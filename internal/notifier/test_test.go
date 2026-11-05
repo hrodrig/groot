@@ -112,4 +112,12 @@ func TestBuildSummaryLine_clientID(t *testing.T) {
 	if !strings.Contains(failLine, "GROOT FAILED. client=bastion-01 reason=boom") {
 		t.Fatalf("failLine=%q", failLine)
 	}
+	partial := buildSummaryLine(eventFailure, sum, "")
+	if !strings.Contains(partial, "GROOT finished with failures. client=bastion-01 total=") {
+		t.Fatalf("partial=%q", partial)
+	}
+	testLine := buildSummaryLine(EventTest, sum, "")
+	if !strings.Contains(testLine, "GROOT notify test. client=bastion-01 total=") {
+		t.Fatalf("testLine=%q", testLine)
+	}
 }

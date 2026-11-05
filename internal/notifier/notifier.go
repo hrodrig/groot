@@ -206,6 +206,12 @@ func (f *FanOut) notifyEvent(ctx context.Context, event string, summary collecto
 			}
 			continue
 		}
+		if wh, ok := sender.(*webhookSender); ok && wh.kind == "slack" {
+			if err := wh.SendSlack(ctx, msgCtx); err != nil {
+				errs = append(errs, err)
+			}
+			continue
+		}
 		if err := sender.Send(ctx, text); err != nil {
 			errs = append(errs, err)
 		}
@@ -228,6 +234,7 @@ func (w *webhookSender) Send(ctx context.Context, text string) error {
 	var payload any
 	switch w.kind {
 	case "slack":
+		// Plain fallback (tests / direct Send). FanOut uses SendSlack for rich attachments.
 		payload = map[string]string{"text": text}
 	case "teams":
 		payload = map[string]string{"text": text}
@@ -240,6 +247,18 @@ func (w *webhookSender) Send(ctx context.Context, text string) error {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("marshal webhook payload: %w", err)
+	}
+	return w.http.postJSONWithRetry(ctx, w.url, body, nil)
+}
+
+// jsonMarshal is overridden in tests to exercise marshal error paths.
+var jsonMarshal = json.Marshal
+
+// SendSlack posts the one-line text plus a kzero-style attachment (color bar + bullets).
+func (w *webhookSender) SendSlack(ctx context.Context, msgCtx messageContext) error {
+	body, err := jsonMarshal(buildSlackPayload(msgCtx))
+	if err != nil {
+		return fmt.Errorf("marshal slack webhook payload: %w", err)
 	}
 	return w.http.postJSONWithRetry(ctx, w.url, body, nil)
 }

@@ -282,6 +282,13 @@ Argv is split on whitespace in config—**no shell quoting** for pipelines or re
 - **Failure** message format:  
   `GROOT FAILED. reason=…` (abort) or `GROOT finished with failures. …` (partial threshold).  
   Same optional `client=<id>` insertion after the opening phrase when `client_id` is set.
+- **Slack only (rich attachment):** in addition to the plain `text` one-liner (fallback / accessibility), the webhook JSON includes one legacy attachment:
+  - **color** (vertical bar): `good` / green = success or `notify.test`; `warning` / yellow = partial job failures (`notify.on_failure`, empty reason); `danger` / red = abort or hard failure (non-empty reason)
+  - **fallback:** same as `text`
+  - **text (mrkdwn):** title (`✅ *GROOT completed*` / `❌ *GROOT failed*` / `✅ *GROOT notify test*`) plus bullets for non-empty fields among Cluster, Client, Time, Context, User, Mode, Duration, Jobs, Archive (basename), Run ID, and Reason (failure only)
+  - **footer:** `groot vX.Y.Z | <day Mon>` (omit date when finish time unknown)
+  - **ts:** Unix seconds of finish time  
+  Teams / Discord / generic / email / PagerDuty payloads are unchanged (one-liner or their existing contracts).
 - **Discord** content truncated to 2000 runes.
 - Notify errors **fail the command** (`send notifications: …` / `send failure notifications: …`).
 - HTTP notify clients **retry** transient 5xx and network errors per `notify.retry` (§4).

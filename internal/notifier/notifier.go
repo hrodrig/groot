@@ -251,9 +251,12 @@ func (w *webhookSender) Send(ctx context.Context, text string) error {
 	return w.http.postJSONWithRetry(ctx, w.url, body, nil)
 }
 
+// jsonMarshal is overridden in tests to exercise marshal error paths.
+var jsonMarshal = json.Marshal
+
 // SendSlack posts the one-line text plus a kzero-style attachment (color bar + bullets).
 func (w *webhookSender) SendSlack(ctx context.Context, msgCtx messageContext) error {
-	body, err := json.Marshal(buildSlackPayload(msgCtx))
+	body, err := jsonMarshal(buildSlackPayload(msgCtx))
 	if err != nil {
 		return fmt.Errorf("marshal slack webhook payload: %w", err)
 	}

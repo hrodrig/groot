@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -95,6 +96,25 @@ func TestBuildSlackPayload_failureOmitsEmpty(t *testing.T) {
 	}
 	if att.Footer != "groot dev" {
 		t.Fatalf("footer=%q", att.Footer)
+	}
+}
+
+func TestSlackJobs_empty(t *testing.T) {
+	if got := slackJobs(collector.Summary{}); got != "" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestSendSlack_marshalError(t *testing.T) {
+	orig := jsonMarshal
+	t.Cleanup(func() { jsonMarshal = orig })
+	jsonMarshal = func(any) ([]byte, error) {
+		return nil, errors.New("boom")
+	}
+	w := &webhookSender{url: "http://127.0.0.1:0/unused", kind: "slack", http: testHTTPNotify()}
+	err := w.SendSlack(context.Background(), messageContext{Event: eventSuccess, SummaryLine: "x"})
+	if err == nil || !strings.Contains(err.Error(), "marshal slack") {
+		t.Fatalf("err=%v", err)
 	}
 }
 

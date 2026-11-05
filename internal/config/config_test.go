@@ -16,6 +16,9 @@ func TestSampleYAML(t *testing.T) {
 	if !strings.Contains(s, "cluster_name:") {
 		t.Fatalf("sample should document cluster_name: %q", s)
 	}
+	if !strings.Contains(s, "client_id:") {
+		t.Fatalf("sample should document client_id: %q", s)
+	}
 	if !strings.Contains(s, "upload:") {
 		t.Fatalf("sample should document upload block: %q", s)
 	}
@@ -747,5 +750,53 @@ func TestLoad_kubeconfigFromEnvTilde(t *testing.T) {
 	want := filepath.Join(home, ".kube", "env-config")
 	if cfg.Kubeconfig != want {
 		t.Fatalf("kubeconfig from KUBECONFIG: got %q want %q", cfg.Kubeconfig, want)
+	}
+}
+
+func TestLoad_clientIDFromYAML(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "client.yaml")
+	if err := os.WriteFile(path, []byte("client_id: \"bastion-01\"\noutput_dir: \"./out\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GROOT_CLIENT_ID", "")
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.ClientID != "bastion-01" {
+		t.Fatalf("ClientID=%q", cfg.ClientID)
+	}
+}
+
+func TestLoad_clientIDFromEnv(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "client-env.yaml")
+	if err := os.WriteFile(path, []byte("client_id: \"\"\noutput_dir: \"./out\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GROOT_CLIENT_ID", "bastion-env-1")
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.ClientID != "bastion-env-1" {
+		t.Fatalf("ClientID=%q", cfg.ClientID)
+	}
+}
+
+func TestLoad_clientIDEnvOverridesYAML(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "client-win.yaml")
+	if err := os.WriteFile(path, []byte("client_id: \"from-yaml\"\noutput_dir: \"./out\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GROOT_CLIENT_ID", "from-env")
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.ClientID != "from-env" {
+		t.Fatalf("ClientID=%q want from-env", cfg.ClientID)
 	}
 }

@@ -45,6 +45,7 @@ func DispatchTest(ctx context.Context, cfg config.Config, event string) error {
 	}
 
 	sum := testSummary()
+	sum.ClientID = strings.TrimSpace(cfg.ClientID)
 	switch strings.TrimSpace(event) {
 	case eventFailure:
 		return fan.NotifyFailure(ctx, sum, "notify test: simulated collect failure")

@@ -60,6 +60,7 @@ func (s *Service) writeManifest(
 		ConfigVersion:        s.cfg.ConfigVersion,
 		ArchiveLayoutVersion: ArchiveLayoutVersion,
 		RunID:                s.RunID,
+		ClientID:             strings.TrimSpace(s.cfg.ClientID),
 		ArchiveSHA256:        s.archiveSHA256,
 		CollectedAt:          time.Now().UTC().Format(time.RFC3339),
 		DurationSeconds:      summary.Duration.Seconds(),

@@ -17,7 +17,7 @@ func TestWriteManifest(t *testing.T) {
 	defer cleanup()
 
 	root := t.TempDir()
-	s := New(config.Config{FilePrefix: "groot-capture", Kubeconfig: kc})
+	s := New(config.Config{FilePrefix: "groot-capture", Kubeconfig: kc, ClientID: "bastion-01"})
 	s.SetBuildInfo("0.4.0", "abc", "develop", "now")
 	if err := os.MkdirAll(filepath.Join(root, "extras"), 0o755); err != nil {
 		t.Fatal(err)
@@ -39,6 +39,9 @@ func TestWriteManifest(t *testing.T) {
 	}
 	if m.GrootVersion != "0.4.0" || m.Jobs.Total != 3 || len(m.Paths) == 0 {
 		t.Fatalf("%+v", m)
+	}
+	if m.ClientID != "bastion-01" {
+		t.Fatalf("client_id=%q", m.ClientID)
 	}
 	if m.ArchiveLayoutVersion != ArchiveLayoutVersion {
 		t.Fatalf("archive_layout_version=%d want %d", m.ArchiveLayoutVersion, ArchiveLayoutVersion)

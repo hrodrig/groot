@@ -37,6 +37,7 @@ type Summary struct {
 	Failed      int           `json:"failed"`
 	Failures    []string      `json:"failures,omitempty"`
 	RunID       string        `json:"run_id,omitempty"`
+	ClientID    string        `json:"client_id,omitempty"`
 }
 
 type job struct {
@@ -166,6 +167,7 @@ func (s *Service) Run(ctx context.Context) (Summary, error) {
 	if summary.RunID == "" {
 		summary.RunID = "unknown"
 	}
+	summary.ClientID = strings.TrimSpace(s.cfg.ClientID)
 
 	if s.cfg.Collection.RedactSecrets {
 		s.runRedactPass(captureDir)

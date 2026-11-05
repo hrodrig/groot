@@ -16,29 +16,37 @@ type messageContext struct {
 	Summary     collector.Summary
 }
 
+func clientAttr(sum collector.Summary) string {
+	if id := strings.TrimSpace(sum.ClientID); id != "" {
+		return fmt.Sprintf(" client=%s", id)
+	}
+	return ""
+}
+
 func buildSummaryLine(event string, sum collector.Summary, reason string) string {
 	duration := sum.Duration.Round(time.Second)
+	client := clientAttr(sum)
 	switch event {
 	case EventTest:
 		return fmt.Sprintf(
-			"GROOT notify test. total=%d success=%d failed=%d duration=%s output=%s archive=%s run_id=%s",
-			sum.Total, sum.Success, sum.Failed, duration, sum.OutputDir, sum.ArchivePath, sum.RunID,
+			"GROOT notify test.%s total=%d success=%d failed=%d duration=%s output=%s archive=%s run_id=%s",
+			client, sum.Total, sum.Success, sum.Failed, duration, sum.OutputDir, sum.ArchivePath, sum.RunID,
 		)
 	case eventFailure:
 		if strings.TrimSpace(reason) != "" {
 			return fmt.Sprintf(
-				"GROOT FAILED. reason=%s total=%d success=%d failed=%d duration=%s output=%s archive=%s",
-				reason, sum.Total, sum.Success, sum.Failed, duration, sum.OutputDir, sum.ArchivePath,
+				"GROOT FAILED.%s reason=%s total=%d success=%d failed=%d duration=%s output=%s archive=%s",
+				client, reason, sum.Total, sum.Success, sum.Failed, duration, sum.OutputDir, sum.ArchivePath,
 			)
 		}
 		return fmt.Sprintf(
-			"GROOT finished with failures. total=%d success=%d failed=%d duration=%s output=%s archive=%s",
-			sum.Total, sum.Success, sum.Failed, duration, sum.OutputDir, sum.ArchivePath,
+			"GROOT finished with failures.%s total=%d success=%d failed=%d duration=%s output=%s archive=%s",
+			client, sum.Total, sum.Success, sum.Failed, duration, sum.OutputDir, sum.ArchivePath,
 		)
 	default:
 		return fmt.Sprintf(
-			"GROOT finished. total=%d success=%d failed=%d duration=%s output=%s archive=%s",
-			sum.Total, sum.Success, sum.Failed, duration, sum.OutputDir, sum.ArchivePath,
+			"GROOT finished.%s total=%d success=%d failed=%d duration=%s output=%s archive=%s",
+			client, sum.Total, sum.Success, sum.Failed, duration, sum.OutputDir, sum.ArchivePath,
 		)
 	}
 }
@@ -56,6 +64,7 @@ func applyTemplate(tmpl string, ctx messageContext) string {
 		"{{output_dir}}":   ctx.Summary.OutputDir,
 		"{{archive_path}}": ctx.Summary.ArchivePath,
 		"{{run_id}}":       ctx.Summary.RunID,
+		"{{client_id}}":    strings.TrimSpace(ctx.Summary.ClientID),
 	}
 	out := tmpl
 	for k, v := range repl {

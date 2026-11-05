@@ -96,4 +96,28 @@ func TestBuildSummaryLine_notifyTest(t *testing.T) {
 	if !strings.Contains(line, "GROOT notify test") || !strings.Contains(line, "notify-test") {
 		t.Fatalf("line=%q", line)
 	}
+	if strings.Contains(line, "client=") {
+		t.Fatalf("empty client_id must omit client= attr: %q", line)
+	}
+}
+
+func TestBuildSummaryLine_clientID(t *testing.T) {
+	sum := testSummary()
+	sum.ClientID = "bastion-01"
+	line := buildSummaryLine(eventSuccess, sum, "")
+	if !strings.Contains(line, "GROOT finished. client=bastion-01 total=") {
+		t.Fatalf("line=%q", line)
+	}
+	failLine := buildSummaryLine(eventFailure, sum, "boom")
+	if !strings.Contains(failLine, "GROOT FAILED. client=bastion-01 reason=boom") {
+		t.Fatalf("failLine=%q", failLine)
+	}
+	partial := buildSummaryLine(eventFailure, sum, "")
+	if !strings.Contains(partial, "GROOT finished with failures. client=bastion-01 total=") {
+		t.Fatalf("partial=%q", partial)
+	}
+	testLine := buildSummaryLine(EventTest, sum, "")
+	if !strings.Contains(testLine, "GROOT notify test. client=bastion-01 total=") {
+		t.Fatalf("testLine=%q", testLine)
+	}
 }

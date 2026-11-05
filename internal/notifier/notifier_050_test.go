@@ -184,3 +184,16 @@ func TestApplyTemplate(t *testing.T) {
 		t.Fatalf("got %q", out)
 	}
 }
+
+func TestApplyTemplate_clientID(t *testing.T) {
+	out := applyTemplate(`id={{client_id}}`, messageContext{
+		Summary: collector.Summary{ClientID: "bastion-01"},
+	})
+	if out != "id=bastion-01" {
+		t.Fatalf("got %q", out)
+	}
+	empty := applyTemplate(`id={{client_id}}`, messageContext{})
+	if empty != "id=" {
+		t.Fatalf("empty client_id: got %q", empty)
+	}
+}

@@ -27,6 +27,10 @@ file_prefix: "groot-capture"
 # Use this for in-cluster pods (no kubeconfig context), e.g. cluster_name: "prod-eks"
 cluster_name: ""
 
+# Optional collector / bastion / site identity (notify summary + extras/manifest.json).
+# Independent of cluster_name. Not part of the archive basename. Env: GROOT_CLIENT_ID.
+# client_id: "bastion-01"
+
 collection:
   # Maximum duration for the whole collect run (context deadline); entire job aborts after this.
   timeout: 20m
@@ -135,8 +139,9 @@ notify:
     # Optional fixed fields merged into the default JSON payload (values support {{summary}} placeholders).
     # extra_fields:
     #   event: "{{event}}"
-    # Optional JSON body template (placeholders: {{summary}}, {{total}}, {{failed}}, {{event}}, …).
-    # body_template: '{"text":"{{summary}}","failed":{{failed}}}'
+    #   client_id: "{{client_id}}"
+    # Optional JSON body template (placeholders: {{summary}}, {{total}}, {{failed}}, {{event}}, {{client_id}}, …).
+    # body_template: '{"text":"{{summary}}","failed":{{failed}},"client_id":"{{client_id}}"}'
     # Optional HMAC-SHA256 signature header (sha256=<hex>) over the raw POST body.
     # hmac_secret: ""
     # hmac_header: "X-Groot-Signature"

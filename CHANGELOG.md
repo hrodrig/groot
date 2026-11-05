@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`client_id` / `GROOT_CLIENT_ID`:** optional collector / bastion identity in notify summary (`client=<id>`), `{{client_id}}` template placeholder, and `extras/manifest.json` (omit when empty). Independent of `cluster_name`; not part of archive basename ([#37](https://github.com/hrodrig/groot/issues/37)).
+
+### Security
+
+- **Dependencies:** bump `golang.org/x/net` **0.60.0 → 0.62.0** (GO-2026-6860 / GO-2026-6866) and `golang.org/x/crypto` **0.57.0 → 0.58.1** pre-release (GO-2026-5932; no tagged `v0.58.1` yet).
+
 ## [1.2.2] - 2026-11-02
 
 Security patch — transitive **go-jose** bump ([GHSA-mgcc-cww5-fp2q](https://github.com/go-jose/go-jose/security/advisories/GHSA-mgcc-cww5-fp2q)); Dependabot targets **`develop`**.

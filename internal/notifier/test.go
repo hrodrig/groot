@@ -45,6 +45,7 @@ func DispatchTest(ctx context.Context, cfg config.Config, event string) error {
 	}
 
 	sum := testSummary()
+	sum.ClientID = strings.TrimSpace(cfg.ClientID)
 	switch strings.TrimSpace(event) {
 	case eventFailure:
 		return fan.NotifyFailure(ctx, sum, "notify test: simulated collect failure")
@@ -64,5 +65,11 @@ func testSummary() collector.Summary {
 		OutputDir:   "/tmp/groot-notify-test/out",
 		ArchivePath: "/tmp/groot-notify-test/groot-notify-test.tar.gz",
 		RunID:       "notify-test",
+		Cluster:     "test-cluster",
+		Context:     "test-context",
+		User:        "test-user",
+		Mode:        "notify.test",
+		Version:     "dev",
+		FinishedAt:  time.Date(2026, 11, 5, 13, 0, 0, 0, time.UTC),
 	}
 }

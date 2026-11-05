@@ -117,6 +117,7 @@ Partial job failures inside collect remain **non-fatal** by default; they are co
 | `config_version` | int | `0` (legacy) | **1.0.0+:** use `1` for new configs. Absent or `0` = legacy pre-1.0 behavior. Loader rejects unknown future versions. |
 | `kubeconfig` | string | `""` | Empty → client-go default rules + in-cluster when applicable. Supports `~` / `${VAR}` expansion (same as `output_dir`). Multipath values use `os.PathListSeparator` (same as `KUBECONFIG`). |
 | `cluster_name` | string | `""` | Optional archive basename cluster label. When empty, resolved from kubeconfig → `kube-public/cluster-info` → API server host. |
+| `client_id` | string | `""` | Optional collector / bastion / site identity for notify + `extras/manifest.json`. Independent of `cluster_name` (API target). Not part of the archive basename. Env: `GROOT_CLIENT_ID` overrides YAML when set. |
 | `output_dir` | string | `./out` | Supports `~` and `${VAR}` expansion. |
 | `file_prefix` | string | `groot-capture` | **Used** in capture directory and archive basename (ROADMAP **0.4.x #12**). |
 | `collection` | object | see below | |
@@ -168,8 +169,8 @@ Each channel: `enabled` + credentials. Multiple destinations: **`;`-separated** 
 
 **Generic webhook contract:**
 
-- **Default:** single JSON object `{"<json_key>":"<summary line>"}` plus optional `extra_fields` (values support `{{summary}}`, `{{total}}`, `{{failed}}`, `{{event}}`, … placeholders).
-- **`body_template`:** when set, POST the rendered JSON template instead of the default shape. Must be valid JSON after substitution.
+- **Default:** single JSON object `{"<json_key>":"<summary line>"}` plus optional `extra_fields` (values support `{{summary}}`, `{{total}}`, `{{failed}}`, `{{event}}`, `{{client_id}}`, `{{run_id}}`, … placeholders).
+- **`body_template`:** when set, POST the rendered JSON template instead of the default shape. Must be valid JSON after substitution. Placeholders include `{{client_id}}` (empty string when unset).
 - **HMAC:** when `hmac_secret` is set, header `hmac_header` (default `X-Groot-Signature`) is `sha256=<hex>` over the raw POST body (HMAC-SHA256).
 
 **PagerDuty:** HTTP **202** expected; `custom_details` includes `total`, `success`, `failed`, `duration`, `output_dir`, `archive_path`.
@@ -202,6 +203,8 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
   "groot_commit": "…",
   "config_version": 1,
   "archive_layout_version": 1,
+  "run_id": "…",
+  "client_id": "bastion-01",
   "collected_at": "2026-06-05T12:00:00Z",
   "duration_seconds": 42.5,
   "session_base": "groot-capture-7kqv2xy-20260605-120000",
@@ -213,7 +216,7 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
 }
 ```
 
-`paths` is the sorted list of files under the capture tree (slash-separated, relative to the capture folder). Empty fields fall back to `"unknown"` or `"dev"`.
+`paths` is the sorted list of files under the capture tree (slash-separated, relative to the capture folder). Empty fields fall back to `"unknown"` or `"dev"`. `client_id` is omitted from JSON when unset (not written as `""`).
 
 ### Job execution
 
@@ -222,7 +225,7 @@ After all jobs complete (and before the capture folder is removed), `extras/mani
 - Workers run jobs concurrently up to `worker_concurrency`.
 - **Kubernetes API rate limit:** Groot sets client-go **`QPS=50`** and **`Burst=100`** on the shared REST config (`internal/kubeloader`). All collection jobs share one token bucket; workers compete for those tokens. **`worker_concurrency`** controls how many jobs run in parallel, not the QPS cap. On large clusters or slow apiserver, reduce **`worker_concurrency`** if you see long stalls or HTTP **429** responses. QPS/Burst are **not** YAML-configurable today (roadmap **#67**).
 - Optional jobs may fail without aborting the whole run (`Optional: true` on internal jobs).
-- `Summary` reports `Total`, `Success`, `Failed`, `Failures[]`, `Duration`, `OutputDir`, `ArchivePath`.
+- `Summary` reports `Total`, `Success`, `Failed`, `Failures[]`, `Duration`, `OutputDir`, `ArchivePath`, `RunID`, and `ClientID` (when `client_id` is set).
 
 ### Typical artifacts (non-exhaustive)
 
@@ -273,9 +276,19 @@ Argv is split on whitespace in config—**no shell quoting** for pipelines or re
 - Fire **once** after collect returns a `Summary` on the success path (archive created).
 - Optional **failure alerts** when `notify.on_failure.enabled` (see §4): on collect abort and/or when partial job failures exceed `min_failed_jobs`. Respects **`--no-notify`** / `GROOT_NO_NOTIFY`.
 - **Success** message format (all channels):  
-  `GROOT finished. total=… success=… failed=… duration=… output=… archive=…`
+  `GROOT finished. total=… success=… failed=… duration=… output=… archive=…`  
+  When `client_id` is set, insert `client=<id>` immediately after the opening phrase:  
+  `GROOT finished. client=<id> total=… …`
 - **Failure** message format:  
-  `GROOT FAILED. reason=…` (abort) or `GROOT finished with failures. …` (partial threshold).
+  `GROOT FAILED. reason=…` (abort) or `GROOT finished with failures. …` (partial threshold).  
+  Same optional `client=<id>` insertion after the opening phrase when `client_id` is set.
+- **Slack only (rich attachment):** in addition to the plain `text` one-liner (fallback / accessibility), the webhook JSON includes one legacy attachment:
+  - **color** (vertical bar): `good` / green = success or `notify.test`; `warning` / yellow = partial job failures (`notify.on_failure`, empty reason); `danger` / red = abort or hard failure (non-empty reason)
+  - **fallback:** same as `text`
+  - **text (mrkdwn):** title (`✅ *GROOT completed*` / `❌ *GROOT failed*` / `✅ *GROOT notify test*`) plus bullets for non-empty fields among Cluster, Client, Time, Context, User, Mode, Duration, Jobs, Archive (basename), Run ID, and Reason (failure only)
+  - **footer:** `groot vX.Y.Z | <day Mon>` (omit date when finish time unknown)
+  - **ts:** Unix seconds of finish time  
+  Teams / Discord / generic / email / PagerDuty payloads are unchanged (one-liner or their existing contracts).
 - **Discord** content truncated to 2000 runes.
 - Notify errors **fail the command** (`send notifications: …` / `send failure notifications: …`).
 - HTTP notify clients **retry** transient 5xx and network errors per `notify.retry` (§4).
@@ -496,7 +509,7 @@ Copy a profile as a starting point (`cp examples/profiles/incident-quick.yml gro
 groot notify test [--config <path>] [--event notify.test|success|failure]
 ```
 
-Loads `notify.*` from config and posts a **synthetic** `collector.Summary` to every enabled channel. Does **not** run collect, write an archive, or contact the Kubernetes API. Ignores `--no-notify` / `GROOT_NO_NOTIFY` (the command exists solely to exercise notify).
+Loads `notify.*` from config and posts a **synthetic** `collector.Summary` to every enabled channel. Does **not** run collect, write an archive, or contact the Kubernetes API. Ignores `--no-notify` / `GROOT_NO_NOTIFY` (the command exists solely to exercise notify). When `client_id` / `GROOT_CLIENT_ID` is set, the synthetic summary carries it (default line + `{{client_id}}`).
 
 | Flag | Default | Effect |
 |------|---------|--------|

@@ -79,6 +79,7 @@ func TestManifest_roundTripCollectShapedEncoder(t *testing.T) {
 		ConfigVersion:        2,
 		ArchiveLayoutVersion: arcread.ArchiveLayoutVersion,
 		RunID:                "run-1",
+		ClientID:             "bastion-01",
 		ArchiveSHA256:        "deadbeef",
 		CollectedAt:          "2026-01-02T15:04:05Z",
 		DurationSeconds:      2.5,

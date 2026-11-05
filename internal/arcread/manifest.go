@@ -31,6 +31,7 @@ type Manifest struct {
 	ConfigVersion        int             `json:"config_version,omitempty"`
 	ArchiveLayoutVersion int             `json:"archive_layout_version"`
 	RunID                string          `json:"run_id,omitempty"`
+	ClientID             string          `json:"client_id,omitempty"`
 	ArchiveSHA256        string          `json:"archive_sha256,omitempty"`
 	CollectedAt          string          `json:"collected_at"`
 	DurationSeconds      float64         `json:"duration_seconds"`

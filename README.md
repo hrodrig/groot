@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-1.2.2-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.27.3-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -583,6 +583,7 @@ notify:
 |-----|----------------|
 | **`kubeconfig`** | Path to the kubeconfig file used to build the **client-go** REST config (same discovery rules as **client-go** / **`clientcmd`**). Empty: use **`KUBECONFIG`** if set, then the default kubeconfig locations (for example **`~/.kube/config`**), or in-cluster credentials when Groot runs as a pod. Supports **`~`** and **`${VAR}`** expansion (YAML, `KUBECONFIG`, and **`--kubeconfig`**). **`groot --kubeconfig`** overrides this for a single run (see [Resolution and precedence](#resolution-and-precedence)). |
 | **`cluster_name`** | Optional label for the **`<cluster>`** segment in archive basenames. When empty, Groot resolves: kubeconfig cluster name → **`kube-public/cluster-info`** → API server host → **`unknown-cluster`**. Set explicitly for in-cluster pods without kubeconfig context. Env: **`GROOT_CLUSTER_NAME`**. |
+| **`client_id`** | Optional collector / bastion / site identity for notify (`client=<id>` in the summary line, **`{{client_id}}`** in generic templates) and **`extras/manifest.json`**. Independent of **`cluster_name`**. Not part of the archive basename. Env: **`GROOT_CLIENT_ID`**. |
 | **`output_dir`** | Base directory: each run creates **`<file_prefix>-<short>[-since-<slug>]-<timestamp>/`**, then **`<sessionBase>-<cluster>[-<message>].tar.gz`** beside it. **`<short>`** is from **`run_id`** (concurrent-safe). Supports **`~`** and **`${VAR}`** expansion. |
 | **`file_prefix`** | Prefix for capture directory and archive basename (default **`groot-capture`**). Example session: **`groot-capture-7kqv2xy-20260606-120000-my-cluster.tar.gz`**. |
 | **`collection`** | Tuning for timeouts, parallelism, namespaces, pod logs, optional **`extra_kubectl`** argv lines, redaction, etc. (see below). |
@@ -775,6 +776,10 @@ Groot sends a **one-line summary** after collect. Channels are independent; enab
 GROOT finished. total=42 success=40 failed=2 duration=3m12s output=/out/groot-capture-… archive=/out/groot-capture-….tar.gz
 ```
 
+When **`client_id`** is set: `GROOT finished. client=bastion-01 total=42 …`.
+
+**Slack** also posts a structured attachment (green/red color bar, labeled bullets for cluster/client/time/…, footer `groot vX.Y.Z`) while keeping the one-liner as the `text` fallback. Other channels stay one-line only.
+
 **Failure messages** (when `notify.on_failure.enabled: true`):
 
 ```text
@@ -963,10 +968,10 @@ This repository ships the **CLI**, **packages**, and **`ghcr.io/hrodrig/groot`**
 | On-demand collect (HTTP → Job) | **[groot-trigger](https://github.com/hrodrig/groot-trigger)** |
 | Archive catalog on a VPS (**gfs**) | **[groot-share](https://github.com/hrodrig/groot-share)** — deploy: **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)** |
 
-Pull the image from here (pin to the [version badge](#readme-top) — currently **`v1.2.2`**):
+Pull the image from here (pin to the [version badge](#readme-top) — currently **`v1.3.0`**):
 
 ```bash
-docker pull ghcr.io/hrodrig/groot:v1.2.2
+docker pull ghcr.io/hrodrig/groot:v1.3.0
 ```
 
 In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](SPECIFICATIONS.md#8-runtime-and-kubernetes-access). See [Groot family](#groot-family) for the full companion map.

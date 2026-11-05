@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-05
+
+Minor — notify attribution + Slack rich attachments (SPEC); archive-trust plan remains open in the **1.3.x** band.
+
+### Added
+
+- **`client_id` / `GROOT_CLIENT_ID`:** optional collector / bastion identity in notify summary (`client=<id>`), `{{client_id}}` template placeholder, and `extras/manifest.json` (omit when empty). Independent of `cluster_name`; not part of archive basename ([#37](https://github.com/hrodrig/groot/issues/37)).
+- **Slack rich notify:** webhook posts keep the plain `text` one-liner and add a color-bar attachment (`good` / `warning` / `danger`) with Cluster / Client / Time / Context / User / Mode / Duration / Jobs / Archive / Run ID and `groot vX.Y.Z` footer ([#38](https://github.com/hrodrig/groot/issues/38)).
+
+### Security
+
+- **Dependencies:** bump `golang.org/x/net` **0.60.0 → 0.62.0** (GO-2026-6860 / GO-2026-6866) and `golang.org/x/crypto` **0.57.0 → 0.58.1** pre-release (GO-2026-5932; no tagged `v0.58.1` yet).
+- **Dependencies:** bump `github.com/klauspost/compress` **1.18.0 → 1.18.7** ([GHSA-259r-337f-4rfw](https://github.com/advisories/GHSA-259r-337f-4rfw)) so `make release-check STRICT_RELEASE=1` / grype pass.
+
+### Changed
+
+- **README / man pages / BSD ports:** version badge and packaging pins synced to **1.3.0**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.3.0**.
+- **ROADMAP:** **v1.3.0** ships notify UX; archive-trust items (`#49`, `#100`–`#107`) stay **Pending** in **1.3.x**.
+
 ## [1.2.2] - 2026-11-02
 
 Security patch — transitive **go-jose** bump ([GHSA-mgcc-cww5-fp2q](https://github.com/go-jose/go-jose/security/advisories/GHSA-mgcc-cww5-fp2q)); Dependabot targets **`develop`**.

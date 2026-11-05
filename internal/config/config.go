@@ -20,6 +20,7 @@ type Config struct {
 	ConfigVersion int           `mapstructure:"config_version"`
 	Kubeconfig    string        `mapstructure:"kubeconfig"`
 	ClusterName   string        `mapstructure:"cluster_name"`
+	ClientID      string        `mapstructure:"client_id"`
 	OutputDir     string        `mapstructure:"output_dir"`
 	FilePrefix    string        `mapstructure:"file_prefix"`
 	Collection    CollectionCfg `mapstructure:"collection"`
@@ -217,6 +218,9 @@ func applyLoadedConfig(cfg *Config) error {
 	}
 	// Same ~ / ${VAR} rules as output_dir (YAML, KUBECONFIG env, multipath lists).
 	cfg.Kubeconfig = ExpandKubeconfig(cfg.Kubeconfig)
+	// Prefer explicit env when set (bastion CronJob / systemd); else YAML / AutomaticEnv.
+	cfg.ClientID = strings.TrimSpace(firstNonEmpty(os.Getenv("GROOT_CLIENT_ID"), cfg.ClientID))
+	cfg.ClusterName = strings.TrimSpace(cfg.ClusterName)
 
 	if cfg.Collection.WorkerConcurrency < 1 {
 		cfg.Collection.WorkerConcurrency = 4

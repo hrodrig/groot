@@ -7,13 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [1.3.1] - 2026-11-08
 
-- **SECURITY.md:** pointer to [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) host/kernel notes for **CVE-2026-98432** (no prod listener in this CLI; [#55](https://github.com/hrodrig/groot/issues/55)).
+Patch — Slack notify duplicate-text fix, dependency refresh (k8s **0.37.2**, AWS/GCS), security compress bump. Archive-trust plan remains open in the **1.3.x** band.
 
 ### Fixed
 
 - **Slack notify:** drop top-level webhook `text` so the one-liner does not appear above the rich attachment (duplicate of the card body); keep it in `attachments[].fallback` only.
+
+### Security
+
+- **Dependencies:** bump `github.com/klauspost/compress` **1.18.7 → 1.20.2** (GO-2026-6865) so `make security` / grype stay green.
+
+### Changed
+
+- **Dependencies:** Kubernetes client stack **0.32.5 → 0.37.2** (`k8s.io/api`, `apimachinery`, `client-go`, `metrics`); AWS SDK (`config`, `s3`), `cloud.google.com/go/storage`, `google.golang.org/api`, `sigs.k8s.io/yaml`, `fake-gcs-server`.
+- **SECURITY.md:** pointer to [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) host/kernel notes for **CVE-2026-98432** (no prod listener in this CLI; [#55](https://github.com/hrodrig/groot/issues/55)).
+- **README / man pages / BSD ports:** version badge and packaging pins synced to **1.3.1**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.3.1**.
 
 ## [1.3.0] - 2026-11-05
 

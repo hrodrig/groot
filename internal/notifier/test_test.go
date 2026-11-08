@@ -37,11 +37,9 @@ func TestAnyEnabled(t *testing.T) {
 }
 
 func TestDispatchTest_slackDefaultEvent(t *testing.T) {
-	var gotText string
+	var got slackWebhookPayload
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var body map[string]string
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		gotText = body["text"]
+		_ = json.NewDecoder(r.Body).Decode(&got)
 		w.WriteHeader(http.StatusOK)
 	}))
 	t.Cleanup(srv.Close)
@@ -55,17 +53,25 @@ func TestDispatchTest_slackDefaultEvent(t *testing.T) {
 	if err := DispatchTest(context.Background(), cfg, EventTest); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(gotText, "GROOT notify test") {
-		t.Fatalf("text=%q", gotText)
+	if got.Text != "" {
+		t.Fatalf("top-level text must be empty, got %q", got.Text)
+	}
+	if len(got.Attachments) != 1 {
+		t.Fatalf("attachments=%d", len(got.Attachments))
+	}
+	att := got.Attachments[0]
+	if !strings.Contains(att.Fallback, "GROOT notify test") {
+		t.Fatalf("fallback=%q", att.Fallback)
+	}
+	if !strings.Contains(att.Text, "GROOT notify test") {
+		t.Fatalf("attachment text=%q", att.Text)
 	}
 }
 
 func TestDispatchTest_failureEvent(t *testing.T) {
-	var gotText string
+	var got slackWebhookPayload
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var body map[string]string
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		gotText = body["text"]
+		_ = json.NewDecoder(r.Body).Decode(&got)
 		w.WriteHeader(http.StatusOK)
 	}))
 	t.Cleanup(srv.Close)
@@ -79,8 +85,18 @@ func TestDispatchTest_failureEvent(t *testing.T) {
 	if err := DispatchTest(context.Background(), cfg, eventFailure); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(gotText, "GROOT FAILED") {
-		t.Fatalf("text=%q", gotText)
+	if got.Text != "" {
+		t.Fatalf("top-level text must be empty, got %q", got.Text)
+	}
+	if len(got.Attachments) != 1 {
+		t.Fatalf("attachments=%d", len(got.Attachments))
+	}
+	att := got.Attachments[0]
+	if !strings.Contains(att.Fallback, "GROOT FAILED") {
+		t.Fatalf("fallback=%q", att.Fallback)
+	}
+	if !strings.Contains(att.Text, "GROOT failed") {
+		t.Fatalf("attachment text=%q", att.Text)
 	}
 }
 

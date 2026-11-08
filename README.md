@@ -778,7 +778,7 @@ GROOT finished. total=42 success=40 failed=2 duration=3m12s output=/out/groot-ca
 
 When **`client_id`** is set: `GROOT finished. client=bastion-01 total=42 …`.
 
-**Slack** also posts a structured attachment (green/red color bar, labeled bullets for cluster/client/time/…, footer `groot vX.Y.Z`) while keeping the one-liner as the `text` fallback. Other channels stay one-line only.
+**Slack** posts a structured attachment only (green/red/yellow color bar, labeled bullets for cluster/client/time/…, footer `groot vX.Y.Z`). The one-liner lives in attachment `fallback`, not as a duplicate top-level `text`. Other channels stay one-line only.
 
 **Failure messages** (when `notify.on_failure.enabled: true`):
 

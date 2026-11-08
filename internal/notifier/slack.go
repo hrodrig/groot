@@ -16,7 +16,9 @@ const (
 )
 
 type slackWebhookPayload struct {
-	Text        string            `json:"text"`
+	// Text is omitted on purpose: Slack would render it above the attachment and
+	// duplicate the one-liner already carried in attachments[].fallback + body.
+	Text        string            `json:"text,omitempty"`
 	Attachments []slackAttachment `json:"attachments"`
 }
 
@@ -40,7 +42,6 @@ func buildSlackPayload(ctx messageContext) slackWebhookPayload {
 		Markdown: []string{"text"},
 	}
 	return slackWebhookPayload{
-		Text:        line,
 		Attachments: []slackAttachment{att},
 	}
 }

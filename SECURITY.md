@@ -4,6 +4,10 @@
 
 This policy covers the GROOT CLI, its configuration handling, optional notification integrations (Slack, Telegram, Teams), and the published container image. GROOT uses the Kubernetes API (client-go) and writes diagnostics to disk; treat output archives as potentially sensitive (see [README](README.md)).
 
+### Host kernels (operators)
+
+This CLI has **no production listen socket**. Host/kernel patching (including **[CVE-2026-98432](https://nvd.nist.gov/vuln/detail/CVE-2026-98432)** / MPTCP listen PoCs) is an **operator** concern — see [groot-selfhosted SECURITY.md](https://github.com/hrodrig/groot-selfhosted/blob/develop/SECURITY.md#host--kernel-notes). Tracking: [#55](https://github.com/hrodrig/groot/issues/55).
+
 ## Supported versions
 
 We support the **latest release** tagged on `main` and meaningful security fixes on the current development branch (`develop`). Versions follow [semantic versioning](https://semver.org/) (MAJOR.MINOR.PATCH).

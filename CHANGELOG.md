@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Slack notify:** drop top-level webhook `text` so the one-liner does not appear above the rich attachment (duplicate of the card body); keep it in `attachments[].fallback` only.
+
 ## [1.3.0] - 2026-11-05
 
 Minor — notify attribution + Slack rich attachments (SPEC); archive-trust plan remains open in the **1.3.x** band.

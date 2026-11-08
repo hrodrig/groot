@@ -33,8 +33,8 @@ func TestBuildSlackPayload_success(t *testing.T) {
 	}
 	line := buildSummaryLine(eventSuccess, sum, "")
 	p := buildSlackPayload(messageContext{Event: eventSuccess, Summary: sum, SummaryLine: line})
-	if p.Text != line {
-		t.Fatalf("text fallback=%q", p.Text)
+	if p.Text != "" {
+		t.Fatalf("top-level text must be empty (avoid Slack duplicate), got %q", p.Text)
 	}
 	if len(p.Attachments) != 1 {
 		t.Fatalf("attachments=%d", len(p.Attachments))
@@ -154,8 +154,11 @@ func TestFanOut_Notify_slackRichAttachment(t *testing.T) {
 	if err := json.Unmarshal(raw, &p); err != nil {
 		t.Fatalf("json: %v body=%s", err, raw)
 	}
-	if p.Text == "" || len(p.Attachments) != 1 {
+	if p.Text != "" || len(p.Attachments) != 1 {
 		t.Fatalf("payload=%#v", p)
+	}
+	if p.Attachments[0].Fallback == "" {
+		t.Fatal("expected fallback one-liner")
 	}
 	if !strings.Contains(p.Attachments[0].Text, "*Client:* `bastion-01`") {
 		t.Fatalf("attachment=%s", p.Attachments[0].Text)

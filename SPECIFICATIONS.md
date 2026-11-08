@@ -282,9 +282,9 @@ Argv is split on whitespace in config—**no shell quoting** for pipelines or re
 - **Failure** message format:  
   `GROOT FAILED. reason=…` (abort) or `GROOT finished with failures. …` (partial threshold).  
   Same optional `client=<id>` insertion after the opening phrase when `client_id` is set.
-- **Slack only (rich attachment):** in addition to the plain `text` one-liner (fallback / accessibility), the webhook JSON includes one legacy attachment:
+- **Slack only (rich attachment):** webhook JSON is **attachment-only** (no top-level `text` — that would duplicate the summary above the card). One legacy attachment:
   - **color** (vertical bar): `good` / green = success or `notify.test`; `warning` / yellow = partial job failures (`notify.on_failure`, empty reason); `danger` / red = abort or hard failure (non-empty reason)
-  - **fallback:** same as `text`
+  - **fallback:** plain one-liner (`GROOT finished. …`) for clients that do not render attachments
   - **text (mrkdwn):** title (`✅ *GROOT completed*` / `❌ *GROOT failed*` / `✅ *GROOT notify test*`) plus bullets for non-empty fields among Cluster, Client, Time, Context, User, Mode, Duration, Jobs, Archive (basename), Run ID, and Reason (failure only)
   - **footer:** `groot vX.Y.Z | <day Mon>` (omit date when finish time unknown)
   - **ts:** Unix seconds of finish time  

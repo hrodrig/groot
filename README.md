@@ -5,7 +5,7 @@
 **☸** _Collect Kubernetes logs and cluster context into one archive_
 
 [![Release](https://img.shields.io/github/v/release/hrodrig/groot?display_name=tag&label=release&logo=github)](https://github.com/hrodrig/groot/releases)
-[![Version](https://img.shields.io/badge/version-1.3.0-blue)](https://github.com/hrodrig/groot/releases)
+[![Version](https://img.shields.io/badge/version-1.3.1-blue)](https://github.com/hrodrig/groot/releases)
 [![Go](https://img.shields.io/badge/Go-1.27.3-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![pkg.go.dev](https://pkg.go.dev/badge/github.com/hrodrig/groot)](https://pkg.go.dev/github.com/hrodrig/groot)
@@ -778,7 +778,7 @@ GROOT finished. total=42 success=40 failed=2 duration=3m12s output=/out/groot-ca
 
 When **`client_id`** is set: `GROOT finished. client=bastion-01 total=42 …`.
 
-**Slack** also posts a structured attachment (green/red color bar, labeled bullets for cluster/client/time/…, footer `groot vX.Y.Z`) while keeping the one-liner as the `text` fallback. Other channels stay one-line only.
+**Slack** posts a structured attachment only (green/red/yellow color bar, labeled bullets for cluster/client/time/…, footer `groot vX.Y.Z`). The one-liner lives in attachment `fallback`, not as a duplicate top-level `text`. Other channels stay one-line only.
 
 **Failure messages** (when `notify.on_failure.enabled: true`):
 
@@ -968,10 +968,10 @@ This repository ships the **CLI**, **packages**, and **`ghcr.io/hrodrig/groot`**
 | On-demand collect (HTTP → Job) | **[groot-trigger](https://github.com/hrodrig/groot-trigger)** |
 | Archive catalog on a VPS (**gfs**) | **[groot-share](https://github.com/hrodrig/groot-share)** — deploy: **[groot-share-selfhosted](https://github.com/hrodrig/groot-share-selfhosted)** |
 
-Pull the image from here (pin to the [version badge](#readme-top) — currently **`v1.3.0`**):
+Pull the image from here (pin to the [version badge](#readme-top) — currently **`v1.3.1`**):
 
 ```bash
-docker pull ghcr.io/hrodrig/groot:v1.3.0
+docker pull ghcr.io/hrodrig/groot:v1.3.1
 ```
 
 In-cluster behavior (CronJob, RBAC, `/out` volume) is documented in [SPEC §8](SPECIFICATIONS.md#8-runtime-and-kubernetes-access). See [Groot family](#groot-family) for the full companion map.

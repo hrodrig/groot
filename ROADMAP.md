@@ -8,7 +8,7 @@ User-facing overview: **[README.md](README.md)** and **[configs/groot.yml.sample
 
 When a roadmap item ships, update **CHANGELOG** (reference **`(band #N)`** in bullets) and mark the item **Done** here—or move highlights into the **Shipped** table.
 
-**Last reviewed:** 2026-11-05 (**v1.3.0** — `client_id` + Slack rich notify; archive-trust plan **`#49`**, **`#100`–`#107`** remains open in **1.3.x**; **`#99`** archive MCP stays **v1.4.0**)
+**Last reviewed:** 2026-11-08 (**v1.3.1** — Slack notify text dedupe + deps/k8s **0.37.2**; archive-trust plan **`#49`**, **`#100`–`#107`** remains open in **1.3.x**; **`#99`** archive MCP stays **v1.4.0**)
 
 ### Versioning note
 
@@ -34,6 +34,7 @@ Bands group semver minors into planning horizons. Individual items carry **globa
 |----------|------|-------|-------|
 | **Shipped** | **#69** `groot analyze <archive>` | Analysis | **Done (v1.1.0)** — offline heuristics + executive/LLM Markdown + goldens. |
 | **Shipped** | **v1.3.0** notify UX | Notify | **`client_id`** ([#37](https://github.com/hrodrig/groot/issues/37)) + Slack rich attachment ([#38](https://github.com/hrodrig/groot/issues/38)). |
+| **Shipped** | **v1.3.1** patch | Notify / deps | Slack drop duplicate top-level `text`; k8s **0.37.2** + AWS/GCS refresh; compress **1.20.2**. |
 | **Next** | **1.3.x** archive trust | Contract | [plan-1.3.0.md](docs/plan-1.3.0.md) — **#49**, **#100**–**#107** (still in **1.3.x**). Before **#32** / **#56**. |
 | **Then** | **#32** multi-cluster collect | Multi-cluster | [plan-1.0.0.md](docs/plan-1.0.0.md) post-1.0 order. |
 | **Then** | **#56** `groot diff` | Analysis | Shared `arcread` reader; natural follow-on to `#69`. |
@@ -115,6 +116,7 @@ GROOT is a **read-only log and context collector**: one **`groot collect`** prod
 | **1.2.0** | 4 | **Toolchain:** Go **1.27.2**; golangci-lint **v2.14.0**; `x/net` **v0.60.0** (govulncheck); client-go **0.32.5** kept. |
 | **1.2.1** | 4 | **Security:** Go **1.27.3** (`crypto/x509` denylist, **CVE-2026-111943** / **GO-2026-6809**). Kind E2E fails CI (`#49`). |
 | **1.2.2** | 4 | **Security:** `go-jose/v4` **4.1.6** (**GHSA-mgcc-cww5-fp2q**); Dependabot `target-branch: develop`. |
+| **1.3.1** | 4 | **Patch:** Slack no duplicate top-level `text`; k8s client **0.37.2**; AWS/GCS/google deps; compress **1.20.2**. Archive trust remains open in **1.3.x**. |
 | **1.3.0** | 4 | **Notify:** `client_id` / Slack rich attachment (`good`/`warning`/`danger`); `x/net` **0.62.0** + `x/crypto` **0.58.1** pre. Archive trust remains open in **1.3.x**. |
 
 ---

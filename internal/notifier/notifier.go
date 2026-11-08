@@ -254,7 +254,8 @@ func (w *webhookSender) Send(ctx context.Context, text string) error {
 // jsonMarshal is overridden in tests to exercise marshal error paths.
 var jsonMarshal = json.Marshal
 
-// SendSlack posts the one-line text plus a kzero-style attachment (color bar + bullets).
+// SendSlack posts a kzero-style attachment (color bar + bullets). The one-liner
+// lives in attachments[].fallback only — no top-level text (avoids Slack duplicate).
 func (w *webhookSender) SendSlack(ctx context.Context, msgCtx messageContext) error {
 	body, err := jsonMarshal(buildSlackPayload(msgCtx))
 	if err != nil {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **SECURITY.md:** pointer to [groot-selfhosted](https://github.com/hrodrig/groot-selfhosted) host/kernel notes for **CVE-2026-98432** (no prod listener in this CLI; [#55](https://github.com/hrodrig/groot/issues/55)).
+
 ### Fixed
 
 - **Slack notify:** drop top-level webhook `text` so the one-liner does not appear above the rich attachment (duplicate of the card body); keep it in `attachments[].fallback` only.

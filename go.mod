@@ -4,7 +4,7 @@ go 1.27.3
 
 require (
 	cloud.google.com/go/storage v1.70.0
-	github.com/aws/aws-sdk-go-v2 v1.47.6
+	github.com/aws/aws-sdk-go-v2 v1.47.8
 	github.com/aws/aws-sdk-go-v2/config v1.33.14
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.14
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.25

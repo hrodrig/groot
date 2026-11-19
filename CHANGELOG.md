@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-11-19
+
+Patch — Go **1.27.4** (stdlib `net/http` vuln) and dependency refresh (AWS SDK, `x/crypto`, `x/sys`, `pflag`, `sftp`, `google.golang.org/api`). Archive-trust plan remains open in the **1.3.x** band.
+
 ### Security
 
 - **Go 1.27.3 → 1.27.4** in `go.mod` and the **`Dockerfile`** builder image (`golang:1.27.4-alpine`). Clears **GO-2026-6859** (`net/http`) so `govulncheck` / Security workflow stay green. README Go badge synced to **1.27.4**.
+
+### Changed
+
+- **Dependencies:** `github.com/pkg/sftp` **1.13.12**; `golang.org/x/sys` **0.50.0**; `github.com/spf13/pflag` **1.1.0**; `golang.org/x/crypto` **0.59.0**; `google.golang.org/api` **0.315.0**; AWS SDK stack (`aws-sdk-go-v2` **1.48.0**, `config` **1.33.18**, `credentials` **1.21.0**, `service/s3` **1.114.10**, `feature/s3/manager` **1.23.24**).
+- **README / man pages / BSD ports:** version badge and packaging pins synced to **1.3.2**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.3.2**.
 
 ## [1.3.1] - 2026-11-08
 

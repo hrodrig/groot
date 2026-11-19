@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Go 1.27.3 → 1.27.4** in `go.mod` and the **`Dockerfile`** builder image (`golang:1.27.4-alpine`). Clears **GO-2026-6859** (`net/http`) so `govulncheck` / Security workflow stay green. README Go badge synced to **1.27.4**.
+
 ## [1.3.1] - 2026-11-08
 
 Patch — Slack notify duplicate-text fix, dependency refresh (k8s **0.37.2**, AWS/GCS), security compress bump. Archive-trust plan remains open in the **1.3.x** band.

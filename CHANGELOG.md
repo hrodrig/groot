@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-11-24
+
+Patch — AWS SDK / GCS / Google API dependency refresh. Archive-trust plan remains open in the **1.3.x** band.
+
+### Changed
+
+- **Dependencies:** AWS SDK (`config` **1.33.21**, `credentials` **1.21.3**, `service/s3` **1.116.0**, `feature/s3/manager` **1.23.28**); `cloud.google.com/go/storage` **1.71.0**; `google.golang.org/api` **0.316.0**.
+- **README / man pages / BSD ports:** version badge and packaging pins synced to **1.3.3**.
+- **VHS demo** (`docs/demo.gif`): regenerated so `groot --version` shows **1.3.3**.
+
 ## [1.3.2] - 2026-11-19
 
 Patch — Go **1.27.4** (stdlib `net/http` vuln) and dependency refresh (AWS SDK, `x/crypto`, `x/sys`, `pflag`, `sftp`, `google.golang.org/api`). Archive-trust plan remains open in the **1.3.x** band.
